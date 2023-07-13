@@ -66,8 +66,21 @@ in
     useGlobalPkgs = true;
     useUserPackages = true;
     users.han-tyumi = { ... }: {
-      home.stateVersion = "23.11";
-      programs = enabledShells;
+      home = {
+        shellAliases = {
+          cat = "bat";
+        };
+        stateVersion = "23.11";
+      };
+
+      programs = enabledShells // {
+        direnv.enable = true;
+        bat.enable = true;
+        exa = {
+          enable = true;
+          enableAliases = true;
+        };
+      };
     };
   };
 
