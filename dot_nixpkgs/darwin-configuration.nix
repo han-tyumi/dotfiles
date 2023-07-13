@@ -32,13 +32,8 @@ in
       "utm"
     ];
 
-    global = {
-      autoUpdate = false;
-    };
-
-    onActivation = {
-      cleanup = "zap";
-    };
+    global.autoUpdate = false;
+    onActivation.cleanup = "zap";
   };
 
   users.users.han-tyumi = {
@@ -46,6 +41,7 @@ in
     description = "Han-Tyumi";
     home = "/Users/han-tyumi";
     shell = pkgs.fish;
+    
     packages = with pkgs; [
       git
       fish
