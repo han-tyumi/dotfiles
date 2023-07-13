@@ -1,20 +1,40 @@
+{ pkgs, ... }:
+
 let
+  baseUserPackages = with pkgs; [
+    git
+    fish
+    nil
+    nixpkgs-fmt
+    shellcheck
+    shfmt
+    chezmoi
+    nodejs_20
+    deno
+    purescript
+    spago
+    dotty
+    scala-cli
+    sbt
+    scalafmt
+  ] ++ nodePackages;
+
+  nodePackages = with pkgs.nodePackages_latest; [
+    yarn
+    pnpm
+  ];
+
+  userPackages = baseUserPackages ++ nodePackages;
+
   enabledShells = {
     bash.enable = true;
     zsh.enable = true;
     fish.enable = true;
   };
 in
-{ pkgs, ... }: {
-  imports = [ <home-manager/nix-darwin> ];
 
-  system.defaults = {
-    NSGlobalDomain = {
-      AppleShowAllFiles = true;
-      AppleInterfaceStyle = "Dark";
-    };
-    finder.FXPreferredViewStyle = "Nlsv";
-  };
+{
+  imports = [ <home-manager/nix-darwin> ];
 
   nixpkgs.config.allowUnfree = true;
   services.nix-daemon.enable = true;
@@ -22,7 +42,6 @@ in
 
   homebrew = {
     enable = true;
-
     casks = [
       "visual-studio-code"
       "kitty"
@@ -31,7 +50,6 @@ in
       "arc"
       "utm"
     ];
-
     global.autoUpdate = false;
     onActivation.cleanup = "zap";
   };
@@ -41,30 +59,29 @@ in
     description = "Han-Tyumi";
     home = "/Users/han-tyumi";
     shell = pkgs.fish;
-    
-    packages = with pkgs; [
-      git
-      fish
-      nil
-      nixpkgs-fmt
-      shellcheck
-      shfmt
-      chezmoi
-      nodejs_20
-      deno
-    ];
+    packages = userPackages;
   };
 
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
     users.han-tyumi = { ... }: {
-      programs = enabledShells;
       home.stateVersion = "23.11";
+      programs = enabledShells;
     };
   };
 
-  programs = enabledShells;
+  system = {
+    defaults = {
+      NSGlobalDomain = {
+        AppleShowAllFiles = true;
+        AppleInterfaceStyle = "Dark";
+      };
+      finder.FXPreferredViewStyle = "Nlsv";
+    };
 
-  system.stateVersion = 4;
+    stateVersion = 4;
+  };
+
+  programs = enabledShells;
 }
