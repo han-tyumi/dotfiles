@@ -20,10 +20,6 @@ in
   services.nix-daemon.enable = true;
   nix.package = pkgs.nix;
 
-  environment.systemPackages = [
-    pkgs.git
-  ];
-
   homebrew = {
     enable = true;
 
@@ -50,13 +46,16 @@ in
     description = "Han-Tyumi";
     home = "/Users/han-tyumi";
     shell = pkgs.fish;
-    packages = [
-      pkgs.chezmoi
-      pkgs.fish
-      pkgs.nil
-      pkgs.nixpkgs-fmt
-      pkgs.shellcheck
-      pkgs.shfmt
+    packages = with pkgs; [
+      git
+      fish
+      nil
+      nixpkgs-fmt
+      shellcheck
+      shfmt
+      chezmoi
+      nodejs_20
+      deno
     ];
   };
 
