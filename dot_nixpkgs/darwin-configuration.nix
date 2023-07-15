@@ -2,26 +2,25 @@
 
 let
   baseUserPackages = with pkgs; [
-    git
-    fish
+    chezmoi
+    deno
+    dotty
+    fd
     nil
     nixpkgs-fmt
+    nodejs_20
+    purescript
+    scala-cli
+    scalafmt
     shellcheck
     shfmt
-    chezmoi
-    nodejs_20
-    deno
-    purescript
     spago
-    dotty
-    scala-cli
-    sbt
-    scalafmt
-  ] ++ nodePackages;
+  ];
 
   nodePackages = with pkgs.nodePackages_latest; [
-    yarn
+    graphite-cli
     pnpm
+    yarn
   ];
 
   userPackages = baseUserPackages ++ nodePackages;
@@ -43,11 +42,9 @@ in
   homebrew = {
     enable = true;
     casks = [
-      "visual-studio-code"
-      "kitty"
+      "arc"
       "raycast"
       "transmit"
-      "arc"
       "utm"
     ];
     global.autoUpdate = false;
@@ -65,8 +62,12 @@ in
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
+
     users.han-tyumi = { ... }: {
       home = {
+        sessionVariables = {
+          EDITOR = "code";
+        };
         shellAliases = {
           cat = "bat";
         };
@@ -74,12 +75,34 @@ in
       };
 
       programs = enabledShells // {
-        direnv.enable = true;
+        atuin.enable = true;
         bat.enable = true;
+        direnv.enable = true;
         exa = {
           enable = true;
           enableAliases = true;
         };
+        fzf.enable = true;
+        git = {
+          enable = true;
+          delta.enable = true;
+        };
+        kitty.enable = true;
+        mpv.enable = true;
+        neovim = {
+          enable = true;
+          viAlias = true;
+          vimAlias = true;
+          vimdiffAlias = true;
+        };
+        nnn.enable = true;
+        ripgrep.enable = true;
+        sbt.enable = true;
+        starship.enable = true;
+        tealdeer.enable = true;
+        vscode.enable = true;
+        zellij.enable = true;
+        zoxide.enable = true;
       };
     };
   };
