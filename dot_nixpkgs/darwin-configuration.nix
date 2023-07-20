@@ -15,7 +15,6 @@ let
     shellcheck
     shfmt
     spago
-    temurin-bin-17
   ];
 
   nodePackages = with pkgs.nodePackages_latest; [
@@ -87,6 +86,10 @@ in
         git = {
           enable = true;
           delta.enable = true;
+        };
+        java = {
+          enable = true;
+          package = pkgs.temurin-bin-17;
         };
         kitty.enable = true;
         mpv.enable = true;
