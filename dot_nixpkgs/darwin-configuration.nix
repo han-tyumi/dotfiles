@@ -15,6 +15,7 @@ let
     shellcheck
     shfmt
     spago
+    temurin-bin-17
   ];
 
   nodePackages = with pkgs.nodePackages_latest; [
