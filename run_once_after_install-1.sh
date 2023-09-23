@@ -11,10 +11,9 @@ fi
 
 # Install Nix
 # https://nixos.org/
-
 if [[ -x /run/current-system/sw/bin/nix ]]; then
   echo "Nix is already installed."
 else
   echo "Installing Nix..."
-  bash -c "$(curl -L https://nixos.org/nix/install)"
+  curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
 fi
