@@ -43,18 +43,8 @@ in
       cat = "bat";
       g = "git";
       p = "pnpm";
-      znu = "zsh -lc nu";
-      wt = "wezterm cli";
-      wta = "wt activate-pane-direction";
-      wtas = "wt adjust-pane-size";
-      wtk = "wt kill-pane";
-      wtp = "wt send-text";
-      wts = "wt split-pane";
-      wtsl = "wts --left";
-      wtsr = "wts --right";
-      wtst = "wts --top";
-      wtt = "wt move-pane-to-new-tab";
       y = "yarn";
+      znu = "zsh -lc nu";
     };
     stateVersion = "23.11";
   };
@@ -216,14 +206,12 @@ in
         lock_timeout = 21600;
       };
     };
-    rio.enable = true;
     ripgrep.enable = true;
     starship = {
       enable = true;
       enableFishIntegration = false;
     };
     tealdeer.enable = true;
-    wezterm.enable = true;
     zellij.enable = false;
     zoxide.enable = true;
     zsh = {
