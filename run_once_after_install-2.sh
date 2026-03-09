@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# TODO: Update based on upswitch.
 # Install Nix Darwin
 # https://github.com/LnL7/nix-darwin
 if [[ -x /run/current-system/sw/bin/darwin-rebuild ]]; then

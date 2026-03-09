@@ -1,8 +1,3 @@
-[".config/rio/themes/catppuccin-mocha.toml"]
-type = "file"
-url = "https://github.com/catppuccin/rio/raw/refs/heads/main/themes/catppuccin-mocha.toml"
-refreshPeriod = "6h"
-
 ["v"]
 type = "git-repo"
 url = "https://github.com/vlang/v.git"
