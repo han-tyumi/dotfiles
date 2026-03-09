@@ -4,11 +4,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    fh.url = "https://flakehub.com/f/DeterminateSystems/fh/*.tar.gz";
-    flake-checker.url = "https://flakehub.com/f/DeterminateSystems/flake-checker/*.tar.gz";
-
     nix-darwin = {
-      url = "github:LnL7/nix-darwin";
+      url = "github:nix-darwin/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -16,11 +13,14 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    gitu = {
+      url = "github:altsem/gitu";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs@{ self, nix-darwin, home-manager, ... }: {
-    # Build darwin flake using:
-    # $ darwin-rebuild build --flake .#Matts-MacBook-Pro
     darwinConfigurations."Matts-MacBook-Pro" = nix-darwin.lib.darwinSystem {
       modules = [
         ./configuration.nix
@@ -29,8 +29,10 @@
           home-manager = {
             useGlobalPkgs = true;
             useUserPackages = true;
+            backupFileExtension = "backup";
 
-            users.han-tyumi = import ./home.nix;
+            users.han-tyumi = ./home.nix;
+            extraSpecialArgs = { inherit inputs; };
           };
         }
       ];

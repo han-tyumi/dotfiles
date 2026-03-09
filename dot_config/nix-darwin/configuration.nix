@@ -1,84 +1,149 @@
 { pkgs, inputs, ... }:
 
-let
-  basePackages = with pkgs; [
-    age
-    coreutils
-    chezmoi
-    deno
-    fd
-    inputs.fh.packages.aarch64-darwin.default
-    inputs.flake-checker.packages.aarch64-darwin.default
-    nil
-    nixpkgs-fmt
-    nodejs_20
-    openconnect
-    php
-    shellcheck
-    shfmt
-    vpn-slice
-  ];
-
-  nodePackages = with pkgs.nodePackages_latest; [
-    degit
-    graphite-cli
-    pnpm
-    yarn
-  ];
-
-  userPackages = basePackages ++ nodePackages;
-in
-
 {
   nixpkgs = {
     config.allowUnfree = true;
 
     # The platform the configuration will be used on.
     hostPlatform = "aarch64-darwin";
-  };
 
-  # Auto upgrade nix package and the daemon service.
-  services.nix-daemon.enable = true;
+    overlays = [
+      (final: prev: { nodejs = prev.nodejs_22; })
+      # Skip nushell tests - they fail on macOS due to sandbox permission issues
+      (final: prev: {
+        nushell = prev.nushell.overrideAttrs (old: {
+          doCheck = false;
+        });
+      })
+    ];
+  };
 
   nix.settings = {
     # Necessary for using flakes on this system.
     experimental-features = "nix-command flakes auto-allocate-uids";
     extra-nix-path = "nixpkgs=flake:nixpkgs";
 
+    download-buffer-size = 512 * 1024 * 1024;
+
     keep-derivations = true;
     keep-outputs = true;
+
+    trusted-users = [
+      "root"
+      "han-tyumi"
+    ];
   };
 
   homebrew = {
     enable = true;
+    taps = [
+      "pantsbuild/tap"
+      "knope-dev/tap"
+    ];
+    brews = [
+      "exercism"
+      "ferium"
+      "golangci-lint"
+      "knope"
+      "mas"
+      "mise"
+      "poppler"
+      "rtk"
+      "rustup"
+      "zlib"
+      "zstd"
+    ];
     casks = [
       "arc"
+      "bitwarden"
+      "claude"
+      "claude-code"
+      "cursor"
+      "docker-desktop"
+      "eqmac"
+      "firefox"
+      "gimp"
+      "jetbrains-toolbox"
+      "keycastr"
+      "kitty"
       "marginnote"
+      "microsoft-excel"
+      "microsoft-teams"
+      "modrinth"
       "moonlight"
+      "pants"
+      "postgres-unofficial"
+      "prismlauncher"
+      "private-internet-access"
       "qmk-toolbox"
       "raycast"
       "steam"
+      "the-unarchiver"
+      "trae"
       "transmit"
       "via"
+      "vip-access"
+      "visual-studio-code"
+      "warp"
+      "whatsapp"
+      "windsurf"
+      "xmind"
+      "zed"
+      "zen"
       "zoom"
     ];
     masApps = {
       Amphetamine = 937984704;
+      iMovie = 408981434;
       "Logic Pro" = 634148309;
     };
-    global.autoUpdate = false;
-    onActivation.cleanup = "zap";
+    onActivation = {
+      autoUpdate = true;
+      upgrade = true;
+      cleanup = "zap";
+    };
   };
 
   users.users.han-tyumi = {
     name = "han-tyumi";
     description = "Han-Tyumi";
     home = "/Users/han-tyumi";
-    shell = pkgs.fish;
-    packages = userPackages;
+    shell = pkgs.zsh;
+    packages = with pkgs; [
+      act
+      age
+      comma
+      coreutils
+      chezmoi
+      cmake
+      devenv
+      ejson
+      ffmpeg
+      fontforge
+      # inputs.gitu.packages.${system}.default # Temporarily disabled - Apple SDK issue
+      gnupg
+      graphviz
+      lua51Packages.lua
+      lua51Packages.luarocks
+      lua-language-server
+      nix-health
+      nixd
+      nixfmt
+      nurl
+      openconnect
+      passh
+      php
+      pkg-config
+      shellcheck
+      shfmt
+      unison-ucm
+      vpn-slice
+      wget
+    ];
   };
 
   system = {
+    primaryUser = "han-tyumi";
     defaults = {
       NSGlobalDomain = {
         AppleShowAllFiles = true;
@@ -98,8 +163,29 @@ in
     stateVersion = 4;
   };
 
+  environment = {
+    etc = {
+      "sudoers.d/nix-darwin".text = ''
+        Defaults timestamp_timeout=360
+      '';
+    };
+
+    extraInit = ''
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    '';
+
+    shells = [
+      pkgs.bashInteractive
+      pkgs.fish
+      pkgs.nushell
+      pkgs.zsh
+    ];
+  };
+
+  security.pam.services.sudo_local.touchIdAuth = true;
+
   programs = {
-    bash.enable = true;
+    bash.enable = false;
     zsh.enable = true;
     fish.enable = true;
   };
