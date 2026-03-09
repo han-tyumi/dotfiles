@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# {{ include "dot_config/mise/config.toml" | sha256sum }}
+
+mise plugins upgrade
+mise upgrade

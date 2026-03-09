@@ -1,0 +1,26 @@
+[tools]
+bun = "latest"
+crystal = "latest"
+deno = "latest"
+dotnet = "latest"
+elixir = "1.18"
+erlang = "latest"
+gleam = "latest"
+go = "latest"
+just = "latest"
+kotlin = "2"
+mint = "latest"
+node = "latest"
+pixi = "latest"
+usage = "latest"
+zig = "latest"
+
+"npm:@biomejs/biome" = "2.1.2"
+"npm:@google/gemini-cli" = "latest"
+"npm:git-removed-branches" = "latest"
+
+"pipx:openconnect-sso[full]" = "latest"
+
+[settings]
+pin = true
+idiomatic_version_file_enable_tools = []
