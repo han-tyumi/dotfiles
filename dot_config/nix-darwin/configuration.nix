@@ -120,7 +120,6 @@
       ejson
       ffmpeg
       fontforge
-      # inputs.gitu.packages.${system}.default # Temporarily disabled - Apple SDK issue
       gnupg
       graphviz
       lua51Packages.lua

@@ -8,7 +8,6 @@ This is a personal dotfiles repository managed by chezmoi for macOS (specificall
 - **Nix Darwin** with flakes for system-level package management
 - **Home Manager** for user-level configuration
 - **mise** for language version management
-- **proto** for additional toolchain management
 - **Homebrew** for macOS-specific applications
 
 ## Architecture
@@ -29,15 +28,12 @@ This is a personal dotfiles repository managed by chezmoi for macOS (specificall
 3. **Tool Configuration Layer** (`dot_config/`): Individual tool configs
    - `mise/config.toml`: Language runtime versions
    - `starship.toml`: Shell prompt configuration
-   - `neovide/`, etc.: Editor configs
-
-4. **Proto Layer** (`dot_proto/`): Additional toolchain management
-   - `.prototools`: Proto-managed tool versions (Node, Deno, Go, pnpm, etc.)
+   - `neovide/`: Editor configs
 
 ### Nix Darwin Structure
 
 The Nix configuration uses a flake-based setup:
-- `flake.nix` defines inputs (nixpkgs, nix-darwin, home-manager, gitu)
+- `flake.nix` defines inputs (nixpkgs, nix-darwin, home-manager)
 - `configuration.nix` handles system-level concerns:
   - Homebrew taps, brews, casks, and Mac App Store apps
   - System defaults (Dark mode, finder settings, etc.)
@@ -88,11 +84,6 @@ Update mise tools:
 ```bash
 mise plugins upgrade
 mise upgrade
-```
-
-Update proto tools:
-```bash
-proto upgrade
 ```
 
 ### Chezmoi Operations
@@ -164,5 +155,5 @@ Neovim config is managed as an external git submodule (`dot_config/external_nvim
 - The main system configuration targets the hostname "Matts-MacBook-Pro"
 - Node.js is pinned to version 22 via nixpkgs overlay
 - Homebrew auto-updates and upgrades on activation
-- Git ignores `.claude`, `CLAUDE.md`, and `mise.local.toml` globally
+- Git ignores `.claude/*.local.*`, `.env.local`, `.mcp.local.json`, `CLAUDE.local.md`, and `mise.local.toml` globally
 - The nix-darwin rebuild script is currently disabled (commented out in `run_onchange_after_1-nix-darwin.tmpl`)

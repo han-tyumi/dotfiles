@@ -1,5 +1,5 @@
 module commands {
-  const local_flake_dir = ' ~/.config/nix-darwin'
+  const local_flake_dir = '~/.config/nix-darwin'
   const system_flake_dir = '/etc/nix-darwin'
 
   # Applies various updates related to Chezmoi, Nix Darwin, and Home Manager.

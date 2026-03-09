@@ -27,7 +27,7 @@ in
       "/opt"
       "$CARGO_HOME/bin"
       "$HOME/.local/bin"
-"$HOME/.dotnet/tools"
+      "$HOME/.dotnet/tools"
       "$HOME/.config/v-analyzer/bin"
       "$HOME/roc"
     ];
