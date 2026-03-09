@@ -36,7 +36,6 @@ in
       CARGO_HOME = "$HOME/.cargo";
       RUSTUP_HOME = "$HOME/.rustup";
       GITHUB_TOKEN = private.githubToken;
-      DIRENV_LOG_FORMAT = "";
     };
     shellAliases = {
       ai = "aichat";
@@ -74,6 +73,7 @@ in
     };
     direnv = {
       enable = true;
+      silent = true;
       nix-direnv.enable = true;
       stdlib = ''
         : "''${XDG_CACHE_HOME:="$HOME/.cache"}"
@@ -92,6 +92,9 @@ in
     fd.enable = true;
     fish = {
       enable = true;
+      interactiveShellInit = ''
+        set -g fish_greeting
+      '';
       shellInit = ''
         eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -111,10 +114,6 @@ in
         {
           name = "plugin-git";
           src = pkgs.fishPlugins.plugin-git.src;
-        }
-        {
-          name = "tide";
-          src = pkgs.fishPlugins.tide.src;
         }
         {
           name = "z";
@@ -209,16 +208,18 @@ in
     ripgrep.enable = true;
     starship = {
       enable = true;
-      enableFishIntegration = false;
+      enableTransience = true;
     };
     tealdeer.enable = true;
     zellij.enable = false;
     zoxide.enable = true;
     zsh = {
       enable = true;
+      envExtra = ''
+        eval "$(direnv hook zsh)"
+      '';
       profileExtra = ''
         eval "$(/opt/homebrew/bin/brew shellenv)"
-        eval "$(direnv export zsh)"
         eval "$(mise activate zsh --shims)"
       '';
     };
