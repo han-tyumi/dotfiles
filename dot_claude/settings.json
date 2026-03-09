@@ -1,0 +1,139 @@
+{
+  "env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/han-tyumi/.claude/hooks/rtk-rewrite.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Edit(**/.claude/**)",
+      "Read(**/.claude/**)",
+      "Read(//private/tmp/**)",
+      "Read(//tmp/package/**)",
+      "Read(//private/tmp/package/**)",
+      "Read(//Users/han-tyumi/.claude/**)",
+      "Write(**/.claude/**)",
+
+      "Bash(cat:*)",
+      "Bash(chezmoi data:*)",
+      "Bash(chezmoi diff:*)",
+      "Bash(chezmoi status:*)",
+      "Bash(find:*)",
+      "Bash(gh api:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh search issues:*)",
+      "Bash(git diff-tree:*)",
+      "Bash(git diff:*)",
+      "Bash(git fetch:*)",
+      "Bash(git grep:*)",
+      "Bash(git log:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git mv:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
+      "Bash(grep:*)",
+      "Bash(lsof:*)",
+      "Bash(ls:*)",
+      "Bash(npm search:*)",
+      "Bash(npm view:*)",
+      "Bash(npx biome:*)",
+      "Bash(npx quicktype:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx tsx:*)",
+      "Bash(paste:*)",
+      "Bash(pgrep:*)",
+      "Bash(pnpm --version:*)",
+      "Bash(pnpm check:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm outdated:*)",
+      "Bash(pnpm tsc:*)",
+      "Bash(test:*)",
+      "Bash(tree:*)",
+      "Bash(wc:*)",
+      "Bash(which:*)",
+      "Bash(yarn biome:*)",
+      "Bash(yarn info:*)",
+      "Bash(yarn install:*)",
+      "Bash(yarn tsc:*)",
+      "Bash(yarn why:*)",
+
+      "mcp__context7__query-docs",
+      "mcp__context7__resolve-library-id",
+
+      "mcp__github__get_file_contents",
+      "mcp__github__get_issue",
+      "mcp__github__get_pull_request",
+      "mcp__github__get_pull_request_comments",
+      "mcp__github__get_pull_request_files",
+      "mcp__github__get_pull_request_reviews",
+      "mcp__github__get_pull_request_status",
+      "mcp__github__list_commits",
+      "mcp__github__list_issues",
+      "mcp__github__list_pull_requests",
+      "mcp__github__search_code",
+      "mcp__github__search_issues",
+      "mcp__github__search_repositories",
+      "mcp__github__search_users",
+
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_close",
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_drag",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_handle_dialog",
+      "mcp__playwright__browser_hover",
+      "mcp__playwright__browser_install",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_navigate_back",
+      "mcp__playwright__browser_network_requests",
+      "mcp__playwright__browser_press_key",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_run_code",
+      "mcp__playwright__browser_select_option",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_tabs",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_wait_for",
+
+      "mcp__playwright-test__browser_console_messages",
+      "mcp__playwright-test__browser_press_key",
+      "mcp__playwright-test__browser_take_screenshot",
+      "mcp__playwright-test__browser_type",
+
+      "mcp__sentry__get_issue_details",
+      "mcp__sentry__search_issues",
+
+      "WebFetch(domain:biomejs.dev)",
+      "WebFetch(domain:docs.github.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:oxc.rs)",
+      "WebFetch(domain:pnpm.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:react-typescript-cheatsheet.netlify.app)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:typescript-eslint.io)",
+      "WebFetch(domain:www.chromatic.com)"
+    ],
+    "deny": [],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  },
+  "alwaysThinkingEnabled": true
+}
