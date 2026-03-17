@@ -136,6 +136,7 @@
       shellcheck
       shfmt
       unison-ucm
+      github-mcp-server
       vpn-slice
       wget
     ];

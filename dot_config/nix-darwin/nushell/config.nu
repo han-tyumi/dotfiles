@@ -27,6 +27,7 @@ module commands {
     
       log $"Applying Chezmoi's state\n\n"
       ^chezmoi apply
+      log ""
     }
 
     if ($system_flake_dir | path type) != 'symlink' {
