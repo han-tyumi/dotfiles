@@ -2,19 +2,6 @@
   "env": {
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/Users/han-tyumi/.claude/hooks/rtk-rewrite.sh"
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Edit(**/.claude/**)",
@@ -24,7 +11,6 @@
       "Read(//private/tmp/package/**)",
       "Read(//Users/han-tyumi/.claude/**)",
       "Write(**/.claude/**)",
-
       "Bash(cat:*)",
       "Bash(chezmoi data:*)",
       "Bash(chezmoi diff:*)",
@@ -32,6 +18,9 @@
       "Bash(find:*)",
       "Bash(gh api:*)",
       "Bash(gh issue view:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
       "Bash(gh search issues:*)",
       "Bash(git diff-tree:*)",
       "Bash(git diff:*)",
@@ -61,6 +50,9 @@
       "Bash(pnpm list:*)",
       "Bash(pnpm outdated:*)",
       "Bash(pnpm tsc:*)",
+      "Bash(rtk git diff:*)",
+      "Bash(rtk git log:*)",
+      "Bash(rtk git status)",
       "Bash(test:*)",
       "Bash(tree:*)",
       "Bash(wc:*)",
@@ -68,12 +60,11 @@
       "Bash(yarn biome:*)",
       "Bash(yarn info:*)",
       "Bash(yarn install:*)",
+      "Bash(yarn test:*)",
       "Bash(yarn tsc:*)",
       "Bash(yarn why:*)",
-
       "mcp__context7__query-docs",
       "mcp__context7__resolve-library-id",
-
       "mcp__github__get_file_contents",
       "mcp__github__get_issue",
       "mcp__github__get_pull_request",
@@ -88,7 +79,6 @@
       "mcp__github__search_issues",
       "mcp__github__search_repositories",
       "mcp__github__search_users",
-
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_close",
       "mcp__playwright__browser_console_messages",
@@ -110,29 +100,42 @@
       "mcp__playwright__browser_take_screenshot",
       "mcp__playwright__browser_type",
       "mcp__playwright__browser_wait_for",
-
       "mcp__playwright-test__browser_console_messages",
       "mcp__playwright-test__browser_press_key",
       "mcp__playwright-test__browser_take_screenshot",
       "mcp__playwright-test__browser_type",
-
       "mcp__sentry__get_issue_details",
       "mcp__sentry__search_issues",
-
       "WebFetch(domain:biomejs.dev)",
       "WebFetch(domain:docs.github.com)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:oxc.rs)",
       "WebFetch(domain:pnpm.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:react-bootstrap.netlify.app)",
       "WebFetch(domain:react-typescript-cheatsheet.netlify.app)",
       "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:storybook.js.org)",
       "WebFetch(domain:typescript-eslint.io)",
-      "WebFetch(domain:www.chromatic.com)"
+      "WebFetch(domain:www.chromatic.com)",
+      "WebFetch(domain:www.npmjs.com)"
     ],
     "deny": [],
     "additionalDirectories": [
       "/tmp"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/han-tyumi/.claude/hooks/rtk-rewrite.sh"
+          }
+        ]
+      }
     ]
   },
   "alwaysThinkingEnabled": true
