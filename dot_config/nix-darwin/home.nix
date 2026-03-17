@@ -35,7 +35,8 @@ in
       DUNE_CACHE = "enabled";
       CARGO_HOME = "$HOME/.cargo";
       RUSTUP_HOME = "$HOME/.rustup";
-      GITHUB_TOKEN = private.githubToken;
+      GH_TOKEN = private.githubToken;
+      GITHUB_PERSONAL_ACCESS_TOKEN = private.githubToken;
     };
     shellAliases = {
       ai = "aichat";
