@@ -72,7 +72,7 @@
       "modrinth"
       "moonlight"
       "pants"
-      "postgres-unofficial"
+      "postgres-app"
       "prismlauncher"
       "private-internet-access"
       "qmk-toolbox"
@@ -187,6 +187,14 @@
   programs = {
     bash.enable = false;
     zsh.enable = true;
-    fish.enable = true;
+    fish = {
+      enable = true;
+      # nix-daemon.fish only adds ~/.nix-profile/bin and /nix/var/nix/profiles/default/bin.
+      # Add the remaining nix-darwin profile paths that set-environment provides for zsh/bash.
+      shellInit = ''
+        fish_add_path --path /run/current-system/sw/bin
+        fish_add_path --path /etc/profiles/per-user/$USER/bin
+      '';
+    };
   };
 }
