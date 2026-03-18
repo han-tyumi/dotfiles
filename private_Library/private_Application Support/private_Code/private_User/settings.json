@@ -1,0 +1,61 @@
+{
+  "$schema": "vscode://schemas/settings/user",
+
+  // Appearance
+  "workbench.colorTheme": "Catppuccin Mocha",
+  "workbench.iconTheme": "catppuccin-mocha",
+  "workbench.preferredDarkColorTheme": "Catppuccin Mocha",
+  "workbench.preferredLightColorTheme": "Catppuccin Latte",
+  "catppuccin.accentColor": "blue",
+
+  // Editor
+  "editor.fontFamily": "'PragmataPro Mono Liga', monospace",
+  "editor.fontSize": 14,
+  "editor.tabSize": 2,
+  "editor.minimap.enabled": false,
+  "editor.linkedEditing": true,
+  "editor.inlayHints.enabled": "offUnlessPressed",
+  "editor.stickyScroll.maxLineCount": 10,
+  "diffEditor.ignoreTrimWhitespace": false,
+
+  // Terminal
+  "terminal.integrated.defaultProfile.osx": "fish",
+  "terminal.integrated.fontSize": 14,
+
+  // Privacy
+  "redhat.telemetry.enabled": false,
+  "telemetry.telemetryLevel": "off",
+  "chat.disableAIFeatures": true,
+
+  // Nix
+  "nix.enableLanguageServer": true,
+  "nix.serverPath": "nixd",
+  "nix.serverSettings": {
+    "nixd": {
+      "formatting": {
+        "command": ["nixfmt"]
+      }
+    }
+  },
+
+  // Trust
+  "json.schemaDownload.trustedDomains": {
+    "https://biomejs.dev": true,
+    "https://developer.microsoft.com/json-schemas/": true,
+    "https://esm.sh": true,
+    "https://json-schema.org/": true,
+    "https://json.schemastore.org/": true,
+    "https://raw.githubusercontent.com/devcontainers/spec/": true,
+    "https://raw.githubusercontent.com/microsoft/vscode/": true,
+    "https://schemastore.azurewebsites.net/": true,
+    "https://www.schemastore.org/": true
+  },
+
+  // Claude Code
+  "claudeCode.preferredLocation": "panel",
+
+  // Atlassian
+  "atlascode.bitbucket.enabled": false,
+  "atlascode.jira.enabled": true,
+  "atlascode.rovodev.enabled": false
+}
