@@ -99,7 +99,7 @@ in
       shellInit = ''
         eval "$(/opt/homebrew/bin/brew shellenv)"
 
-        if status is-interactive
+        if status is-interactive; and set -q TERM_PROGRAM
           mise activate fish | source
         else
           mise activate fish --shims | source
