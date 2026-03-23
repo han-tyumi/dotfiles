@@ -57,5 +57,12 @@
   // Atlassian
   "atlascode.bitbucket.enabled": false,
   "atlascode.jira.enabled": true,
-  "atlascode.rovodev.enabled": false
+  "atlascode.rovodev.enabled": false,
+
+  // Activity Bar
+  "workbench.activityBar.compact": true,
+  "workbench.activityBar.location": "top",
+
+  // Git
+  "git.autofetch": true
 }

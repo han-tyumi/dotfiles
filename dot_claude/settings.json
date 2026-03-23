@@ -36,6 +36,7 @@
       "Bash(grep:*)",
       "Bash(lsof:*)",
       "Bash(ls:*)",
+      "Bash(mise --version)",
       "Bash(npm search:*)",
       "Bash(npm view:*)",
       "Bash(npx biome:*)",
@@ -107,8 +108,10 @@
       "mcp__sentry__get_issue_details",
       "mcp__sentry__search_issues",
       "WebFetch(domain:biomejs.dev)",
+      "WebFetch(domain:code.visualstudio.com)",
       "WebFetch(domain:docs.github.com)",
       "WebFetch(domain:github.com)",
+      "WebFetch(domain:mise.jdx.dev)",
       "WebFetch(domain:oxc.rs)",
       "WebFetch(domain:pnpm.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
@@ -138,5 +141,6 @@
       }
     ]
   },
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high"
 }
