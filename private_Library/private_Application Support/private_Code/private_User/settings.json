@@ -64,5 +64,6 @@
   "workbench.activityBar.location": "top",
 
   // Git
-  "git.autofetch": true
+  "git.autofetch": true,
+  "git.confirmSync": false
 }
