@@ -189,6 +189,8 @@ in
       viAlias = true;
       vimAlias = true;
       vimdiffAlias = true;
+      withPython3 = false;
+      withRuby = false;
     };
     nix-index.enable = true;
     nnn.enable = true;
