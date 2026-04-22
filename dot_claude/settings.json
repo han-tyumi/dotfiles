@@ -55,6 +55,7 @@
       "Bash(rtk git diff:*)",
       "Bash(rtk git log:*)",
       "Bash(rtk git status:*)",
+      "Bash(shellcheck:*)",
       "Bash(test:*)",
       "Bash(tree:*)",
       "Bash(wc:*)",
