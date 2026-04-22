@@ -162,7 +162,7 @@ ahead=0
 behind=0
 dirty=""
 if [ -n "$cwd" ]; then
-    git_status=$(git -C "$cwd" status --branch --porcelain=v1 2>/dev/null || true)
+    git_status=$(GIT_OPTIONAL_LOCKS=0 git -C "$cwd" status --branch --porcelain=v1 2>/dev/null || true)
     if [ -n "$git_status" ]; then
         header=${git_status%%$'\n'*}
         [[ "$header" =~ ^\#\#\ ([^.\ ]+) ]] && branch="${BASH_REMATCH[1]}"
