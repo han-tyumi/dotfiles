@@ -37,7 +37,6 @@
   homebrew = {
     enable = true;
     taps = [
-      "pantsbuild/tap"
       "knope-dev/tap"
     ];
     brews = [
@@ -69,7 +68,6 @@
       "microsoft-teams"
       "modrinth"
       "moonlight"
-      "pants"
       "postgres-app"
       "prismlauncher"
       "private-internet-access"
