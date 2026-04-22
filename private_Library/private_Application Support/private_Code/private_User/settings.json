@@ -20,6 +20,11 @@
   "diffEditor.ignoreTrimWhitespace": false,
   "workbench.editor.closeEmptyGroups": false,
 
+  // Files
+  "files.associations": {
+    "**/zed/*.json": "jsonc"
+  },
+
   // Terminal
   "terminal.integrated.defaultProfile.osx": "nu",
   "terminal.integrated.fontSize": 14,
