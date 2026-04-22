@@ -2,4 +2,17 @@
 
 # {{ output "rtk" "--version" | trim }}
 
+set -euo pipefail
+
 rtk init --global --no-patch
+
+# Verify settings.json hook entry matches current RTK conventions.
+# Warns instead of failing so chezmoi apply isn't blocked on drift.
+# Buffer rtk's output first so `grep -q`'s early exit doesn't SIGPIPE rtk
+# under `set -o pipefail`.
+rtk_status=$(rtk init --show 2>&1)
+if ! printf '%s\n' "$rtk_status" | grep -q '^\[ok\] settings.json:'; then
+  echo "⚠ RTK hook missing or outdated in ~/.claude/settings.json" >&2
+  echo "  Run 'rtk init --show' to see the expected format." >&2
+  echo "  Then update dot_claude/settings.json in the chezmoi source and re-apply." >&2
+fi

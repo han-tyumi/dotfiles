@@ -1,6 +1,7 @@
 {
   "env": {
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_SCROLL_SPEED": "3"
   },
   "permissions": {
     "allow": [
@@ -11,7 +12,6 @@
       "Read(//private/tmp/package/**)",
       "Read(//Users/han-tyumi/.claude/**)",
       "Write(**/.claude/**)",
-      "Bash(/usr/bin/env npx:*)",
       "Bash(cat:*)",
       "Bash(chezmoi data:*)",
       "Bash(chezmoi diff:*)",
@@ -54,7 +54,7 @@
       "Bash(pnpm tsc:*)",
       "Bash(rtk git diff:*)",
       "Bash(rtk git log:*)",
-      "Bash(rtk git status)",
+      "Bash(rtk git status:*)",
       "Bash(test:*)",
       "Bash(tree:*)",
       "Bash(wc:*)",
@@ -71,16 +71,11 @@
       "mcp__context7__resolve-library-id",
       "mcp__github__get_commit",
       "mcp__github__get_file_contents",
-      "mcp__github__get_issue",
       "mcp__github__get_latest_release",
       "mcp__github__get_me",
-      "mcp__github__get_pull_request",
-      "mcp__github__get_pull_request_comments",
-      "mcp__github__get_pull_request_files",
-      "mcp__github__get_pull_request_reviews",
-      "mcp__github__get_pull_request_status",
       "mcp__github__get_release_by_tag",
       "mcp__github__issue_read",
+      "mcp__github__pull_request_read",
       "mcp__github__list_commits",
       "mcp__github__list_issues",
       "mcp__github__list_pull_requests",
@@ -111,10 +106,7 @@
       "mcp__playwright__browser_take_screenshot",
       "mcp__playwright__browser_type",
       "mcp__playwright__browser_wait_for",
-      "mcp__playwright-test__browser_console_messages",
-      "mcp__playwright-test__browser_press_key",
-      "mcp__playwright-test__browser_take_screenshot",
-      "mcp__playwright-test__browser_type",
+      "mcp__playwright-test__*",
       "mcp__sentry__get_issue_details",
       "mcp__sentry__search_issues",
       "WebFetch(domain:atlassian.design)",
@@ -182,12 +174,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/han-tyumi/.claude/hooks/rtk-rewrite.sh"
+            "command": "rtk hook claude"
           }
         ]
       }
     ]
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high"
+  "effortLevel": "auto",
+  "includeCoAuthoredBy": false,
+  "theme": "dark-ansi",
+  "tui": "fullscreen",
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "refreshInterval": 3
+  }
 }
