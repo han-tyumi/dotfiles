@@ -25,6 +25,7 @@
   "terminal.integrated.fontSize": 14,
   "terminal.integrated.lineHeight": 1.2,
   "terminal.integrated.tabs.title": "${sequence}",
+  "terminal.integrated.shellIntegration.decorationsEnabled": "never",
   "terminal.integrated.macOptionIsMeta": true,
   "terminal.integrated.profiles.osx": {
     "nu": {
@@ -39,8 +40,13 @@
       "path": "zsh",
       "icon": "terminal"
     },
+    "zellij": {
+      "path": "zellij",
+      "icon": "terminal-tmux"
+    },
     "claude": {
-      "path": "claude",
+      "path": "zellij",
+      "args": ["attach", "--create", "claude-${workspaceFolderBasename}"],
       "icon": "sparkle"
     }
   },

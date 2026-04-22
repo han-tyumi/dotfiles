@@ -1,0 +1,28 @@
+// Zellij configuration. Docs: https://zellij.dev/documentation/
+//
+// This is intentionally minimal. Browse `zellij setup --dump-config` to see
+// the full defaults and all available options.
+
+theme "catppuccin-mocha"
+
+// Shell run inside each pane. Nushell renders cleanly through zellij even when
+// VS Code's integrated terminal has rendering quirks with it directly.
+default_shell "nu"
+
+// Don't clobber the clipboard every time text is selected.
+copy_on_select false
+
+// Pass all keys through to the running command by default; press Ctrl+g to
+// activate zellij bindings (Ctrl+g again, or finishing an action, returns to
+// locked in most cases — watch the status bar).
+default_mode "locked"
+
+// Hide pane borders by default (cleaner in single-pane sessions). Toggle with
+// Alt+z from locked mode when splitting panes makes borders useful.
+pane_frames false
+
+keybinds {
+    locked {
+        bind "Alt z" { TogglePaneFrames; }
+    }
+}

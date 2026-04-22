@@ -224,7 +224,7 @@ in
       enableTransience = true;
     };
     tealdeer.enable = true;
-    zellij.enable = false;
+    zellij.enable = true;
     zoxide.enable = true;
     zsh = {
       enable = true;
