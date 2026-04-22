@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -51,6 +52,9 @@ in
 
   # link gitalias.txt from store
   xdg.configFile = {
+    # Kickstart (chezmoi external) owns nvim/init.lua.
+    "nvim/init.lua".enable = lib.mkForce false;
+
     "${gitAliasFilePath}".source =
       # generated from `nix run nixpkgs#nurl https://github.com/GitAlias/gitalias/`
       pkgs.fetchFromGitHub {
@@ -189,8 +193,13 @@ in
       viAlias = true;
       vimAlias = true;
       vimdiffAlias = true;
-      withPython3 = false;
-      withRuby = false;
+
+      # TODO: Bump home.stateVersion (currently "23.11") after auditing each
+      # Home Manager release's changelog. Until then, enable Python3/Ruby
+      # providers explicitly — the 26.05 deprecation warnings ask us to set
+      # them, and leaving them off disables provider-dependent plugins.
+      withPython3 = true;
+      withRuby = true;
     };
     nix-index.enable = true;
     nnn.enable = true;
