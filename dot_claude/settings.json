@@ -3,6 +3,7 @@
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "CLAUDE_CODE_SCROLL_SPEED": "3"
   },
+  "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
       "Edit(**/.claude/**)",
@@ -181,14 +182,12 @@
       }
     ]
   },
-  "alwaysThinkingEnabled": true,
-  "effortLevel": "auto",
-  "includeCoAuthoredBy": false,
-  "theme": "dark-ansi",
-  "tui": "fullscreen",
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh",
     "refreshInterval": 3
-  }
+  },
+  "alwaysThinkingEnabled": true,
+  "tui": "fullscreen",
+  "theme": "dark-ansi"
 }
