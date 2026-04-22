@@ -1,4 +1,3 @@
-- Create commits without any Claude attribution.
 - Prefer descriptive variable names over comments. Prefer to let the code document itself rather than using verbose comments.
 - Use punctuation for JSDoc parameters and similar.
 - Avoid using the `any` type in TypeScript files.
