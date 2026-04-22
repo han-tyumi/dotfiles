@@ -6,6 +6,19 @@
     "when": "terminalFocus"
   },
   {
+    "key": "cmd+alt+c",
+    "command": "runCommands",
+    "args": {
+      "commands": [
+        {
+          "command": "workbench.action.terminal.newWithProfile",
+          "args": { "profileName": "claude", "location": "editor" }
+        },
+        "workbench.action.moveEditorToRightGroup"
+      ]
+    }
+  },
+  {
     "key": "cmd+;",
     "command": "claude-vscode.blur",
     "when": "!config.claudeCode.useTerminal && !editorTextFocus"

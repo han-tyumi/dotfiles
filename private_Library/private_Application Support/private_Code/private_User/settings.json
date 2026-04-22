@@ -7,6 +7,7 @@
   "workbench.preferredDarkColorTheme": "Catppuccin Mocha",
   "workbench.preferredLightColorTheme": "Catppuccin Latte",
   "catppuccin.accentColor": "blue",
+  "catppuccin.extraBordersEnabled": true,
 
   // Editor
   "editor.fontFamily": "'PragmataPro Mono Liga', monospace",
@@ -17,10 +18,32 @@
   "editor.inlayHints.enabled": "offUnlessPressed",
   "editor.stickyScroll.maxLineCount": 10,
   "diffEditor.ignoreTrimWhitespace": false,
+  "workbench.editor.closeEmptyGroups": false,
 
   // Terminal
-  "terminal.integrated.defaultProfile.osx": "fish",
+  "terminal.integrated.defaultProfile.osx": "nu",
   "terminal.integrated.fontSize": 14,
+  "terminal.integrated.lineHeight": 1.2,
+  "terminal.integrated.tabs.title": "${sequence}",
+  "terminal.integrated.macOptionIsMeta": true,
+  "terminal.integrated.profiles.osx": {
+    "nu": {
+      "path": "nu",
+      "icon": "terminal"
+    },
+    "fish": {
+      "path": "fish",
+      "icon": "terminal"
+    },
+    "zsh": {
+      "path": "zsh",
+      "icon": "terminal"
+    },
+    "claude": {
+      "path": "claude",
+      "icon": "sparkle"
+    }
+  },
 
   // Privacy
   "redhat.telemetry.enabled": false,
@@ -50,9 +73,6 @@
     "https://schemastore.azurewebsites.net/": true,
     "https://www.schemastore.org/": true
   },
-
-  // Claude Code
-  "claudeCode.preferredLocation": "panel",
 
   // Atlassian
   "atlascode.bitbucket.enabled": false,
