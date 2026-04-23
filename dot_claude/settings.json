@@ -187,6 +187,8 @@
     "command": "~/.claude/statusline.sh",
     "refreshInterval": 3
   },
+  "enabledPlugins": {},
+  "extraKnownMarketplaces": {},
   "alwaysThinkingEnabled": true,
   "tui": "fullscreen",
   "theme": "dark-ansi"
