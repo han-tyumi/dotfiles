@@ -52,6 +52,62 @@ duration_ms=${duration_ms%%.*}
 lines_added=${lines_added%%.*}
 lines_removed=${lines_removed%%.*}
 
+# Detect the real terminal width by reading the parent Claude Code process's
+# controlling TTY — Claude Code pipes the statusline's stdin/stdout so $COLUMNS
+# is unset, tput falls back to 80, and stty has no TTY unless we point it at
+# the parent's /dev/ttysNNN explicitly.
+detect_columns() {
+    local parent_tty cols
+    parent_tty=$(ps -o tty= -p "$PPID" 2>/dev/null | tr -d ' ')
+    if [ -n "$parent_tty" ] && [ "$parent_tty" != "??" ]; then
+        cols=$(stty size </dev/"$parent_tty" 2>/dev/null | awk '{print $2}')
+        if [ -n "$cols" ] && [ "$cols" -gt 0 ]; then
+            printf '%s' "$cols"
+            return
+        fi
+    fi
+    printf '120'
+}
+
+# Keep the first and last N/2 chars with an ellipsis in the middle. Used for
+# branch names where both the prefix (ticket) and suffix (description) carry
+# meaning.
+middle_truncate() {
+    local text=$1 max=$2
+    if [ "${#text}" -le "$max" ]; then
+        printf '%s' "$text"
+        return
+    fi
+    local keep=$(( (max - 1) / 2 ))
+    printf '%s…%s' "${text:0:$keep}" "${text: -$keep}"
+}
+
+# Keep the last N-1 chars with a leading ellipsis — preserves the basename,
+# which is what matters visually when a path overflows.
+left_truncate() {
+    local text=$1 max=$2
+    if [ "${#text}" -le "$max" ]; then
+        printf '%s' "$text"
+        return
+    fi
+    printf '…%s' "${text: -$(( max - 1 ))}"
+}
+
+# Convert a git origin URL (either SSH or HTTPS form) to an
+# https://github.com/<owner>/<repo>/tree/<branch> URL. Returns 1 when the
+# remote isn't a recognized GitHub URL.
+github_tree_url() {
+    local branch=$1 url owner repo
+    url=$(git -C "$cwd" remote get-url origin 2>/dev/null) || return 1
+    if [[ "$url" =~ github\.com[:/]([^/]+)/([^/]+)$ ]]; then
+        owner="${BASH_REMATCH[1]}"
+        repo="${BASH_REMATCH[2]%.git}"
+        printf 'https://github.com/%s/%s/tree/%s' "$owner" "$repo" "$branch"
+        return 0
+    fi
+    return 1
+}
+
 # Compact countdown until a unix timestamp: 2h / 42m / 9s. Empty when past.
 fmt_countdown() {
     local target=$1
@@ -94,18 +150,37 @@ fmt_ctx_pct() {
     fi
 }
 
-# Rate-limit segment: blue label, white percentage (yellow at/above 80%, with countdown).
+# Rate-limit segment: blue label, white percentage (yellow at/above 80%, with
+# countdown). A ⇡ / ⇣ burn-rate indicator compares the used percentage against
+# the fraction of the window that has elapsed: ⇡ when burning faster than even
+# pacing (diff > 10pp), ⇣ when slower, blank when within ±10pp.
 fmt_rate() {
-    local label=$1 resets_at=${3:-} int_pct=${2%%.*}
+    local label=$1 resets_at=${3:-} int_pct=${2%%.*} window_seconds=${4:-0}
     [ -z "$int_pct" ] && int_pct=0
+
+    local burn=""
+    if [ -n "$resets_at" ] && [ "$window_seconds" -gt 0 ]; then
+        local now elapsed elapsed_pct
+        now=$(date +%s)
+        elapsed=$(( window_seconds - (resets_at - now) ))
+        if [ "$elapsed" -gt 0 ]; then
+            elapsed_pct=$(( elapsed * 100 / window_seconds ))
+            if [ "$int_pct" -gt $(( elapsed_pct + 10 )) ]; then
+                burn=" ⇡"
+            elif [ "$int_pct" -lt $(( elapsed_pct - 10 )) ]; then
+                burn=" ⇣"
+            fi
+        fi
+    fi
+
     if [ "$int_pct" -ge 80 ]; then
         local tail=""
         [ -n "$resets_at" ] && tail=" $(fmt_countdown "$resets_at")"
-        printf '%s%s%s %s%d%% ⚠%s%s' \
-            "$BLUE" "$label" "$RESET" "$YELLOW" "$int_pct" "$tail" "$RESET"
+        printf '%s%s%s %s%d%%%s ⚠%s%s' \
+            "$BLUE" "$label" "$RESET" "$YELLOW" "$int_pct" "$burn" "$tail" "$RESET"
     else
-        printf '%s%s%s %s%d%%%s' \
-            "$BLUE" "$label" "$RESET" "$WHITE" "$int_pct" "$RESET"
+        printf '%s%s%s %s%d%%%s%s' \
+            "$BLUE" "$label" "$RESET" "$WHITE" "$int_pct" "$burn" "$RESET"
     fi
 }
 
@@ -175,21 +250,51 @@ if [ -n "$cwd" ]; then
     fi
 fi
 
-branch_display=""
+branch_text=""
 if [ -n "$branch" ] && [ -n "$worktree" ]; then
-    branch_display="${branch}[${worktree}]"
+    branch_text="${branch}[${worktree}]"
 elif [ -n "$branch" ]; then
-    branch_display="$branch"
+    branch_text="$branch"
 fi
-[ -n "$dirty" ] && branch_display="${branch_display}${dirty}"
-[ "$behind" -gt 0 ] && branch_display="${branch_display} ${behind}↓"
-[ "$ahead" -gt 0 ]  && branch_display="${branch_display} ${ahead}↑"
 
-cwd_link=$(osc8_wrap "file://${cwd}" "$path_text")
+branch_suffix=""
+[ -n "$dirty" ] && branch_suffix="${branch_suffix}${dirty}"
+[ "$behind" -gt 0 ] && branch_suffix="${branch_suffix} ${behind}↓"
+[ "$ahead" -gt 0 ]  && branch_suffix="${branch_suffix} ${ahead}↑"
+
+# Budget remaining horizontal space so long paths and branches don't wrap.
+# Reserve space on the right for Claude Code's own notifications/auto-compact
+# messages (mirrors ccstatusline's full-minus-40 default, but we use 20 since
+# our line 1 is shorter than a powerline).
+columns=$(detect_columns)
+notification_reserve=20
+line1_fixed=45
+budget=$(( columns - notification_reserve - line1_fixed ))
+
+branch_max=30
+path_max=40
+if [ "$budget" -lt 74 ]; then
+    branch_max=$(( budget / 2 ))
+    [ "$branch_max" -lt 12 ] && branch_max=12
+    path_max=$(( budget - branch_max - 4 ))
+    [ "$path_max" -lt 8 ] && path_max=8
+fi
+
+path_text_truncated=$(left_truncate "$path_text" "$path_max")
+branch_text_truncated=$(middle_truncate "$branch_text" "$branch_max")
+branch_display="${branch_text_truncated}${branch_suffix}"
+
+cwd_link=$(osc8_wrap "file://${cwd}" "$path_text_truncated")
+
+branch_link="$branch_display"
+if [ -n "$branch" ]; then
+    branch_url=$(github_tree_url "$branch") && \
+        branch_link=$(osc8_wrap "$branch_url" "$branch_display")
+fi
 
 # Path in cyan, branch+status in magenta (each category one color).
 if [ -n "$branch_display" ]; then
-    path_display="${CYAN}${cwd_link}${RESET} on ${MAGENTA}${branch_display}${RESET}"
+    path_display="${CYAN}${cwd_link}${RESET} on ${MAGENTA}${branch_link}${RESET}"
 else
     path_display="${CYAN}${cwd_link}${RESET}"
 fi
@@ -213,11 +318,11 @@ if [ -n "$context_pct" ]; then
 fi
 
 if [ -n "$five_hour_pct" ]; then
-    segments+=("$(fmt_rate 5h "$five_hour_pct" "$five_hour_resets_at")")
+    segments+=("$(fmt_rate 5h "$five_hour_pct" "$five_hour_resets_at" 18000)")
 fi
 
 if [ -n "$seven_day_pct" ]; then
-    segments+=("$(fmt_rate 7d "$seven_day_pct" "$seven_day_resets_at")")
+    segments+=("$(fmt_rate 7d "$seven_day_pct" "$seven_day_resets_at" 604800)")
 fi
 
 if [ "${lines_added:-0}" -gt 0 ] || [ "${lines_removed:-0}" -gt 0 ]; then
