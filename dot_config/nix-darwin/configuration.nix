@@ -9,9 +9,11 @@
 
     overlays = [
       (final: prev: { nodejs = prev.nodejs_22; })
-      # Skip nushell tests - they fail on macOS due to sandbox permission issues
+
+      # TODO: drop once nix#15638 ships; cache fish triggers SIGKILL
+      # in direnv's checkPhase. See nixpkgs#507531.
       (final: prev: {
-        nushell = prev.nushell.overrideAttrs (old: {
+        direnv = prev.direnv.overrideAttrs (_: {
           doCheck = false;
         });
       })
