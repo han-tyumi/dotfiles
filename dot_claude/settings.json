@@ -1,8 +1,4 @@
 {
-  "env": {
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "CLAUDE_CODE_SCROLL_SPEED": "3"
-  },
   "includeCoAuthoredBy": false,
   "permissions": {
     "allow": [
@@ -191,5 +187,6 @@
   "extraKnownMarketplaces": {},
   "alwaysThinkingEnabled": true,
   "tui": "fullscreen",
-  "theme": "dark-ansi"
+  "theme": "dark-ansi",
+  "preferredNotifChannel": "terminal_bell"
 }
