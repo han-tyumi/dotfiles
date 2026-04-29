@@ -47,7 +47,7 @@ in
       y = "yarn";
       znu = "zsh -lc nu";
     };
-    stateVersion = "23.11";
+    stateVersion = "25.11";
   };
 
   # link gitalias.txt from store
@@ -69,7 +69,6 @@ in
   programs = {
     aichat.enable = true;
     atuin.enable = true;
-    bash.enable = false;
     bat.enable = true;
     carapace.enable = true;
     delta = {
@@ -133,7 +132,6 @@ in
     git = {
       enable = true;
       lfs.enable = true;
-      signing.format = null;
       settings = {
         user = {
           name = "Matt Champagne";
@@ -180,7 +178,6 @@ in
     };
     git-cliff.enable = true;
     git-credential-oauth.enable = true;
-    gitui.enable = false;
     java = {
       enable = true;
       package = pkgs.temurin-bin-25;
@@ -193,13 +190,6 @@ in
       viAlias = true;
       vimAlias = true;
       vimdiffAlias = true;
-
-      # TODO: Bump home.stateVersion (currently "23.11") after auditing each
-      # Home Manager release's changelog. Until then, enable Python3/Ruby
-      # providers explicitly — the 26.05 deprecation warnings ask us to set
-      # them, and leaving them off disables provider-dependent plugins.
-      withPython3 = true;
-      withRuby = true;
     };
     nix-index.enable = true;
     nnn.enable = true;
@@ -224,7 +214,6 @@ in
       enableTransience = true;
     };
     tealdeer.enable = true;
-    zellij.enable = false;
     zoxide.enable = true;
     zsh = {
       enable = true;
