@@ -51,8 +51,7 @@ Chezmoi uses special script naming conventions:
   - `install-1.sh`: Installs Homebrew and Nix
   - `install-2.sh`: Installs Nix Darwin
 - `run_onchange_after_*.tmpl`: Scripts that run when tracked files change
-  - `1-nix-darwin.tmpl`: Rebuilds Nix Darwin (currently disabled via comment)
-  - `2-mise-config.toml.tmpl`: Updates mise plugins and tools
+  - `1-mise-config.toml.tmpl`: Updates mise plugins and tools
 
 ## Common Commands
 
@@ -156,4 +155,3 @@ Neovim config is managed as an external git submodule (`dot_config/external_nvim
 - Node.js is pinned to version 22 via nixpkgs overlay
 - Homebrew auto-updates and upgrades on activation
 - Git ignores `.claude/*.local.*`, `.env.local`, `.mcp.local.json`, `CLAUDE.local.md`, and `mise.local.toml` globally
-- The nix-darwin rebuild script is currently disabled (commented out in `run_onchange_after_1-nix-darwin.tmpl`)
