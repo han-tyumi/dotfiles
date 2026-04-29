@@ -41,12 +41,7 @@ module commands {
 
     try {
       if $update {
-        log "Updating Nix channels\n\n"
-        ^sudo -i nix-channel --add https://github.com/nix-darwin/nix-darwin/archive/master.tar.gz darwin
-        ^sudo -i nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs
-        ^sudo -i nix-channel --update
-
-        log "\nUpdating nix-darwin flake inputs\n\n"
+        log "Updating nix-darwin flake inputs\n\n"
         ^nix flake update
       }
 
