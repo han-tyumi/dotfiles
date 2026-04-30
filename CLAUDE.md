@@ -39,7 +39,7 @@ The Nix configuration uses a flake-based setup:
   - System defaults (Dark mode, finder settings, etc.)
   - User packages installed via Nix
 - `home.nix` configures the user environment:
-  - Shell configurations (fish, nushell, zsh)
+  - Shell configurations (nushell, zsh)
   - Git configuration with conditional includes for work/personal
   - Development tools and their settings
   - Session variables and PATH configuration

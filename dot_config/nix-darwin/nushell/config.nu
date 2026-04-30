@@ -80,6 +80,19 @@ module commands {
     cd $original_dir
   }
 
+  # Initialize a flake.nix + .envrc in the current directory and open the flake
+  # for editing. No-op for the missing piece if one already exists.
+  export def flakify []: nothing -> nothing {
+    if not ('flake.nix' | path exists) {
+      ^nix flake new -t github:nix-community/nix-direnv .
+    } else if not ('.envrc' | path exists) {
+      'use flake' | save .envrc
+      ^direnv allow
+    }
+
+    ^$env.EDITOR flake.nix
+  }
+
   export def reload []: nothing -> nothing {
     exec nu
   }

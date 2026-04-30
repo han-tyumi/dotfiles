@@ -10,8 +10,8 @@
     overlays = [
       (final: prev: { nodejs = prev.nodejs_24; })
 
-      # TODO: drop once nix#15638 ships; cache fish triggers SIGKILL
-      # in direnv's checkPhase. See nixpkgs#507531.
+      # TODO: drop once nix#15638 ships. Darwin Mach-O codesign corruption
+      # in cached store paths SIGKILLs direnv's checkPhase. See nixpkgs#507531.
       (final: prev: {
         direnv = prev.direnv.overrideAttrs (_: {
           doCheck = false;
@@ -172,7 +172,6 @@
 
     shells = [
       pkgs.bashInteractive
-      pkgs.fish
       pkgs.nushell
       pkgs.zsh
     ];
@@ -183,14 +182,5 @@
   programs = {
     bash.enable = false;
     zsh.enable = true;
-    fish = {
-      enable = true;
-      # nix-daemon.fish only adds ~/.nix-profile/bin and /nix/var/nix/profiles/default/bin.
-      # Add the remaining nix-darwin profile paths that set-environment provides for zsh/bash.
-      shellInit = ''
-        fish_add_path --path /run/current-system/sw/bin
-        fish_add_path --path /etc/profiles/per-user/$USER/bin
-      '';
-    };
   };
 }

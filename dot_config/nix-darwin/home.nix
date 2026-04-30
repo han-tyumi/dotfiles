@@ -95,37 +95,6 @@ in
     };
     eza.enable = true;
     fd.enable = true;
-    fish = {
-      enable = true;
-      interactiveShellInit = ''
-        set -g fish_greeting
-      '';
-      shellInit = ''
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-
-        if status is-interactive; and set -q TERM_PROGRAM
-          mise activate fish | source
-        else
-          mise activate fish --shims | source
-        end
-
-        source "$CARGO_HOME/env.fish"
-      '';
-      plugins = [
-        {
-          name = "macos";
-          src = pkgs.fishPlugins.macos.src;
-        }
-        {
-          name = "plugin-git";
-          src = pkgs.fishPlugins.plugin-git.src;
-        }
-        {
-          name = "z";
-          src = pkgs.fishPlugins.z.src;
-        }
-      ];
-    };
     fzf.enable = true;
     gh = {
       enable = true;

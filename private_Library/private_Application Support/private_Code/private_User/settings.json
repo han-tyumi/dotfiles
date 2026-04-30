@@ -35,10 +35,6 @@
       "path": "nu",
       "icon": "terminal"
     },
-    "fish": {
-      "path": "fish",
-      "icon": "terminal"
-    },
     "zsh": {
       "path": "zsh",
       "icon": "terminal"
