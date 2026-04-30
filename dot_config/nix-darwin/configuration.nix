@@ -44,6 +44,7 @@
     brews = [
       "exercism"
       "ferium"
+      "git-spice"
       "golangci-lint"
       "knope"
       "mas"

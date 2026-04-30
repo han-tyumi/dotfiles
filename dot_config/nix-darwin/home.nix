@@ -43,6 +43,7 @@ in
       ai = "aichat";
       cat = "bat";
       g = "git";
+      gs = "git-spice";
       p = "pnpm";
       y = "yarn";
       znu = "zsh -lc nu";
