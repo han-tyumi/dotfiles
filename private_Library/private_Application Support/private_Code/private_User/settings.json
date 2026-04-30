@@ -29,7 +29,6 @@
   "terminal.integrated.defaultProfile.osx": "nu",
   "terminal.integrated.fontSize": 14,
   "terminal.integrated.lineHeight": 1.2,
-  "terminal.integrated.tabs.title": "${sequence}",
   "terminal.integrated.macOptionIsMeta": true,
   "terminal.integrated.profiles.osx": {
     "nu": {
