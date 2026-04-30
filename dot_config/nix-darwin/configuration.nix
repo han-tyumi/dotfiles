@@ -8,7 +8,7 @@
     hostPlatform = "aarch64-darwin";
 
     overlays = [
-      (final: prev: { nodejs = prev.nodejs_22; })
+      (final: prev: { nodejs = prev.nodejs_24; })
 
       # TODO: drop once nix#15638 ships; cache fish triggers SIGKILL
       # in direnv's checkPhase. See nixpkgs#507531.
