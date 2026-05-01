@@ -51,7 +51,6 @@
       "mise"
       "poppler"
       "rtk"
-      "rustup"
       "zlib"
       "zstd"
     ];
