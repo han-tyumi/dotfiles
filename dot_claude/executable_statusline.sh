@@ -2,7 +2,7 @@
 # shellcheck disable=SC2154  # fields below are assigned via eval "$(jq @sh)"
 # Claude Code statusline (two lines).
 #
-#   Line 1: <model> · <~/path> on <branch*↑↓> · $<cost> · <duration>
+#   Line 1: <model> · <~/path> on <⎇ branch*↑↓> · $<cost> · <duration>
 #   Line 2: <bar> <%> · 5h <%> · 7d <%> · +X/-Y
 #
 # Receives session JSON on stdin. See:
@@ -24,6 +24,7 @@ YELLOW=$'\033[33m'
 BLUE=$'\033[34m'
 MAGENTA=$'\033[35m'
 CYAN=$'\033[36m'
+GREY=$'\033[90m'
 
 # Single jq call for every field: @sh quotes each value for shell, eval sets
 # them. One subprocess vs fourteen.
@@ -174,8 +175,9 @@ fmt_rate() {
     fi
 
     if [ "$int_pct" -ge 80 ]; then
-        local tail=""
-        [ -n "$resets_at" ] && tail=" $(fmt_countdown "$resets_at")"
+        local countdown="" tail=""
+        [ -n "$resets_at" ] && countdown=$(fmt_countdown "$resets_at")
+        [ -n "$countdown" ] && tail=" $countdown"
         printf '%s%s%s %s%d%%%s ⚠%s%s' \
             "$BLUE" "$label" "$RESET" "$YELLOW" "$int_pct" "$burn" "$tail" "$RESET"
     else
@@ -184,24 +186,26 @@ fmt_rate() {
     fi
 }
 
-# Half-block bar in cyan (matches path). The model also uses cyan but is
-# bolded so they're visually distinct. `█` and `▌` are both solid so
-# transitions read evenly; `░` is a light-shade pattern for the empty portion.
+# Foreground-only shade ramp — half-blocks expose the terminal background.
+# Tip `░▒▓` is a sub-bar showing progress toward the next 10%; any nonzero
+# remainder shows it, so single-percent moves register visually.
 fmt_bar() {
     local int_pct=${1%%.*}
     [ -z "$int_pct" ] && int_pct=0
     [ "$int_pct" -gt 100 ] && int_pct=100
     local width=10
-    local halves=$(( int_pct * width * 2 / 100 ))
-    local full=$(( halves / 2 ))
-    local half=$(( halves % 2 ))
-    local empty=$(( width - full - half ))
+    local full=$(( int_pct / 10 ))
+    local remainder=$(( int_pct % 10 ))
+    local tip_glyphs=('' '░' '▒' '▓')
+    local tip=${tip_glyphs[$(( (remainder + 2) / 3 ))]}
+    local empty=$(( width - full - (remainder > 0 ? 1 : 0) ))
     local bar="$CYAN"
-    local i
-    for ((i = 0; i < full; i++)); do bar+='█'; done
-    [ "$half" -eq 1 ] && bar+='▌'
+    local cell
+    for ((cell = 0; cell < full; cell++)); do bar+='█'; done
+    [ -n "$tip" ] && bar+="$tip"
+    bar+="${RESET}${GREY}"
+    for ((cell = 0; cell < empty; cell++)); do bar+='░'; done
     bar+="$RESET"
-    for ((i = 0; i < empty; i++)); do bar+='░'; done
     printf '%s' "$bar"
 }
 
@@ -240,7 +244,13 @@ if [ -n "$cwd" ]; then
     git_status=$(GIT_OPTIONAL_LOCKS=0 git -C "$cwd" status --branch --porcelain=v1 2>/dev/null || true)
     if [ -n "$git_status" ]; then
         header=${git_status%%$'\n'*}
-        [[ "$header" =~ ^\#\#\ ([^.\ ]+) ]] && branch="${BASH_REMATCH[1]}"
+
+        # Header is `## <branch>[...<upstream>] [ahead N, behind M]` or
+        # `## HEAD (no branch)`. Strip prefix, then the upstream separator,
+        # then any trailing ` [ahead/behind]` / ` (no branch)` suffix.
+        header_main=${header#\#\# }
+        branch=${header_main%%...*}
+        branch=${branch%% *}
         [[ "$header" =~ ahead\ ([0-9]+) ]] && ahead="${BASH_REMATCH[1]}"
         [[ "$header" =~ behind\ ([0-9]+) ]] && behind="${BASH_REMATCH[1]}"
 
@@ -250,12 +260,8 @@ if [ -n "$cwd" ]; then
     fi
 fi
 
-branch_text=""
-if [ -n "$branch" ] && [ -n "$worktree" ]; then
-    branch_text="${branch}[${worktree}]"
-elif [ -n "$branch" ]; then
-    branch_text="$branch"
-fi
+worktree_marker=""
+[ -n "$worktree" ] && worktree_marker="⎇ "
 
 branch_suffix=""
 [ -n "$dirty" ] && branch_suffix="${branch_suffix}${dirty}"
@@ -263,38 +269,46 @@ branch_suffix=""
 [ "$ahead" -gt 0 ]  && branch_suffix="${branch_suffix} ${ahead}↑"
 
 # Budget remaining horizontal space so long paths and branches don't wrap.
-# Reserve space on the right for Claude Code's own notifications/auto-compact
-# messages (mirrors ccstatusline's full-minus-40 default, but we use 20 since
-# our line 1 is shorter than a powerline).
+# Claude Code's notifications (auto-compact, mode banner) render on their own
+# line below the statusline, so we don't reserve right-edge space for them.
 columns=$(detect_columns)
-notification_reserve=20
 line1_fixed=45
-budget=$(( columns - notification_reserve - line1_fixed ))
+budget=$(( columns - line1_fixed ))
 
-branch_max=30
-path_max=40
-if [ "$budget" -lt 74 ]; then
+branch_max=60
+branch_min=12
+path_max=100
+path_min=8
+connector_len=4   # " on " between path and branch.
+
+if [ "$budget" -lt $(( branch_max + path_max + connector_len )) ]; then
     branch_max=$(( budget / 2 ))
-    [ "$branch_max" -lt 12 ] && branch_max=12
-    path_max=$(( budget - branch_max - 4 ))
-    [ "$path_max" -lt 8 ] && path_max=8
+    [ "$branch_max" -lt "$branch_min" ] && branch_max=$branch_min
+    path_max=$(( budget - branch_max - connector_len ))
+    [ "$path_max" -lt "$path_min" ] && path_max=$path_min
 fi
 
 path_text_truncated=$(left_truncate "$path_text" "$path_max")
-branch_text_truncated=$(middle_truncate "$branch_text" "$branch_max")
-branch_display="${branch_text_truncated}${branch_suffix}"
+
+# `⎇ ` prefix marks worktree sessions; the name itself is already in the
+# path (cwd's basename usually matches the worktree), so we don't repeat it.
+branch_avail=$(( branch_max - ${#worktree_marker} ))
+branch_truncated=$(middle_truncate "$branch" "$branch_avail")
 
 cwd_link=$(osc8_wrap "file://${cwd}" "$path_text_truncated")
 
-branch_link="$branch_display"
+# Link wraps only the branch name — the worktree marker and dirty/ahead/
+# behind suffix aren't navigable.
+branch_linked="$branch_truncated"
 if [ -n "$branch" ]; then
     branch_url=$(github_tree_url "$branch") && \
-        branch_link=$(osc8_wrap "$branch_url" "$branch_display")
+        branch_linked=$(osc8_wrap "$branch_url" "$branch_truncated")
 fi
+branch_display="${worktree_marker}${branch_linked}${branch_suffix}"
 
 # Path in cyan, branch+status in magenta (each category one color).
-if [ -n "$branch_display" ]; then
-    path_display="${CYAN}${cwd_link}${RESET} on ${MAGENTA}${branch_link}${RESET}"
+if [ -n "$branch" ]; then
+    path_display="${CYAN}${cwd_link}${RESET} on ${MAGENTA}${branch_display}${RESET}"
 else
     path_display="${CYAN}${cwd_link}${RESET}"
 fi
@@ -337,11 +351,11 @@ fi
 
 if [ "${#segments[@]}" -gt 0 ]; then
     line2=""
-    for s in "${segments[@]}"; do
+    for segment in "${segments[@]}"; do
         if [ -z "$line2" ]; then
-            line2="$s"
+            line2="$segment"
         else
-            line2+=" · $s"
+            line2+=" · $segment"
         fi
     done
     printf '%s' "$line2"
