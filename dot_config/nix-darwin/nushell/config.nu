@@ -4,7 +4,7 @@ $env.config.show_banner = false
 # Mise activation: write the nu module and add its dir to NU_LIB_DIRS.
 let mise_path = $env.HOME | path join ".config" "mise" "mise.nu"
 ^mise activate nu | save $mise_path --force
-$env.NU_LIB_DIRS = ($env.NU_LIB_DIRS | append ($mise_path | path dirname))
+$env.NU_LIB_DIRS ++= [($mise_path | path dirname)]
 
 # community/ → github.com/nushell/nu_scripts (chezmoi-external).
 # commands/  → chezmoi-managed helpers.

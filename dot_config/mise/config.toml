@@ -15,8 +15,6 @@ rust = "stable"
 usage = "latest"
 zig = "latest"
 
-"cargo:nu-lint" = "latest"
-
 "npm:@biomejs/biome" = "2.1.2"
 "npm:@google/gemini-cli" = "latest"
 "npm:git-removed-branches" = "latest"

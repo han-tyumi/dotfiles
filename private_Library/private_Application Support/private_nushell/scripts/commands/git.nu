@@ -1,11 +1,11 @@
 # Custom git wrappers that augment the community/aliases/git aliases.
 # `gXx` names = smart wrappers around the `gX` family.
 
-def "nu-complete local branches" [] {
+def "nu-complete local branches" []: any -> list<any> {
   ^git branch | lines | each {|b| $b | str substring 2.. }
 }
 
-def "nu-complete remotes" [] {
+def "nu-complete remotes" []: any -> list<string> {
   ^git remote | lines
 }
 
@@ -57,7 +57,7 @@ export def gbx [
   let local_branches = (^git branch | lines | each {|b| $b | str substring 2.. })
 
   if $delete {
-    let candidates = ($local_branches | where {|b| $b != $current })
+    let candidates = ($local_branches | where $it != $current)
     if ($candidates | is-empty) {
       print "No branches to delete (only the current branch exists)."
       return
@@ -143,7 +143,7 @@ export def gig [
 # Show contributor commit-count histogram, sorted descending.
 @search-terms "history" "authors" "contributors" "histogram"
 @example "Top contributors in the repo" { gha }
-export def gha [] {
+export def gha []: any -> table {
   ^git log --pretty='%h»¦«%aN»¦«%s»¦«%aD'
   | lines
   | split column '»¦«' sha committer desc date

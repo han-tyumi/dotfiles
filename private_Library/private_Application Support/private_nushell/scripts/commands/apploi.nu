@@ -1,5 +1,5 @@
-const local_flake_dir = '~/.config/nix-darwin'
-const system_flake_dir = '/etc/nix-darwin'
+const LOCAL_FLAKE_DIR = '~/.config/nix-darwin'
+const SYSTEM_FLAKE_DIR = '/etc/nix-darwin'
 
 # Apply Chezmoi state, Nix Darwin config, and tooling updates.
 @search-terms "rebuild" "switch" "darwin" "chezmoi" "home-manager" "mise"
@@ -26,25 +26,25 @@ export def main [
 
   if $chezmoi {
     let source_path = (^chezmoi source-path)
-    log $"Changing to ($source_path)\n\n"
+    step $"Changing to ($source_path)\n\n"
     cd $source_path
 
-    log $"Applying Chezmoi's state\n\n"
+    step $"Applying Chezmoi's state\n\n"
     ^chezmoi apply
-    log ""
+    step ""
   }
 
-  if ($system_flake_dir | path type) != 'symlink' {
-    log $"Linking ($local_flake_dir) to ($system_flake_dir)"
-    ^sudo ln -s $local_flake_dir $system_flake_dir
+  if ($SYSTEM_FLAKE_DIR | path type) != 'symlink' {
+    step $"Linking ($LOCAL_FLAKE_DIR) to ($SYSTEM_FLAKE_DIR)"
+    ^sudo ln -s $LOCAL_FLAKE_DIR $SYSTEM_FLAKE_DIR
   }
 
-  log $"Changing to ($system_flake_dir)\n\n"
-  cd $system_flake_dir
+  step $"Changing to ($SYSTEM_FLAKE_DIR)\n\n"
+  cd $SYSTEM_FLAKE_DIR
 
   try {
     if $update {
-      log "Updating nix-darwin flake inputs\n\n"
+      step "Updating nix-darwin flake inputs\n\n"
       ^nix flake update
     }
 
@@ -53,38 +53,40 @@ export def main [
         let from = $'/etc/($file)rc'
         let to = $'($from).before-nix-darwin'
         if ($from | path exists) {
-          log $"\nBacking up ($from) to ($to)\n"
+          step $"\nBacking up ($from) to ($to)\n"
           ^sudo mv $from $to
         }
       }
 
-      log "\nApplying nix-darwin configuration\n\n"
+      step "\nApplying nix-darwin configuration\n\n"
 
       # Issue with `/tmp` symlink; we use `/private/tmp` directly instead.
       ^sudo TMPDIR=/private/tmp darwin-rebuild switch
     }
 
     if $clean {
-      log "\nCleaning up Nix store\n\n"
+      step "\nCleaning up Nix store\n\n"
       ^sudo -H nix-collect-garbage --delete-old
     }
 
     if $mise {
-      log "\nUpgrading mise plugins\n\n"
+      step "\nUpgrading mise plugins\n\n"
       ^mise plugins upgrade
 
-      log "\n\nUpgrading outdated mise tools\n\n"
+      step "\n\nUpgrading outdated mise tools\n\n"
       ^mise upgrade
     }
   } catch {|err|
-    log $"\nError: ($err)\n"
+    step $"\nError: ($err)\n"
   }
 
-  log $"\n\nChanging back to ($original_dir)"
+  step $"\n\nChanging back to ($original_dir)"
   cd $original_dir
 }
 
-def log [text: string]: nothing -> nothing {
+# Print a progress line in `>> X ...` style. Splits on newlines so multi-line
+# input formats consistently.
+def step [text: string]: nothing -> nothing {
   $text
   | split row "\n"
   | each {|line|
