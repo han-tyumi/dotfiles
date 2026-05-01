@@ -17,8 +17,10 @@ For deep dives, fetch these authoritative sources:
 | Field                      | Description                                                                                                            |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------|
 | `name`                     | Display name and `/slash-command`. Lowercase letters, numbers, hyphens. Max 64 chars. Defaults to directory name.      |
-| `description`              | What the skill does and when to use it. Front-load the key use case. Truncated at 250 chars in listings.               |
+| `description`              | What the skill does and when to use it. Front-load the key use case. Combined with `when_to_use`, truncated at 1,536 chars in listings. |
+| `when_to_use`              | Extra trigger phrases / example requests, appended to `description` in the listing. Counts toward the 1,536-char cap.  |
 | `argument-hint`            | Hint shown during autocomplete. E.g., `[issue-number]` or `[filename] [format]`.                                      |
+| `arguments`                | Named positional arguments for `$name` substitution in the skill content. Space-separated string or YAML list.         |
 | `disable-model-invocation` | `true` prevents Claude from loading the skill automatically. Use for workflows with side effects or manual triggers.   |
 | `user-invocable`           | `false` hides from the `/` menu. Use for background knowledge users shouldn't invoke directly.                         |
 | `allowed-tools`            | Tools allowed without permission prompts. Supports patterns -- see [Tool patterns](#tool-patterns-for-allowed-tools).  |

@@ -1,6 +1,6 @@
 ---
 name: git-spice
-description: Manages stacks of dependent Git branches and stacked PRs via git-spice (`gs`). Use for stacked branches, splitting a branch into a stack, restacking after edits, or submitting a stack of PRs.
+description: Manages stacks of dependent Git branches and stacked PRs via the third-party git-spice CLI (`gs`). Use for stacked branches, splitting a branch into a stack, restacking after edits, or submitting a stack of PRs.
 ---
 
 # git-spice

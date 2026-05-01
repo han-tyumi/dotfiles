@@ -99,7 +99,9 @@ lines of reference to create a 15-line skill.
 #### Writing the description
 
 The description is the most impactful part of the skill. Claude uses it to
-decide when to load the skill, and it's truncated at 250 characters in listings.
+decide when to load the skill. The combined `description` + `when_to_use` text
+is truncated at 1,536 characters in the skill listing — front-load the key use
+case so it survives the cap.
 
 - Front-load the primary use case. The first phrase should answer "what does this
   do?"
@@ -196,7 +198,7 @@ so Claude can see the full scope even when previewing.
 Run through [quality-checklist.md](quality-checklist.md). At minimum confirm:
 
 - SKILL.md has valid YAML frontmatter and is under 500 lines.
-- Description is under 250 characters and front-loads the key use case.
+- Combined `description` + `when_to_use` is under 1,536 characters and front-loads the key use case.
 - Name uses only lowercase letters, numbers, and hyphens.
 - `disable-model-invocation: true` is set if the skill has side effects.
 - `context: fork` is only used when content forms a complete, self-contained

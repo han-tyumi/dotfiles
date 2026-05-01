@@ -24,4 +24,6 @@
 - Comments should use proper capitalization and punctuation when possible.
 - Add a blank line before comments so they visually pair with the code they describe.
 
+RTK is a token-optimized CLI proxy that auto-rewrites common Bash invocations (e.g., `git status` → `rtk git status`) via a PreToolUse hook. See `RTK.md` for the command reference and bypass patterns.
+
 @RTK.md
