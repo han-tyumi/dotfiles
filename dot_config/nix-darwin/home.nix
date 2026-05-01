@@ -71,6 +71,7 @@ in
     aichat.enable = true;
     atuin.enable = true;
     bat.enable = true;
+    broot.enable = true;
     carapace.enable = true;
     delta = {
       enable = true;
@@ -148,6 +149,7 @@ in
     };
     git-cliff.enable = true;
     git-credential-oauth.enable = true;
+    intelli-shell.enable = true;
     java = {
       enable = true;
       package = pkgs.temurin-bin-25;
