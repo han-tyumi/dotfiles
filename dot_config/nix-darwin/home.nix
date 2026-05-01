@@ -166,6 +166,11 @@ in
     nushell = {
       enable = true;
       configFile.source = ./nushell/config.nu;
+      plugins = with pkgs.nushellPlugins; [
+        highlight
+        query
+        skim
+      ];
     };
     rbw = {
       enable = true;
