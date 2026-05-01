@@ -1,6 +1,7 @@
 ---
 name: slack-message
 description: Format Slack messages with proper markup. Use when composing or formatting a Slack message, announcement, or post.
+when_to_use: User asks to compose or convert text for Slack, mentions pasting into Slack, posting in a channel, or Slack-specific markup (bold, lists, code blocks).
 ---
 
 # Slack Message Formatting
