@@ -154,8 +154,6 @@ in
       enable = true;
       package = pkgs.temurin-bin-25;
     };
-    lazygit.enable = true;
-    neovide.enable = true;
     neovim = {
       enable = true;
       defaultEditor = true;
@@ -164,7 +162,6 @@ in
       vimdiffAlias = true;
     };
     nix-index.enable = true;
-    nnn.enable = true;
     nushell = {
       enable = true;
       configFile.source = ./nushell/config.nu;
