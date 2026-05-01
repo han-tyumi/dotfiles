@@ -6,7 +6,7 @@ Verify these before finalizing a skill. Not all apply to every skill.
 
 - [ ] This is NOT an "always do X" rule (belongs in CLAUDE.md).
 - [ ] This is NOT a file-scoped rule (belongs in `.claude/rules/` with `paths`).
-- [ ] This is NOT deterministic automation (belongs in a hook).
+- [ ] This is NOT deterministic enforcement (belongs in a hook — skills are advisory and the model can ignore them).
 - [ ] This is NOT solely an external service connection (belongs in MCP).
 - [ ] This is NOT solely an isolated worker config (belongs in a subagent).
 
@@ -63,6 +63,9 @@ If any of the above fail, redirect to the correct mechanism.
       Claude to fetch data that's always needed.
 - [ ] `disable-model-invocation: true` is set for expensive or rarely-needed
       skills.
+- [ ] Most useful instructions live in the first ~5,000 tokens of SKILL.md.
+      After auto-compaction, reattached skills keep only their first 5K
+      tokens (combined 25K budget across all reattached skills).
 
 ## Safety
 

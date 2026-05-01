@@ -27,7 +27,7 @@ For deep dives, fetch these authoritative sources:
 | `model`                    | Model override: `sonnet`, `opus`, `haiku`, or a full model ID like `claude-opus-4-6`.                                  |
 | `effort`                   | Effort level: `low`, `medium`, `high`, `max`. Overrides session effort. `max` is Opus 4.6 only.                        |
 | `context`                  | Set to `fork` to run in a forked subagent context. Content becomes the subagent's task prompt.                         |
-| `agent`                    | Subagent type when `context: fork` is set: `Explore`, `Plan`, `general-purpose`, or a custom agent name.               |
+| `agent`                    | Subagent type when `context: fork` is set. Built-in: `Explore` (read-only, optimized for codebase research), `Plan` (planning-only, no execution), `general-purpose` (full tools). Or a custom agent from `.claude/agents/`. |
 | `hooks`                    | Hooks scoped to this skill's lifecycle. Same format as settings-based hooks. Active only while skill is running.        |
 | `paths`                    | Glob patterns limiting auto-activation. Accepts a comma-separated string or YAML list. Only affects model invocation.  |
 | `shell`                    | Shell for `` !`command` `` blocks: `bash` (default) or `powershell`.                                                   |

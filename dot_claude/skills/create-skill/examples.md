@@ -119,6 +119,11 @@ Return a structured report:
 Key traits: `context: fork`, `agent: Explore`, self-contained task, structured
 output format.
 
+See also: subagents can preload companion skills via their own `skills:`
+frontmatter field — the inverse pattern. Use when you have a custom subagent
+in `.claude/agents/` that should always have a skill's content available
+without invoking it explicitly.
+
 ### 5. Hybrid skill (knowledge + workflow)
 
 Combines reference knowledge with an invocable workflow.
@@ -289,6 +294,48 @@ For common lookups, see [quick-reference.md](quick-reference.md).
 Key traits: SKILL.md is a map, not an encyclopedia. Doc URLs for deep dives.
 Quick-reference file for common lookups. Stays current because URLs point to
 latest docs.
+
+### 10. Skill paired with an MCP server
+
+When an MCP server provides tools but Claude needs guidance on which to use
+when (and the project's safety conventions for them), a skill bridges the
+gap. The MCP server supplies connectivity and tool definitions; the skill
+teaches the workflow.
+
+```yaml
+---
+name: db-explorer
+description: Inspect the production Postgres schema and run safe read-only queries via the postgres MCP server. Use for schema questions, row counts, or analytical investigation.
+allowed-tools: mcp__postgres
+---
+
+# Database Explorer
+
+Use the postgres MCP server to investigate the production database safely.
+
+## Common workflows
+
+| Question                  | Tool to use                          |
+|---------------------------|--------------------------------------|
+| What tables exist?        | `mcp__postgres__list_tables`         |
+| Schema of a table?        | `mcp__postgres__describe_table`      |
+| Row count?                | `mcp__postgres__query` with `SELECT COUNT(*)` |
+| Sample rows?              | `mcp__postgres__query` with `LIMIT 5` |
+
+## Safety rules
+
+- Read-only by default. Never `INSERT`/`UPDATE`/`DELETE` without explicit
+  user confirmation.
+- For tables over 1M rows, always include `LIMIT` or a `WHERE` clause that
+  uses an indexed column.
+- Wrap analytical queries in `EXPLAIN ANALYZE` first when the cost is
+  uncertain.
+```
+
+Key traits: pairs with an MCP server (`allowed-tools: mcp__postgres`) without
+duplicating tool definitions. The skill teaches *when* to call which MCP tool
+plus the safety conventions for this codebase. MCP provides the connection;
+the skill provides the playbook.
 
 ## Anti-patterns
 

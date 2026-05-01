@@ -27,9 +27,9 @@ extension. Ask yourself:
 
 | Signal                                    | Use instead            |
 |-------------------------------------------|------------------------|
-| "Always do X" rule for all sessions       | CLAUDE.md or `.claude/rules/` |
-| Rule scoped to file types                 | `.claude/rules/` with `paths` frontmatter |
-| Deterministic automation on events        | Hook in settings.json  |
+| "Always do X" rule for all sessions       | CLAUDE.md (always loaded) |
+| Rule scoped to file types                 | `.claude/rules/` with `paths` frontmatter — loads only when matching files are read, cheaper than CLAUDE.md for niche rules |
+| Deterministic enforcement (block, validate, force) | Hook in settings.json — hooks are deterministic; skills are advisory and the model can ignore them |
 | External service connection               | MCP server             |
 | Isolated worker with custom tools/model   | Subagent definition    |
 
@@ -41,7 +41,8 @@ Create a skill when the request is:
 
 Note: skills can later be converted to plugins for broader distribution. Start
 with a standalone skill; convert to a plugin when sharing across projects or
-teams.
+teams. See https://code.claude.com/docs/en/plugins for the conversion path
+and manifest schema.
 
 If a different mechanism is more appropriate, tell the user and help them with
 that instead.
@@ -159,6 +160,18 @@ quality.
 **Consider token cost.** Skills without `disable-model-invocation` have their
 description loaded into every request. Keep it concise. Reference material
 belongs in supporting files, not inlined in SKILL.md.
+
+**Lifecycle and compaction.** Full SKILL.md content only enters the
+conversation when the skill is invoked, then stays for the rest of the
+session. After auto-compaction, each invoked skill is reattached with its
+first ~5,000 tokens preserved, sharing a combined ~25,000-token budget
+across all reattached skills (filled from the most recently invoked skill
+backwards — older invocations can be dropped entirely). Front-load the most
+important instructions so they survive compaction.
+
+**Extended thinking.** Including the word `ultrathink` anywhere in the skill
+content enables extended thinking when the skill is invoked. Use sparingly —
+this materially increases per-turn cost.
 
 **Use doc URLs for deep dives.** For reference skills covering broad topics,
 include a table of fetchable URLs rather than inlining all the content. Claude
