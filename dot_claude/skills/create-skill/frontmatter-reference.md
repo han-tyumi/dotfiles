@@ -39,6 +39,7 @@ For deep dives, fetch these authoritative sources:
 | `$ARGUMENTS`              | All arguments passed when invoking the skill.                                   |
 | `$ARGUMENTS[N]` or `$N`  | Specific argument by 0-based index. `$0` is the first argument.                |
 | `${CLAUDE_SESSION_ID}`    | Current session ID. Useful for logging or session-specific files.               |
+| `${CLAUDE_EFFORT}`        | Current effort level: `low`, `medium`, `high`, `xhigh`, or `max`. Use to adapt instructions to active effort. |
 | `${CLAUDE_SKILL_DIR}`     | Directory containing this SKILL.md. Use for referencing bundled scripts.        |
 
 If `$ARGUMENTS` is not present in the skill content, arguments are appended

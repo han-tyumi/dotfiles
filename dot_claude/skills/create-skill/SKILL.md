@@ -1,6 +1,7 @@
 ---
 name: create-skill
 description: Create or improve Claude Code skills from a prompt. Handles new skills and updates to existing ones, following Anthropic best practices for scope, invocation, and structure.
+when_to_use: User asks to create, improve, audit, or convert a slash command / CLAUDE.md section into a skill, or mentions "skill" in the context of authoring.
 argument-hint: [description of the skill to create]
 ---
 

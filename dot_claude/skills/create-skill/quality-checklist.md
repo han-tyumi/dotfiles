@@ -17,7 +17,7 @@ If any of the above fail, redirect to the correct mechanism.
 - [ ] SKILL.md exists with valid YAML frontmatter between `---` markers.
 - [ ] SKILL.md is under 500 lines.
 - [ ] Name uses only lowercase letters, numbers, and hyphens (max 64 chars).
-- [ ] Description is under 250 characters and front-loads the key use case.
+- [ ] Combined `description` + `when_to_use` is under 1,536 characters and front-loads the key use case.
 - [ ] Description is written in third person ("Processes files", not "I can
       help" or "Use this to").
 - [ ] Description includes keywords that match how users naturally ask.
