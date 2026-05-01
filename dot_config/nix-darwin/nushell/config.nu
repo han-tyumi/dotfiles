@@ -1,114 +1,29 @@
-module commands {
-  const local_flake_dir = '~/.config/nix-darwin'
-  const system_flake_dir = '/etc/nix-darwin'
+# Settings
+$env.config.show_banner = false
 
-  # Applies various updates related to Chezmoi, Nix Darwin, and Home Manager.
-  export def apploi [
-    --all (-A)      # Apply everything.
-    --chezmoi (-c)  # Apply Chezmoi's state.
-    --update (-u)   # Update Nix channels and flake inputs.
-    --switch (-s)   # Switch to the latest nix-darwin configuration.
-    --clean (-C)    # Clean the Nix store.
-    --mise (-m)     # Upgrade mise plugins and tools.
-  ]: nothing -> nothing {
-    let all = $all or not ($chezmoi or $update or $switch or $clean or $mise)
-    let chezmoi = $all or $chezmoi
-    let update = $all or $update
-    let switch = $all or $switch
-    let clean = $all or $clean
-    let mise = $all or $mise
-    
-    let original_dir = (pwd)
+# Mise activation: write the nu module and add its dir to NU_LIB_DIRS.
+let mise_path = $env.HOME | path join ".config" "mise" "mise.nu"
+^mise activate nu | save $mise_path --force
+$env.NU_LIB_DIRS = ($env.NU_LIB_DIRS | append ($mise_path | path dirname))
 
-    if $chezmoi {
-      let source_path = (^chezmoi source-path)
-      log $"Changing to ($source_path)\n\n"
-      cd $source_path
-    
-      log $"Applying Chezmoi's state\n\n"
-      ^chezmoi apply
-      log ""
-    }
+# community/ → github.com/nushell/nu_scripts (chezmoi-external).
+# commands/  → chezmoi-managed helpers.
+# Both live under <config-dir>/scripts/ which is on default NU_LIB_DIRS.
 
-    if ($system_flake_dir | path type) != 'symlink' {
-      log $"Linking ($local_flake_dir) to ($system_flake_dir)"
-      ^sudo ln -s $local_flake_dir $system_flake_dir
-    }
+use community/aliases/git/git-aliases.nu *
+use community/aliases/chezmoi/chezmoi-aliases.nu *
+use community/aliases/eza/eza-aliases.nu *
+use community/aliases/bat/bat-aliases.nu *
+use community/aliases/docker/docker-aliases.nu *
 
+# Module dirs with mod.nu can be imported by name.
+use community/modules/docker *
+use community/modules/capture-foreign-env *
 
-    log $"Changing to ($system_flake_dir)\n\n"
-    cd $system_flake_dir
+# Module dirs without mod.nu need the primary file.
+use community/modules/nix/nix.nu *
+use community/modules/clone-all/clone-all.nu *
+use community/modules/weather/get-weather.nu *
+use community/modules/fuzzy/fuzzy_command_search.nu *
 
-    try {
-      if $update {
-        log "Updating nix-darwin flake inputs\n\n"
-        ^nix flake update
-      }
-
-      if $switch {
-        for file in [bash zsh] {
-          let from = $'/etc/($file)rc'
-          let to = $'($from).before-nix-darwin'
-          if ($from | path exists) {
-            log $"\nBacking up ($from) to ($to)\n"
-            ^sudo mv $from $to
-          }
-        }
-
-        log "\nApplying nix-darwin configuration\n\n"
-        # Issue with `/tmp` symlink; we use `/private/tmp` directly instead.
-        ^sudo TMPDIR=/private/tmp darwin-rebuild switch
-      }
-
-      if $clean {
-        log "\nCleaning up Nix store\n\n"
-        ^sudo -H nix-collect-garbage --delete-old
-      }
-
-      if $mise {
-        log "\nUpgrading mise plugins\n\n"
-        ^mise plugins upgrade
-
-        log "\n\nUpgrading outdated mise tools\n\n"
-        ^mise upgrade
-      }
-    } catch {|err|
-      log $"\nError: ($err)\n"
-    }
-
-    log $"\n\nChanging back to ($original_dir)"
-    cd $original_dir
-  }
-
-  # Initialize a flake.nix + .envrc in the current directory and open the flake
-  # for editing. No-op for the missing piece if one already exists.
-  export def flakify []: nothing -> nothing {
-    if not ('flake.nix' | path exists) {
-      ^nix flake new -t github:nix-community/nix-direnv .
-    } else if not ('.envrc' | path exists) {
-      'use flake' | save .envrc
-      ^direnv allow
-    }
-
-    ^$env.EDITOR flake.nix
-  }
-
-  export def reload []: nothing -> nothing {
-    exec nu
-  }
-
-  def log [text: string]: nothing -> nothing {
-    $text
-    | split row "\n"
-    | each {|line|
-      if ($line | is-empty) {
-        print -e ''
-      } else {
-        print -ne $'>> ($line) ...'
-      }
-    }
-    | ignore
-  }
-}
-
-export use commands *
+use commands *

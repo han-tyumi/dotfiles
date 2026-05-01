@@ -1,3 +1,4 @@
+# `v up` self-updates the V repo, so chezmoi doesn't need to refresh it.
 ["v"]
 type = "git-repo"
 url = "https://github.com/vlang/v.git"
@@ -7,4 +8,12 @@ clone.args = ["--depth", "1"]
 type = "archive"
 url = "https://github.com/roc-lang/roc/releases/download/nightly/roc_nightly-macos_apple_silicon-latest.tar.gz"
 stripComponents = 1
-refreshPeriod = "6h"
+refreshPeriod = "24h"
+
+# Place under nu's default scripts dir so `use community/...` resolves via NU_LIB_DIRS.
+["Library/Application Support/nushell/scripts/community"]
+type = "git-repo"
+url = "https://github.com/nushell/nu_scripts.git"
+refreshPeriod = "24h"
+clone.args = ["--depth", "1"]
+pull.args = ["--ff-only"]

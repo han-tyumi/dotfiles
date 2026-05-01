@@ -166,10 +166,6 @@ in
     nushell = {
       enable = true;
       configFile.source = ./nushell/config.nu;
-      envFile.source = ./nushell/env.nu;
-      settings = {
-        show_banner = false;
-      };
     };
     rbw = {
       enable = true;
