@@ -44,6 +44,8 @@
       "icon": "sparkle"
     }
   },
+  // Disabled — hover popup is slow to appear and lingers until re-hovered. Cmd-click still works.
+  "terminal.integrated.showLinkHover": false,
 
   // Privacy
   "redhat.telemetry.enabled": false,
