@@ -7,9 +7,6 @@
     "allow": [
       "Edit(**/.claude/**)",
       "Read(**/.claude/**)",
-      "Read(//private/tmp/**)",
-      "Read(//tmp/package/**)",
-      "Read(//private/tmp/package/**)",
       "Read(//Users/han-tyumi/.claude/**)",
       "Write(**/.claude/**)",
       "Bash(cat *)",
