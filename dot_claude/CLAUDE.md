@@ -23,7 +23,11 @@
 
 - Comments should use proper capitalization and punctuation when possible.
 - Add a blank line before comments so they visually pair with the code they describe.
+- Source comments describe the current code only. No internal-process references (`.scratch/`, `.claude/rules/*` labels like "Pattern 2" or "Phase 2c", audit/handoff names) and no history ("REVERSES X", "previously did Y", "renamed from Z", "added in v8"). A reader with only the file in front of them must be able to make sense of every comment. History belongs in `git log` and PR descriptions.
+- Don't reference gitignored paths anywhere a reader outside your local checkout would land — not source comments, not commit messages, not PR descriptions.
+- For mise, always use `mise outdated --bump` (or `-l`) to check for tool upgrades. Default `mise outdated` only reports updates *within* the configured version constraint, which means exact pins (e.g. `rclone 1.73.3`) always appear up to date even when newer versions exist.
+- Don't prefix shell commands with `mise exec --`. mise installs shims on `PATH`, so `pnpm`, `node`, etc. resolve directly to the version pinned in `.tool-versions` / `mise.toml`. Using `mise exec` is redundant noise.
 
-RTK is a token-optimized CLI proxy that auto-rewrites common Bash invocations (e.g., `git status` → `rtk git status`) via a PreToolUse hook. See `RTK.md` for the command reference and bypass patterns.
+RTK is a token-optimized CLI proxy. See `RTK.md` for the command reference and bypass patterns.
 
 @RTK.md
