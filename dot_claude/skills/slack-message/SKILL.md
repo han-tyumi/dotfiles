@@ -11,7 +11,9 @@ markup is a small, Slack-specific dialect — not standard Markdown.
 
 Source: [Slack Help — Format your messages with markup](https://slack.com/help/articles/360039953113-Format-your-messages-in-Slack-with-markup).
 
-## Supported markup
+## Officially supported markup
+
+Per the [Slack Help docs](https://slack.com/help/articles/360039953113-Format-your-messages-in-Slack-with-markup#use-markup):
 
 | Format | Syntax |
 |---|---|
@@ -23,12 +25,24 @@ Source: [Slack Help — Format your messages with markup](https://slack.com/help
 | Blockquote | `>text` (one `>` per line) |
 | Link | `[text](https://url)` |
 
+## Lists (work in practice, not in the docs table)
+
+Slack's official markup table omits lists, and the help page even says
+"automatic formatting for bulleted, numbered, and indented lists won't be
+applied." In practice, the following triggers still render as styled lists
+when pasted into the compose box:
+
+| Format | Syntax |
+|---|---|
+| Bulleted list | `- item` (dash + space, preferred) |
+| Bulleted list | `* item` (asterisk + space) |
+| Numbered list | `1. item` (number + period + space) |
+
+Prefer `- ` for bullets; fall back to `* ` only if needed. Use `1. ` for
+numbered lists. Don't drop in plain `•` characters. One item per line.
+
 ## Not supported via markup
 
-- **Lists.** Slack explicitly says "automatic formatting for bulleted, numbered,
-  and indented lists won't be applied" in markup mode. Lists only work via the
-  compose toolbar, not pasted markup. Use dashes or asterisks as plain text if
-  you need visual bullets, but they won't render as a styled list.
 - **Headings.** `#` does nothing.
 - **Images.** Can't embed via markup; paste or upload.
 - **Nested formatting** beyond the basics.
@@ -53,6 +67,5 @@ Typed inline, not part of the markup spec:
 - Output raw markup the user can paste directly into Slack.
 - Use emoji sparingly for visual structure (e.g. `:white_check_mark:` for done,
   `:rotating_light:` for alerts, `:point_right:` for action items).
-- For longer messages, use blockquotes and bold for hierarchy. Don't reach for
-  lists — they don't render.
+- For longer messages, use blockquotes, bold, and `- ` lists for hierarchy.
 - Keep messages scannable.
