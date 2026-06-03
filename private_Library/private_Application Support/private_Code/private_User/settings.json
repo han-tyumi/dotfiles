@@ -28,6 +28,8 @@
   // Terminal
   "terminal.integrated.defaultProfile.osx": "nu",
   "terminal.integrated.fontSize": 14,
+  // Off — webgl/canvas renderers often corrupt the TUI buffer in long sessions.
+  "terminal.integrated.gpuAcceleration": "off",
   "terminal.integrated.lineHeight": 1.2,
   "terminal.integrated.macOptionIsMeta": true,
   "terminal.integrated.profiles.osx": {
