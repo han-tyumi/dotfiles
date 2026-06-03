@@ -39,9 +39,16 @@ Always invoke as `gs <subcommand>`. Equivalent forms: `git spice <subcommand>`,
 | Jump to trunk | `gs trunk` | — |
 | Restack the whole stack | `gs stack restack` | `gs sr` |
 | Restack just current branch on its parent | `gs branch restack` | — |
-| Sync trunk, prune merged branches, restack survivors | `gs repo sync` | `gs rs` |
+| Sync trunk, prune merged branches | `gs repo sync` | `gs rs` |
+| Same, plus restack current stack (see "After a PR merges") | `gs repo sync --restack` | — |
+| Restack every tracked branch in the repo | `gs repo restack` | — |
 | Submit / update PR for current branch only | `gs branch submit` | `gs bs` |
 | Submit / update PRs for the whole stack (default) | `gs stack submit` | `gs ss` |
+| Commit + auto-restack children | `gs commit create` | `gs cc` |
+| Amend tip commit + auto-restack children | `gs commit amend` | `gs ca` |
+| Squash staged changes into a downstack commit + restack | `gs commit fixup [<sha>]` | `gs cf` |
+| Continue a gs-driven rebase after resolving conflicts | `gs rebase continue` | `gs rbc` |
+| Abort a gs-driven rebase | `gs rebase abort` | `gs rba` |
 | Compact stack listing | `gs log short` | `gs ls` |
 | Detailed stack listing (with CR info) | `gs log long` | `gs ll` |
 
@@ -72,14 +79,60 @@ want to force-push it):
 **Start a stack from trunk.** `gs bc feat-1`, commit, `gs bc feat-2`, commit.
 Each `gs bc` creates a branch on top of the current one, building the stack.
 
+**Prefer `gs cc` / `gs ca` over `git commit` / `git commit --amend` on
+stacked branches.** Both gs variants auto-restack the upstack chain so children
+don't go stale. Plain git leaves children pointing at the previous commit, and
+you have to remember to `gs sr` afterward.
+
+**Squash a follow-up edit into an earlier commit.** `gs cf [<sha>]` (commit
+fixup) replaces the `git commit --fixup=<sha> && git rebase --autosquash main`
+two-step. It applies the staged changes to the target commit and restacks
+everything above it in one shot. Useful when responding to review feedback on
+an earlier commit in the stack. If the staged changes can't apply cleanly to
+the target — e.g. a later commit references a symbol you're removing — the
+command fails before touching anything.
+
 **Edit a parent mid-stack.** `gs down` (or `gs bottom` / `gs bco <parent>`),
-commit edits, then `gs sr` to rebase all children onto the new parent.
+edit + `gs ca`, and the upstack restack happens automatically. Or use `gs cf`
+from anywhere in the stack to target a specific downstack commit without
+moving.
+
+**Resolve a gs-driven rebase conflict.** When `gs sr`, `gs cf`, `gs rs
+--restack`, or any other gs command halts on a rebase conflict: resolve the
+conflict (`git add` resolved files), then `gs rbc` to continue. To bail out:
+`gs rba`. These wrap the underlying `git rebase --continue` / `--abort` and
+also clean up gs's internal operation state, so prefer them over the plain
+git equivalents.
+
+`gs rbc` opens an editor for the commit message by default — pass `--no-edit`
+to skip it (or set `spice.rebaseContinue.edit=false` to make `--no-edit` the
+default). This is cleaner than the plain-git `GIT_EDITOR=: git rebase
+--continue` workaround.
 
 **First submit of a stack.** `gs ss --fill`. git-spice creates one PR per
 branch with correct base branches and posts navigation comments linking them.
 
-**After a PR merges.** `gs rs` from anywhere — pulls trunk, deletes merged
-branches locally, restacks remaining children onto trunk.
+**After a PR merges.** `gs rs --restack` pulls trunk, deletes merged branches
+locally (works for squash-merge, not just rebase-merge), and restacks remaining
+children. It correctly skips the absorbed commits — no need for the plain-git
+`git rebase --onto <last-shared-sha>` workaround.
+
+**Caveat: when the merged branch was your current branch, `--restack` ends up
+restacking every tracked branch in the repo, not just the current stack.**
+Verified in source (internal/handler/sync/handler.go, marked `TODO`): when the
+checked-out branch gets deleted because it was merged, gs drops you onto trunk
+before invoking restack — and "current stack" of trunk is "all tracked
+branches." If you have stale stacked branches that conflict with new trunk
+(e.g. another in-flight stack), the restack halts mid-rebase. `gs rebase abort`
+to bail out.
+
+Workarounds when you only want to restack one stack:
+- Check out a child branch first (`gs branch checkout <child>`), *then*
+  `gs rs --restack`. Trunk-anchored restack-all only triggers when the current
+  branch gets deleted.
+- Or run `gs rs` (no `--restack`) to do the trunk pull + merged-branch
+  cleanup, then `gs upstack restack` from the child to restack only the
+  upstack chain.
 
 **Stack a new branch on top of an existing untracked PR branch.** This is the
 common case where someone has been working with plain `git` + `gh` on a PR,
