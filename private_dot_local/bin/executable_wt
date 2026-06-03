@@ -1,0 +1,179 @@
+#!/usr/bin/env nu
+
+# Create a git worktree of the current repo and seed it with the gitignored
+# local config it needs (build env, Claude settings), trust mise and allow
+# direnv at the new path, then install dependencies. Works on any repo: the repo
+# is resolved from the current directory and worktrees go in a sibling
+# `<repo>.worktrees/` directory. Runs as a real command on PATH, so it works from
+# a terminal or an automated session.
+
+# Gitignored files whose basename matches these are junk and never seeded.
+const SEED_DENY_NAMES = ['.DS_Store']
+const SEED_DENY_SUFFIXES = ['.log' '.tmp']
+
+# A nested gitignored file is seeded only when its basename looks like local
+# config: a dotenv file (`.env`, `.env.*`) or a `*.local.*` / `*.local` file.
+# This covers monorepo per-package env files and `.claude/*.local.*` settings.
+# Root-level gitignored files are seeded regardless (minus the junk denylist).
+const SEED_CONFIG_PATTERN = '^\.env(\.|$)|\.local(\.|$)'
+
+# Create and provision a git worktree of the current repo.
+@search-terms "worktree" "git" "yarn" "pnpm" "mise"
+@example "Worktree for an existing local or remote branch" { wt feat/SNB-1234 }
+@example "Worktree with a custom directory name" { wt feat/SNB-1234 spike }
+@example "Create a brand-new branch off the current HEAD" { wt feat/new-thing --create }
+@example "Preview without creating anything" { wt feat/SNB-1234 --dry-run }
+export def main [
+  branch: string  # Branch to check out: an existing local/remote branch, or a new one with --create.
+  name?: string   # Worktree directory name; defaults to the branch with `/` replaced by `-`.
+  --create (-b)   # Create a new branch off the current HEAD instead of checking out an existing one.
+  --dry-run (-n)  # Print what would happen, then exit without changing anything.
+]: nothing -> nothing {
+  if (^git rev-parse --is-inside-work-tree | complete).exit_code != 0 {
+    print -e "Not inside a git repository."
+    exit 1
+  }
+
+  let main_repo = (^git rev-parse --path-format=absolute --git-common-dir | str trim | path dirname)
+  let worktrees_dir = ($main_repo | path dirname | path join $"($main_repo | path basename).worktrees")
+  let worktree_name = ($name | default ($branch | str replace --all '/' '-'))
+  let dir = ($worktrees_dir | path join $worktree_name)
+  let seed_files = (seed-candidates $main_repo)
+
+  if $dry_run {
+    let branch_note = (if $create { $"($branch) \(new branch)" } else { $branch })
+    let seed_note = (if ($seed_files | is-empty) { '\(none)' } else { $seed_files | str join ', ' })
+    step $"Repo:      ($main_repo)"
+    step $"Worktree:  ($dir)"
+    step $"Branch:    ($branch_note)"
+    step $"Seed:      ($seed_note)"
+    step $"Install:   (detect-package-manager $main_repo | default '\(no package.json — skipped)')"
+    if (($main_repo | path join '.envrc') | path exists) {
+      step "direnv:    .envrc → direnv allow"
+    }
+    return
+  }
+
+  if ($dir | path exists) {
+    print -e $"Worktree directory already exists: ($dir)"
+    exit 1
+  }
+
+  step $"Creating worktree at ($dir)"
+  mkdir $worktrees_dir
+  cd $main_repo
+
+  # A failed `git worktree add` aborts the script here, before anything is
+  # copied into a half-made worktree.
+  if $create {
+    ^git worktree add -b $branch $dir
+  } else {
+    ^git worktree add $dir $branch
+  }
+
+  step "Seeding gitignored local config"
+  if ($seed_files | is-empty) {
+    print "   (nothing to seed)"
+  }
+  for file in $seed_files {
+    let dest = ($dir | path join $file)
+    mkdir ($dest | path dirname)
+    cp ($main_repo | path join $file) $dest
+    print $"   copied  ($file)"
+  }
+
+  cd $dir
+
+  # A copied or committed mise config is untrusted at the new path and mise
+  # errors on every command until trusted. `mise trust` is a safe no-op when the
+  # repo has no mise config, so it runs unconditionally.
+  step "Trusting mise config"
+  ^mise trust
+
+  # Like mise, direnv blocks an `.envrc` until it is allowed at the new path.
+  if (($dir | path join '.envrc') | path exists) {
+    step "Allowing direnv"
+    ^direnv allow
+  }
+
+  let package_manager = (detect-package-manager $dir)
+  if $package_manager == null {
+    print ''
+    step $"Done — no package.json, nothing to install. Worktree: ($dir)"
+    return
+  }
+
+  step $"Installing dependencies with ($package_manager)"
+  ^$package_manager install
+
+  if not (has-script $dir 'typecheck') {
+    print ''
+    step $"Done. Worktree: ($dir)"
+    return
+  }
+
+  step "Type-checking"
+  let typecheck_ok = try { ^$package_manager run typecheck; true } catch { false }
+  print ''
+  if $typecheck_ok {
+    step $"Done — typecheck passed. Worktree: ($dir)"
+  } else {
+    step $"Done — typecheck failed; the worktree is still set up. Worktree: ($dir)"
+  }
+}
+
+# Local config worth seeding into a new worktree: gitignored files (excluding
+# directories and junk) that are either at the repo root or, when nested, look
+# like local config — covering monorepo per-package env files and Claude Code
+# settings under `.claude/`.
+def seed-candidates [repo: string]: nothing -> list<string> {
+  ^git -C $repo ls-files --others --ignored --exclude-standard --directory
+  | lines
+  | where $it != ''
+  | where not ($it | str ends-with '/')
+  | where ($it | path basename) not-in $SEED_DENY_NAMES
+  | where not ($SEED_DENY_SUFFIXES | any {|suffix| $it | str ends-with $suffix })
+  | where {|entry| (not ($entry | str contains '/')) or (($entry | path basename) =~ $SEED_CONFIG_PATTERN) }
+}
+
+# The package manager for a repo: package.json's `packageManager` field, else a
+# lockfile, else npm. Null when the repo has no package.json.
+def detect-package-manager [repo: string] {
+  let package_json = ($repo | path join 'package.json')
+  if not ($package_json | path exists) {
+    return null
+  }
+
+  let declared = (open $package_json).packageManager?
+  if $declared != null {
+    return ($declared | split row '@' | first)
+  }
+
+  let lockfiles = {
+    'yarn.lock': 'yarn'
+    'pnpm-lock.yaml': 'pnpm'
+    'package-lock.json': 'npm'
+    'bun.lockb': 'bun'
+  }
+  for entry in ($lockfiles | transpose lockfile manager) {
+    if (($repo | path join $entry.lockfile) | path exists) {
+      return $entry.manager
+    }
+  }
+
+  'npm'
+}
+
+# Whether package.json defines the given script.
+def has-script [repo: string, script: string]: nothing -> bool {
+  let package_json = ($repo | path join 'package.json')
+  if not ($package_json | path exists) {
+    return false
+  }
+  $script in ((open $package_json).scripts? | default {} | columns)
+}
+
+# Print a progress line in `>> ...` style.
+def step [text: string]: nothing -> nothing {
+  print $">> ($text)"
+}
