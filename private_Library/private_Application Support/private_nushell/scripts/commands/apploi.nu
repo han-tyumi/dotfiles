@@ -29,7 +29,12 @@ export def main [
     step $"Changing to ($source_path)\n\n"
     cd $source_path
 
-    step $"Applying Chezmoi's state\n\n"
+    # Claude Code rewrites its own settings file (model, effort, toggles), so
+    # capture it first; changes then surface as git diffs instead of prompts.
+    step $"Re-adding Claude-written settings\n\n"
+    ^chezmoi re-add ~/.claude/settings.json
+
+    step $"\nApplying Chezmoi's state\n\n"
     ^chezmoi apply
     step ""
   }
