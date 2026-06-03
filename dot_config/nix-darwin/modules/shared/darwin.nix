@@ -1,4 +1,9 @@
-{ pkgs, inputs, ... }:
+{
+  pkgs,
+  inputs,
+  profiles,
+  ...
+}:
 
 {
   nixpkgs = {
@@ -32,7 +37,7 @@
 
     trusted-users = [
       "root"
-      "han-tyumi"
+      profiles.username
     ];
   };
 
@@ -42,8 +47,6 @@
       "knope-dev/tap"
     ];
     brews = [
-      "exercism"
-      "ferium"
       "git-spice"
       "golangci-lint"
       "knope"
@@ -60,32 +63,17 @@
       "claude"
       "docker-desktop"
       "eqmac"
-      "firefox"
-      "gimp"
       "keycastr"
-      "marginnote"
-      "microsoft-excel"
-      "microsoft-teams"
-      "modrinth"
-      "moonlight"
       "postgres-app"
-      "prismlauncher"
-      "private-internet-access"
       "raycast"
-      "steam"
       "the-unarchiver"
       "transmit"
       "visual-studio-code"
-      "xmind"
       "zed"
       "zen"
-      "zoom"
     ];
     masApps = {
       Amphetamine = 937984704;
-      iMovie = 408981434;
-      "Logic Pro" = 634148309;
-      "Steam Link" = 1246969117;
     };
     onActivation = {
       autoUpdate = true;
@@ -95,10 +83,10 @@
     };
   };
 
-  users.users.han-tyumi = {
-    name = "han-tyumi";
+  users.users.${profiles.username} = {
+    name = profiles.username;
     description = "Han-Tyumi";
-    home = "/Users/han-tyumi";
+    home = "/Users/${profiles.username}";
     shell = pkgs.zsh;
     packages = with pkgs; [
       act
@@ -120,7 +108,6 @@
       nixd
       nixfmt
       nurl
-      openconnect
       passh
       php
       pkg-config
@@ -128,13 +115,12 @@
       shfmt
       unison-ucm
       github-mcp-server
-      vpn-slice
       wget
     ];
   };
 
   system = {
-    primaryUser = "han-tyumi";
+    primaryUser = profiles.username;
     defaults = {
       NSGlobalDomain = {
         AppleShowAllFiles = true;

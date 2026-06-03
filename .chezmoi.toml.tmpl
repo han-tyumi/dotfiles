@@ -1,3 +1,7 @@
+{{- /* Prompt text doubles as the --promptBool key: `chezmoi init --promptBool personal=false,work=true`. */ -}}
+{{- $personal := promptBoolOnce . "personal" "personal" true -}}
+{{- $work := promptBoolOnce . "work" "work" true -}}
+
 encryption = "age"
 [age]
   identity = "{{ .chezmoi.homeDir }}/key.txt"
@@ -5,3 +9,6 @@ encryption = "age"
 [cd]
   command = "zsh"
   args = ["-lc", "nu"]
+[data]
+  personal = {{ $personal }}
+  work = {{ $work }}

@@ -15,26 +15,69 @@
     };
   };
 
-  outputs = inputs@{ self, nix-darwin, home-manager, ... }: {
-    darwinConfigurations."Matts-MacBook-Pro" = nix-darwin.lib.darwinSystem {
-      modules = [
-        ./configuration.nix
-        home-manager.darwinModules.home-manager
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            backupFileExtension = "backup";
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      nix-darwin,
+      home-manager,
+      ...
+    }:
+    let
+      inherit (nixpkgs) lib;
 
-            users.han-tyumi = ./home.nix;
-            extraSpecialArgs = { inherit inputs; };
-          };
-        }
-      ];
-      specialArgs = { inherit inputs; };
+      # Per-machine profile selection, rendered by chezmoi from its data.
+      profiles = import ./profiles.nix;
+
+      # Guarded so a machine whose work overlay isn't cloned yet still builds.
+      workDarwin = ./modules/work/darwin.nix;
+      workHome = ./modules/work/home.nix;
+
+      mkSystem =
+        profiles:
+        nix-darwin.lib.darwinSystem {
+          specialArgs = { inherit inputs profiles; };
+          modules = [
+            ./modules/shared/darwin.nix
+            home-manager.darwinModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "backup";
+
+                users.${profiles.username}.imports = [
+                  ./modules/shared/home.nix
+                ]
+                ++ lib.optional profiles.personal ./modules/personal/home.nix
+                ++ lib.optional (profiles.work && builtins.pathExists workHome) workHome;
+
+                extraSpecialArgs = { inherit inputs profiles; };
+              };
+            }
+          ]
+          ++ lib.optional profiles.personal ./modules/personal/darwin.nix
+          ++ lib.optional (profiles.work && builtins.pathExists workDarwin) workDarwin;
+        };
+
+      # Eval-only fixtures covering every profile combination.
+      testProfiles = personal: work: {
+        hostname = "test";
+        username = profiles.username;
+        inherit personal work;
+      };
+    in
+    {
+      darwinConfigurations = {
+        ${profiles.hostname} = mkSystem profiles;
+
+        test-minimal = mkSystem (testProfiles false false);
+        test-personal = mkSystem (testProfiles true false);
+        test-work = mkSystem (testProfiles false true);
+        test-full = mkSystem (testProfiles true true);
+      };
+
+      # Expose the package set, including overlays, for convenience.
+      darwinPackages = self.darwinConfigurations.${profiles.hostname}.pkgs;
     };
-
-    # Expose the package set, including overlays, for convenience.
-    darwinPackages = self.darwinConfigurations."Matts-MacBook-Pro".pkgs;
-  };
 }

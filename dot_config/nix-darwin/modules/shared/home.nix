@@ -6,19 +6,8 @@
 }:
 
 let
-  private = import ./private.nix;
   gitAliasFileName = "gitalias.txt";
   gitAliasFilePath = "gitalias/${gitAliasFileName}";
-  workGitIdentity = {
-    user = {
-      name = "Matt Champagne";
-      email = "matthew.champagne@revvity.com";
-    };
-    github.user = "chmmpagne";
-    core = {
-      sshCommand = "ssh -i ~/.ssh/git_chmmpagne";
-    };
-  };
 in
 
 {
@@ -29,15 +18,11 @@ in
       "$CARGO_HOME/bin"
       "$HOME/.local/bin"
       "$HOME/.dotnet/tools"
-      "$HOME/.config/v-analyzer/bin"
-      "$HOME/roc"
     ];
     sessionVariables = {
       DUNE_CACHE = "enabled";
       CARGO_HOME = "$HOME/.cargo";
       RUSTUP_HOME = "$HOME/.rustup";
-      GH_TOKEN = private.githubToken;
-      GITHUB_PERSONAL_ACCESS_TOKEN = private.githubToken;
     };
     shellAliases = {
       ai = "aichat";
@@ -104,13 +89,7 @@ in
       enable = true;
       lfs.enable = true;
       settings = {
-        user = {
-          name = "Matt Champagne";
-          email = "mmchamp95@gmail.com";
-        };
-        github.user = "han-tyumi";
         core = {
-          sshCommand = "ssh -i ~/.ssh/git_han-tyumi";
           # editor = "code --wait";
         };
         init = {
@@ -126,16 +105,6 @@ in
       };
       includes = [
         { path = "${config.xdg.configHome}/${gitAliasFilePath}"; }
-        {
-          condition = "gitdir:~/Code/work/";
-          contentSuffix = "revvity";
-          contents = workGitIdentity;
-        }
-        {
-          condition = "hasconfig:remote.*.url:git@github.com:Revvity/**";
-          contentSuffix = "revvity";
-          contents = workGitIdentity;
-        }
       ];
       ignores = [
         ".claude/*.local.md"
@@ -164,19 +133,12 @@ in
     nix-index.enable = true;
     nushell = {
       enable = true;
-      configFile.source = ./nushell/config.nu;
+      configFile.source = ../../nushell/config.nu;
       plugins = with pkgs.nushellPlugins; [
         highlight
         query
         skim
       ];
-    };
-    rbw = {
-      enable = true;
-      settings = {
-        email = private.bitwardenEmail;
-        lock_timeout = 21600;
-      };
     };
     ripgrep.enable = true;
     starship = {
