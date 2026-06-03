@@ -218,6 +218,7 @@
       "/tmp"
     ]
   },
+  "model": "us.anthropic.claude-opus-4-8[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -239,10 +240,10 @@
   "enabledPlugins": {},
   "extraKnownMarketplaces": {},
   "alwaysThinkingEnabled": true,
+  "effortLevel": "xhigh",
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "theme": "dark-ansi",
   "preferredNotifChannel": "terminal_bell",
-  "agentPushNotifEnabled": true,
-  "effortLevel": "xhigh"
+  "agentPushNotifEnabled": true
 }
