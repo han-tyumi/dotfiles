@@ -34,6 +34,13 @@ export def main [
     step $"Re-adding Claude-written settings\n\n"
     ^chezmoi re-add ~/.claude/settings.json
 
+    # Surface captured-but-uncommitted settings changes every run until
+    # they're committed (accepted) or reverted (`git restore` + `chezmoi apply`).
+    if (do { ^git diff --quiet HEAD -- dot_claude/settings.json } | complete).exit_code != 0 {
+      step $"\nPending Claude settings changes\n\n"
+      ^git --no-pager diff HEAD -- dot_claude/settings.json
+    }
+
     step $"\nApplying Chezmoi's state\n\n"
     ^chezmoi apply
     step ""
