@@ -62,6 +62,10 @@ export def main [
 
       # Issue with `/tmp` symlink; we use `/private/tmp` directly instead.
       ^sudo TMPDIR=/private/tmp darwin-rebuild switch
+
+      # `brew bundle` only upgrades declared formulae; their dependencies go stale without this.
+      step "\nUpgrading Homebrew dependency formulae\n\n"
+      ^brew upgrade --formula
     }
 
     if $clean {
