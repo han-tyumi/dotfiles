@@ -1,3 +1,5 @@
+#!/usr/bin/env nu
+
 const LOCAL_FLAKE_DIR = '~/.config/nix-darwin'
 const SYSTEM_FLAKE_DIR = '/etc/nix-darwin'
 
