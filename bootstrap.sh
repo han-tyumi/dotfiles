@@ -15,12 +15,26 @@ if ! xcode-select -p > /dev/null 2>&1; then
   exit 1
 fi
 
-# Machine secrets are provisioned by hand; warn early rather than fail late.
+# Generate per-machine SSH identity keys; public keys get registered with the
+# matching GitHub account, so no key material is ever transported.
+read -r -p ">> SSH identity keys to generate (space-separated, e.g. 'git_han-tyumi git_chmmpagne'; empty to skip): " ssh_keys
+# shellcheck disable=SC2086 # word splitting is the input format
+for name in $ssh_keys; do
+  key="$HOME/.ssh/$name"
+  mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
+  if [ -f "$key" ]; then
+    echo ">> $key already exists; skipping."
+  else
+    ssh-keygen -t ed25519 -N "" -C "$name@$(hostname -s)" -f "$key"
+  fi
+  echo ">> Public key for $name — add it at https://github.com/settings/keys:"
+  cat "$key.pub"
+done
+
+# Machine secrets that cannot be generated are provisioned by hand; warn early.
 if [ ! -f "$HOME/key.txt" ]; then
   echo ">> NOTE: ~/key.txt (age identity) is missing — required before enabling the personal layer."
-fi
-if ! ls "$HOME"/.ssh/git_* > /dev/null 2>&1; then
-  echo ">> NOTE: no ~/.ssh/git_* identity keys found — required for private overlay repos."
 fi
 
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply "$REPO"

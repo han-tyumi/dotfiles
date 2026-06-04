@@ -126,10 +126,10 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/han-tyumi/dotfiles/main/
 Per-machine secrets:
 - **personal layer**: `~/key.txt` (the age identity — from Bitwarden or the backup
   USB) is the only file that must be transported
-- **private overlays**: generate a fresh SSH key on the machine
-  (`ssh-keygen -f ~/.ssh/git_<account>`) and register the public key with the
-  matching GitHub account — keys are referenced by name, so per-machine material
-  works without transporting anything
+- **private overlays**: a fresh SSH key per machine — `bootstrap.sh` offers to
+  generate them and prints the public keys to register with the matching GitHub
+  account; keys are referenced by name, so per-machine material works without
+  transporting anything
 - **work-only machines need no `key.txt`** — nothing encrypted is applied
 
 To smoke-test in a local VM (Apple Silicon):
