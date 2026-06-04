@@ -123,8 +123,16 @@ Chezmoi uses special script naming conventions:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/han-tyumi/dotfiles/main/bootstrap.sh)"
 ```
 
-Provision `~/key.txt` and `~/.ssh/git_*` first if the machine will use the
-personal layer or private overlays. To smoke-test in a local VM (Apple Silicon):
+Per-machine secrets:
+- **personal layer**: `~/key.txt` (the age identity — from Bitwarden or the backup
+  USB) is the only file that must be transported
+- **private overlays**: generate a fresh SSH key on the machine
+  (`ssh-keygen -f ~/.ssh/git_<account>`) and register the public key with the
+  matching GitHub account — keys are referenced by name, so per-machine material
+  works without transporting anything
+- **work-only machines need no `key.txt`** — nothing encrypted is applied
+
+To smoke-test in a local VM (Apple Silicon):
 
 ```bash
 brew install cirruslabs/cli/tart
