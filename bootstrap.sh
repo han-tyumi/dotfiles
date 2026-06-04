@@ -41,7 +41,9 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$bindir"
 chezmoi="$bindir/chezmoi"
 
 # Prompts for layers/overlays and clones the source, without applying yet.
-"$chezmoi" init "$REPO"
+# Extra script args (e.g. --promptString "layers=...") pass through for
+# unattended runs.
+"$chezmoi" init "$@" "$REPO"
 
 # shellcheck disable=SC2016 # $-expressions are Go template syntax, not shell
 overlays="$("$chezmoi" execute-template \
