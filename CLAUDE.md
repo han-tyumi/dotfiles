@@ -117,6 +117,21 @@ Chezmoi uses special script naming conventions:
 
 ## Common Commands
 
+### Bootstrap a fresh Mac
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/han-tyumi/dotfiles/main/bootstrap.sh)"
+```
+
+Provision `~/key.txt` and `~/.ssh/git_*` first if the machine will use the
+personal layer or private overlays. To smoke-test in a local VM (Apple Silicon):
+
+```bash
+brew install cirruslabs/cli/tart
+tart clone ghcr.io/cirruslabs/macos-sequoia-base:latest dotfiles-test
+tart run dotfiles-test   # log in (admin/admin), open Terminal, run the curl one-liner
+```
+
 ### System Management
 
 Apply chezmoi changes:
