@@ -133,6 +133,9 @@ Per-machine secrets:
   account; keys are referenced by name, so per-machine material works without
   transporting anything
 - **work-only machines need no `key.txt`** — nothing encrypted is applied
+- **App Store**: sign in before bootstrapping any machine whose layers include
+  `masApps` — an unsigned `mas` hangs the first activation indefinitely (it
+  retries rather than failing)
 
 To smoke-test in a local VM (Apple Silicon):
 
