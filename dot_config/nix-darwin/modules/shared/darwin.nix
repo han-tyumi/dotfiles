@@ -66,9 +66,6 @@
       "zed"
       "zen"
     ];
-    masApps = {
-      Amphetamine = 937984704;
-    };
     onActivation = {
       autoUpdate = true;
       upgrade = true;

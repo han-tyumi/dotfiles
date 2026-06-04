@@ -135,7 +135,8 @@ Per-machine secrets:
 - **work-only machines need no `key.txt`** — nothing encrypted is applied
 - **App Store**: sign in before bootstrapping any machine whose layers include
   `masApps` — an unsigned `mas` hangs the first activation indefinitely (it
-  retries rather than failing)
+  retries rather than failing). For that reason `masApps` live only in layers
+  that imply a signed-in Apple ID (personal), never in shared
 
 To smoke-test in a local VM (Apple Silicon):
 
