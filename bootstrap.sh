@@ -2,8 +2,9 @@
 # Bootstrap a fresh Mac from this repo:
 #   bash -c "$(curl -fsSL https://raw.githubusercontent.com/han-tyumi/dotfiles/main/bootstrap.sh)"
 #
-# Installs chezmoi and runs `chezmoi init --apply`, which prompts for layers and
-# overlays, then triggers the run_once scripts (Homebrew, Nix, nix-darwin).
+# Installs chezmoi, prompts for layers/overlays, generates per-machine SSH keys,
+# gates on the age identity when the machine needs it, clones overlay repos, then
+# applies — which triggers the run_once scripts (Homebrew, Nix, nix-darwin).
 set -euo pipefail
 
 REPO="han-tyumi"
@@ -32,12 +33,47 @@ for name in $ssh_keys; do
   cat "$key.pub"
 done
 
-# Machine secrets that cannot be generated are provisioned by hand; warn early.
-if [ ! -f "$HOME/key.txt" ]; then
-  echo ">> NOTE: ~/key.txt (age identity) is missing — required before enabling the personal layer."
-fi
+# A throwaway chezmoi runs the bootstrap; the applied config installs the real
+# one via Nix later.
+bindir="$(mktemp -d)"
+trap 'rm -rf "$bindir"' EXIT
+sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$bindir"
+chezmoi="$bindir/chezmoi"
 
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply "$REPO"
+# Prompts for layers/overlays and clones the source, without applying yet.
+"$chezmoi" init "$REPO"
+
+layers="$("$chezmoi" execute-template '{{ .layerList | join " " }}')"
+# shellcheck disable=SC2016 # $-expressions are Go template syntax, not shell
+overlays="$("$chezmoi" execute-template \
+  '{{ range $name, $url := .overlayUrls }}{{ if has $name $.layerList }}{{ $name }}={{ $url }}{{ "\n" }}{{ end }}{{ end }}')"
+
+# The personal layer decrypts secrets at apply time, so the identity must exist first.
+case " $layers " in
+  *" personal "*)
+    while [ ! -f "$HOME/key.txt" ]; do
+      read -r -p ">> Place the age identity at ~/key.txt (Bitwarden or backup USB), then press Enter..." _
+    done
+    ;;
+esac
+
+# Clone enabled overlays before the first apply so the initial rebuild already
+# includes them (chezmoi's own external clone has no ssh auth configured yet).
+while IFS='=' read -r name url; do
+  [ -n "$name" ] || continue
+  dir="$HOME/.config/nix-darwin/overlays/$name"
+  if [ -d "$dir/.git" ]; then
+    echo ">> Overlay '$name' already cloned; skipping."
+    continue
+  fi
+  read -r -p ">> SSH key in ~/.ssh to clone overlay '$name' with: " keyname
+  read -r -p ">> Register ~/.ssh/$keyname.pub with the overlay repo's account, then press Enter..." _
+  mkdir -p "$(dirname "$dir")"
+  GIT_SSH_COMMAND="ssh -i $HOME/.ssh/$keyname" git clone "$url" "$dir"
+  git -C "$dir" config core.sshCommand "ssh -i $HOME/.ssh/$keyname"
+done <<< "$overlays"
+
+# Applies everything; run_once scripts install Homebrew, Nix, and nix-darwin.
+"$chezmoi" apply
 
 echo ">> Bootstrap complete. Open a new shell, then use 'apploi' for rebuilds."
-echo ">> Overlay layers (if any) document their own first-clone step in their README."
