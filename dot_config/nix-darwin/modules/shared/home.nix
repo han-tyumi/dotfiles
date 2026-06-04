@@ -65,7 +65,6 @@ in
     direnv = {
       enable = true;
       silent = true;
-      nix-direnv.enable = true;
       stdlib = ''
         : "''${XDG_CACHE_HOME:="$HOME/.cache"}"
         declare -A direnv_layout_dirs
@@ -145,9 +144,6 @@ in
     zoxide.enable = true;
     zsh = {
       enable = true;
-      envExtra = ''
-        eval "$(direnv hook zsh)"
-      '';
       profileExtra = ''
         eval "$(/opt/homebrew/bin/brew shellenv)"
         eval "$(mise activate zsh --shims)"
