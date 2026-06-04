@@ -78,9 +78,11 @@
     "https://www.schemastore.org/": true
   },
 
-{{ range .layerList -}}
-{{ $fragment := joinPath $.chezmoi.homeDir ".config/nix-darwin/overlays" . "vscode-settings.jsonc" -}}
+{{ range $layer := .layerList -}}
+{{ range $root := list "modules" "overlays" -}}
+{{ $fragment := joinPath $.chezmoi.homeDir ".config/nix-darwin" $root $layer "vscode-settings.jsonc" -}}
 {{ if stat $fragment }}{{ output "cat" $fragment }}{{ end -}}
+{{ end -}}
 {{ end }}
   // Activity Bar
   "workbench.activityBar.compact": true,

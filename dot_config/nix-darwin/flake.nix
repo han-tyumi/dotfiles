@@ -77,19 +77,21 @@
       testFor =
         layers:
         mkSystem {
-          inherit (machine) username;
-          hostname = "test";
+          inherit (machine) username hostname;
           inherit layers;
         };
     in
     {
+      # The machine's own attr is merged last so it always wins a name collision
+      # with a test fixture.
       darwinConfigurations = {
-        ${machine.hostname} = mkSystem machine;
-
         test-minimal = testFor [ ];
         test-all = testFor (lib.unique (inRepoLayers ++ overlayLayers));
       }
-      // lib.listToAttrs (map (name: lib.nameValuePair "test-${name}" (testFor [ name ])) inRepoLayers);
+      // lib.listToAttrs (map (name: lib.nameValuePair "test-${name}" (testFor [ name ])) inRepoLayers)
+      // {
+        ${machine.hostname} = mkSystem machine;
+      };
 
       # Expose the package set, including overlays, for convenience.
       darwinPackages = self.darwinConfigurations.${machine.hostname}.pkgs;

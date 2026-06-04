@@ -52,6 +52,9 @@ Caveats:
   newly-ignored targets): manually `rm` leftovers like
   `~/.config/nix-darwin/private.nix`; Homebrew's `cleanup = "zap"` removes the
   casks/brews itself.
+- Renaming the Mac (LocalHostName) breaks `darwin-rebuild`'s attr lookup until the
+  next `chezmoi apply` re-renders `machine.nix` — the failure is loud, the fix is
+  one apply.
 - On a fresh machine, clone overlay repos manually once before the first rebuild —
   chezmoi's own external clone may lack ssh auth, and external clone failures are
   non-fatal and easy to miss (the flake just builds without the layer until the clone
