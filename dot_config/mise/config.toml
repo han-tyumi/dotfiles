@@ -19,8 +19,6 @@ zig = "latest"
 "npm:@google/gemini-cli" = "latest"
 "npm:git-removed-branches" = "latest"
 
-"pipx:openconnect-sso[full]" = "latest"
-
 [settings]
 pin = true
 idiomatic_version_file_enable_tools = []

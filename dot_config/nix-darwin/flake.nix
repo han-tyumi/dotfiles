@@ -29,9 +29,10 @@
       # Per-machine profile selection, rendered by chezmoi from its data.
       profiles = import ./profiles.nix;
 
-      # Guarded so a machine whose work overlay isn't cloned yet still builds.
-      workDarwin = ./modules/work/darwin.nix;
-      workHome = ./modules/work/home.nix;
+      # The work overlay is a chezmoi-cloned external (chmmpagne/dotfiles);
+      # guarded so a machine whose clone hasn't landed yet still builds.
+      workDarwin = ./work/darwin.nix;
+      workHome = ./work/home.nix;
 
       mkSystem =
         profiles:

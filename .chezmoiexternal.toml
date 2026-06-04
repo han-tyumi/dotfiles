@@ -1,3 +1,4 @@
+{{ if .personal -}}
 # `v up` self-updates the V repo, so chezmoi doesn't need to refresh it.
 ["v"]
 type = "git-repo"
@@ -10,6 +11,18 @@ url = "https://github.com/roc-lang/roc/releases/download/nightly/roc_nightly-mac
 stripComponents = 1
 refreshPeriod = "24h"
 
+{{ end -}}
+{{ if .work -}}
+# Work overlay (private repo); the nix-darwin flake imports work/{darwin,home}.nix
+# from the clone when profiles.work is enabled. Not shallow: the clone doubles as
+# the working copy for editing and pushing work skills.
+[".config/nix-darwin/work"]
+type = "git-repo"
+url = "git@github.com:chmmpagne/dotfiles.git"
+refreshPeriod = "168h"
+pull.args = ["--ff-only"]
+
+{{ end -}}
 # Place under nu's default scripts dir so `use community/...` resolves via NU_LIB_DIRS.
 ["Library/Application Support/nushell/scripts/community"]
 type = "git-repo"

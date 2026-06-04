@@ -105,6 +105,14 @@ in
       };
       includes = [
         { path = "${config.xdg.configHome}/${gitAliasFilePath}"; }
+
+        # Fetch auth for the work overlay clone, needed before the work
+        # layer's own git config has ever been applied.
+        {
+          condition = "hasconfig:remote.*.url:git@github.com:chmmpagne/**";
+          contentSuffix = "chmmpagne";
+          contents.core.sshCommand = "ssh -i ~/.ssh/git_chmmpagne";
+        }
       ];
       ignores = [
         ".claude/*.local.md"

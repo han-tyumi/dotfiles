@@ -1,1 +1,4 @@
 CLAUDE.md
+{{ if not .personal -}}
+.config/nix-darwin/private.nix
+{{ end -}}
