@@ -12,73 +12,80 @@ This is a personal dotfiles repository managed by chezmoi for macOS (specificall
 
 ## Architecture
 
-### Profiles
+### Layers
 
-Configuration is layered into three profiles, selected per machine by chezmoi data
-(`personal` and `work` booleans, both prompted at `chezmoi init`, default `true`):
+Configuration is composed from **layers**, selected per machine by chezmoi data:
 
-- **shared** — always applied: dev core plus every-machine apps
-- **personal** — hobby/games/media, personal git identity, `private.nix` consumers, V/Roc
-- **work** — lives in a separate **private repo** (`chmmpagne/dotfiles`), cloned by a
-  work-gated chezmoi external to `~/.config/nix-darwin/work/`: work git identity,
-  work casks, openconnect tooling (mise `conf.d` fragment), and work Claude skills
-  (Home Manager symlinks them into `~/.claude/skills/` via `mkOutOfStoreSymlink`,
-  so the clone stays the live, editable copy)
+- **shared** (`modules/shared/`) — always applied: dev core plus every-machine apps
+- **in-repo layers** (`modules/<name>/`) — e.g. `personal`: hobby/games/media, personal
+  git identity, `private.nix` consumers, V/Roc, personal mise runtimes
+- **overlay layers** (`overlays/<name>/`) — private repos declared per machine in
+  chezmoi data and cloned by a chezmoi external next to the flake. Their
+  `darwin.nix`/`home.nix` are imported when the layer is enabled, and chezmoi
+  templates splice optional fragments from them (e.g. `vscode-settings.jsonc` into
+  the VS Code settings). Home Manager symlinks an overlay's `skills/` into
+  `~/.claude/skills/` via `mkOutOfStoreSymlink`, so the clone stays the live,
+  editable copy.
 
-Any combination works (shared-only, +personal, +work, +both). The flags flow from
-chezmoi data into the flake through the generated `profiles.nix`:
+A layer may exist in-repo, as an overlay, or both; any combination of layers works.
+Selection flows from chezmoi data into the flake through the generated `machine.nix`:
 
 ```bash
-chezmoi init --promptBool personal=false,work=true   # change a machine's profiles
-chezmoi data                                          # inspect current flags
+# Space-separated; overlays are name=url pairs.
+chezmoi init --promptString "layers=personal work,overlays=work=git@github.com:user/repo.git"
+chezmoi data   # inspect current selection
 ```
 
-`profiles.nix` derives `hostname` from `scutil --get LocalHostName` (what
+`machine.nix` derives `hostname` from `scutil --get LocalHostName` (what
 `darwin-rebuild` matches flake attrs against), not `.chezmoi.hostname` — they differ.
 
-The flake also exposes eval-only fixtures `test-{minimal,personal,work,full}` covering
-every combination:
+The flake exposes eval-only fixtures: `test-minimal` (shared only), `test-<name>` for
+each in-repo layer, and `test-all` (every in-repo layer plus any overlay clone present
+on disk):
 
 ```bash
-nix eval ~/.config/nix-darwin#darwinConfigurations.test-minimal.system.drvPath
+nix eval ~/.config/nix-darwin#darwinConfigurations.test-all.system.drvPath
 ```
 
 Caveats:
-- Toggling a profile **off** orphans already-applied files (chezmoi never removes
-  newly-ignored targets): manually `rm ~/.config/nix-darwin/private.nix` (non-personal)
-  and similar leftovers; Homebrew's `cleanup = "zap"` removes the casks/brews itself.
-- On a fresh work machine the overlay clone needs the `chmmpagne/**` ssh include from
-  the shared git config, which only exists after the first rebuild — so the first
-  bootstrap may need a second `chezmoi apply --refresh-externals` + rebuild pass.
-  External clone failures are non-fatal and easy to miss; the flake's `pathExists`
-  guard just builds without the work layer until the clone lands.
+- Toggling a layer **off** orphans already-applied files (chezmoi never removes
+  newly-ignored targets): manually `rm` leftovers like
+  `~/.config/nix-darwin/private.nix`; Homebrew's `cleanup = "zap"` removes the
+  casks/brews itself.
+- On a fresh machine, clone overlay repos manually once before the first rebuild —
+  chezmoi's own external clone may lack ssh auth, and external clone failures are
+  non-fatal and easy to miss (the flake just builds without the layer until the clone
+  lands). Each overlay repo's README documents its exact bootstrap.
 
 ### Configuration Hierarchy
 
 1. **Chezmoi Layer** (root level): Manages all dotfiles with templating support
-   - `.chezmoi.toml.tmpl`: Main chezmoi config with age encryption + profile prompts
-   - `.chezmoiexternal.toml`: External resources (git repos, archives), profile-gated
-   - `.chezmoiignore`: Profile-gated target exclusions
+   - `.chezmoi.toml.tmpl`: Main chezmoi config with age encryption + layer prompts
+   - `.chezmoiexternals/`: External resources (git repos, archives), one file per
+     concern; plain TOML except the data-driven overlays template
+   - `.chezmoilayers/<layer>.ignore`: Targets owned by a layer — regular files and
+     external targets alike — ignored (and the externals skipped) when the layer is off
+   - `.chezmoiignore`: Always-ignored paths plus a generic loop over `.chezmoilayers/`
 
 2. **Nix Darwin Layer** (`dot_config/nix-darwin/`): System configuration
-   - `flake.nix`: Inputs/outputs; assembles modules per `profiles.nix`
-   - `profiles.nix.tmpl`: Per-machine hostname/username/profile flags (chezmoi-rendered)
+   - `flake.nix`: Inputs/outputs; assembles modules per `machine.nix`
+   - `machine.nix.tmpl`: Per-machine hostname/username/layer list (chezmoi-rendered)
    - `modules/shared/{darwin,home}.nix`: Always-on system + Home Manager config
-   - `modules/personal/{darwin,home}.nix`: Personal-profile config
-   - `work/{darwin,home}.nix`: Work overlay (external clone, not in this repo)
+   - `modules/<layer>/{darwin,home}.nix`: In-repo layer config (e.g. `personal`)
+   - `overlays/<layer>/{darwin,home}.nix`: Overlay layers (external clones, not in this repo)
    - `private.nix`: Private user data (git-ignored)
    - `encrypted_private.nix.age`: Encrypted private configuration
 
 3. **Tool Configuration Layer** (`dot_config/`): Individual tool configs
-   - `mise/config.toml`: Language runtime versions
+   - `mise/config.toml`: Language runtime versions (personal/work runtimes layer in via `conf.d` fragments)
    - `starship.toml`: Shell prompt configuration
-   - `neovide/`: Editor configs
 
 ### Nix Darwin Structure
 
 The Nix configuration uses a flake-based setup:
 - `flake.nix` defines inputs (nixpkgs, nix-darwin, home-manager) and a `mkSystem`
-  that imports `modules/shared` plus `modules/personal` / `work` per the profile flags
+  that imports `modules/shared` plus each enabled layer's modules from `modules/<name>`
+  and `overlays/<name>` (missing files skipped)
 - `*/darwin.nix` modules handle system-level concerns:
   - Homebrew taps, brews, casks, and Mac App Store apps
   - System defaults (Dark mode, finder settings, etc.)
@@ -88,8 +95,9 @@ The Nix configuration uses a flake-based setup:
   - Git configuration with conditional includes for work/personal
   - Development tools and their settings
   - Session variables and PATH configuration
-- List options (casks, packages, `git.includes`) merge across modules; the work module
-  sets the global git identity only under `lib.mkIf (!profiles.personal)`
+- List options (casks, packages, `git.includes`) merge across modules; a layer can
+  claim a default-when-absent option with `lib.mkIf` on `machine.layers` membership
+  (e.g. an overlay's git identity becomes global default when `personal` is off)
 
 ### Run Scripts
 
@@ -99,7 +107,10 @@ Chezmoi uses special script naming conventions:
   - `install-2.sh`: Installs Nix Darwin
 - `run_onchange_after_*.tmpl`: Scripts that run when tracked files change
   - `1-mise-config.toml.tmpl`: Updates mise plugins and tools
-  - `4-v.sh.tmpl`: Updates V; renders empty (skipped) unless the personal profile is on
+- `.chezmoiscripts/<layer>/`: Layer-owned scripts; they derive their layer name from
+  their own path (`.chezmoi.sourceFile`) rather than hardcoding it
+  - `personal/run_onchange_after_v.sh.tmpl`: Updates V; renders empty (skipped)
+    unless `~/v` exists (the V external)
 
 ## Common Commands
 
@@ -152,14 +163,11 @@ chezmoi add <file>
 
 ### Git Configuration
 
-This repository has two Git identities:
-- **Personal**: Default identity (han-tyumi) — from the personal profile
-- **Work**: chmmpagne, activated for `~/Code/work/`, `Revvity/**` and `chmmpagne/**`
-  remotes — from the work overlay; it becomes the global default on work-only machines
-
-SSH keys are identity-specific:
-- Personal: `~/.ssh/git_han-tyumi`
-- Work: `~/.ssh/git_chmmpagne`
+Git identities are provided by layers:
+- **Personal layer**: default identity (han-tyumi), SSH key `~/.ssh/git_han-tyumi`
+- **Overlay layers** can add identities scoped via `includeIf` (directory and remote
+  patterns) and become the global default when the personal layer is absent — see the
+  overlay repo's README
 
 ## Key Technical Details
 
@@ -189,11 +197,13 @@ All shells integrate:
 
 ### External Resources
 
-External resources are managed in `.chezmoiexternal.toml` (a template, profile-gated):
-- **V language** (personal): Git repo clone at `~/v`
-- **Roc language** (personal): Nightly builds for Apple Silicon (refreshed every 24h)
-- **Work overlay** (work): private `chmmpagne/dotfiles` clone at `~/.config/nix-darwin/work`
-- **Nushell community scripts**: `nu_scripts` clone under the nushell scripts dir
+External resources are managed in `.chezmoiexternals/`:
+- `personal.toml` — **V language** (git clone at `~/v`) and **Roc** nightlies; pure
+  TOML, gated by `.chezmoilayers/personal.ignore`
+- `overlays.toml.tmpl` — per-machine overlay repos (from chezmoi data) cloned to
+  `~/.config/nix-darwin/overlays/<name>`
+- `shared.toml` — **Nushell community scripts** (`nu_scripts`) under the nushell
+  scripts dir
 
 ### Neovim Configuration
 
@@ -202,7 +212,7 @@ Neovim config is managed as an external git submodule (`dot_config/external_nvim
 ## Important Notes
 
 - The flake's machine attr is generated per host from `scutil --get LocalHostName`
-  (via `profiles.nix`), so `darwin-rebuild switch --flake ~/.config/nix-darwin` needs
+  (via `machine.nix`), so `darwin-rebuild switch --flake ~/.config/nix-darwin` needs
   no explicit attribute
 - Node.js is pinned to version 24 via nixpkgs overlay
 - Homebrew auto-updates and upgrades on activation

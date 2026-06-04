@@ -1,0 +1,12 @@
+{{ range $name, $url := .overlayUrls -}}
+{{ if has $name $.layerList -}}
+# Overlay layers clone next to the flake, which imports their modules when the
+# layer is enabled. Not shallow: the clone doubles as the editing working copy.
+[".config/nix-darwin/overlays/{{ $name }}"]
+type = "git-repo"
+url = "{{ $url }}"
+refreshPeriod = "168h"
+pull.args = ["--ff-only"]
+
+{{ end -}}
+{{ end -}}

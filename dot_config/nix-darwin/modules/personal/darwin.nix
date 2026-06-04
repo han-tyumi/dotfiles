@@ -1,13 +1,19 @@
-{ ... }:
+{ machine, ... }:
 
 {
   homebrew = {
+    taps = [
+      "knope-dev/tap"
+    ];
     brews = [
       "exercism"
       "ferium"
+      "golangci-lint"
+      "knope"
     ];
     casks = [
-      "firefox"
+      "claude"
+      "eqmac"
       "gimp"
       "marginnote"
       "modrinth"
@@ -15,7 +21,7 @@
       "prismlauncher"
       "private-internet-access"
       "steam"
-      "xmind"
+      "transmit"
       "zoom"
     ];
     masApps = {
@@ -24,4 +30,6 @@
       "Steam Link" = 1246969117;
     };
   };
+
+  users.users.${machine.username}.description = "Han-Tyumi";
 }

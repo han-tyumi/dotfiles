@@ -1,0 +1,4 @@
+.config/mise/conf.d/personal.toml
+.config/nix-darwin/private.nix
+roc
+v

@@ -78,11 +78,10 @@
     "https://www.schemastore.org/": true
   },
 
-  // Atlassian
-  "atlascode.bitbucket.enabled": false,
-  "atlascode.jira.enabled": true,
-  "atlascode.rovodev.enabled": false,
-
+{{ range .layerList -}}
+{{ $fragment := joinPath $.chezmoi.homeDir ".config/nix-darwin/overlays" . "vscode-settings.jsonc" -}}
+{{ if stat $fragment }}{{ output "cat" $fragment }}{{ end -}}
+{{ end }}
   // Activity Bar
   "workbench.activityBar.compact": true,
   "workbench.activityBar.location": "top",

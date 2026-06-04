@@ -7,10 +7,14 @@ in
 {
   home = {
     sessionPath = [
+      "$CARGO_HOME/bin"
+      "$HOME/.dotnet/tools"
       "$HOME/.config/v-analyzer/bin"
       "$HOME/roc"
     ];
     sessionVariables = {
+      CARGO_HOME = "$HOME/.cargo";
+      RUSTUP_HOME = "$HOME/.rustup";
       GH_TOKEN = private.githubToken;
       GITHUB_PERSONAL_ACCESS_TOKEN = private.githubToken;
     };

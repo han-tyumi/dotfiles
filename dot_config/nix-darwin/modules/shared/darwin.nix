@@ -1,7 +1,7 @@
 {
   pkgs,
   inputs,
-  profiles,
+  machine,
   ...
 }:
 
@@ -37,19 +37,14 @@
 
     trusted-users = [
       "root"
-      profiles.username
+      machine.username
     ];
   };
 
   homebrew = {
     enable = true;
-    taps = [
-      "knope-dev/tap"
-    ];
     brews = [
       "git-spice"
-      "golangci-lint"
-      "knope"
       "mas"
       "mise"
       "poppler"
@@ -60,14 +55,10 @@
     casks = [
       "arc"
       "bitwarden"
-      "claude"
       "docker-desktop"
-      "eqmac"
-      "keycastr"
       "postgres-app"
       "raycast"
       "the-unarchiver"
-      "transmit"
       "visual-studio-code"
       "zed"
       "zen"
@@ -83,10 +74,9 @@
     };
   };
 
-  users.users.${profiles.username} = {
-    name = profiles.username;
-    description = "Han-Tyumi";
-    home = "/Users/${profiles.username}";
+  users.users.${machine.username} = {
+    name = machine.username;
+    home = "/Users/${machine.username}";
     shell = pkgs.zsh;
     packages = with pkgs; [
       act
@@ -95,8 +85,6 @@
       coreutils
       chezmoi
       cmake
-      devenv
-      ejson
       ffmpeg
       fontforge
       gnupg
@@ -104,23 +92,18 @@
       lua51Packages.lua
       lua51Packages.luarocks
       lua-language-server
-      nix-health
       nixd
       nixfmt
-      nurl
-      passh
-      php
       pkg-config
       shellcheck
       shfmt
-      unison-ucm
       github-mcp-server
       wget
     ];
   };
 
   system = {
-    primaryUser = profiles.username;
+    primaryUser = machine.username;
     defaults = {
       NSGlobalDomain = {
         AppleShowAllFiles = true;

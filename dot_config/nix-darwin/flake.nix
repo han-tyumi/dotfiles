@@ -1,5 +1,5 @@
 {
-  description = "Han-Tyumi's Darwin System";
+  description = "Darwin system configuration";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-25.11-darwin";
@@ -26,18 +26,25 @@
     let
       inherit (nixpkgs) lib;
 
-      # Per-machine profile selection, rendered by chezmoi from its data.
-      profiles = import ./profiles.nix;
+      # Per-machine identity and enabled layers, rendered by chezmoi from its data.
+      machine = import ./machine.nix;
 
-      # The work overlay is a chezmoi-cloned external (chmmpagne/dotfiles);
-      # guarded so a machine whose clone hasn't landed yet still builds.
-      workDarwin = ./work/darwin.nix;
-      workHome = ./work/home.nix;
+      # A layer named N can ship modules in-repo (modules/N) and/or from a private
+      # overlay clone (overlays/N, a chezmoi-managed external). Missing files are
+      # skipped, so a machine whose overlay clone hasn't landed yet still builds.
+      layerModules =
+        fileName: layers:
+        builtins.filter builtins.pathExists (
+          lib.concatMap (name: [
+            (./modules + "/${name}/${fileName}")
+            (./overlays + "/${name}/${fileName}")
+          ]) layers
+        );
 
       mkSystem =
-        profiles:
+        machine:
         nix-darwin.lib.darwinSystem {
-          specialArgs = { inherit inputs profiles; };
+          specialArgs = { inherit inputs machine; };
           modules = [
             ./modules/shared/darwin.nix
             home-manager.darwinModules.home-manager
@@ -47,38 +54,44 @@
                 useUserPackages = true;
                 backupFileExtension = "backup";
 
-                users.${profiles.username}.imports = [
+                users.${machine.username}.imports = [
                   ./modules/shared/home.nix
                 ]
-                ++ lib.optional profiles.personal ./modules/personal/home.nix
-                ++ lib.optional (profiles.work && builtins.pathExists workHome) workHome;
+                ++ layerModules "home.nix" machine.layers;
 
-                extraSpecialArgs = { inherit inputs profiles; };
+                extraSpecialArgs = { inherit inputs machine; };
               };
             }
           ]
-          ++ lib.optional profiles.personal ./modules/personal/darwin.nix
-          ++ lib.optional (profiles.work && builtins.pathExists workDarwin) workDarwin;
+          ++ layerModules "darwin.nix" machine.layers;
         };
 
-      # Eval-only fixtures covering every profile combination.
-      testProfiles = personal: work: {
-        hostname = "test";
-        username = profiles.username;
-        inherit personal work;
-      };
+      # Eval-only fixtures: every in-repo layer alone, plus everything at once.
+      onlyDirs = lib.filterAttrs (_: type: type == "directory");
+      inRepoLayers = lib.filter (name: name != "shared") (
+        builtins.attrNames (onlyDirs (builtins.readDir ./modules))
+      );
+      overlayLayers = lib.optionals (builtins.pathExists ./overlays) (
+        builtins.attrNames (onlyDirs (builtins.readDir ./overlays))
+      );
+      testFor =
+        layers:
+        mkSystem {
+          inherit (machine) username;
+          hostname = "test";
+          inherit layers;
+        };
     in
     {
       darwinConfigurations = {
-        ${profiles.hostname} = mkSystem profiles;
+        ${machine.hostname} = mkSystem machine;
 
-        test-minimal = mkSystem (testProfiles false false);
-        test-personal = mkSystem (testProfiles true false);
-        test-work = mkSystem (testProfiles false true);
-        test-full = mkSystem (testProfiles true true);
-      };
+        test-minimal = testFor [ ];
+        test-all = testFor (lib.unique (inRepoLayers ++ overlayLayers));
+      }
+      // lib.listToAttrs (map (name: lib.nameValuePair "test-${name}" (testFor [ name ])) inRepoLayers);
 
       # Expose the package set, including overlays, for convenience.
-      darwinPackages = self.darwinConfigurations.${profiles.hostname}.pkgs;
+      darwinPackages = self.darwinConfigurations.${machine.hostname}.pkgs;
     };
 }

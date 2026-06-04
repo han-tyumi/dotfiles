@@ -1,0 +1,13 @@
+# Gated by the matching .chezmoilayers manifest when this file's layer is off.
+
+# `v up` self-updates the V repo, so chezmoi doesn't need to refresh it.
+["v"]
+type = "git-repo"
+url = "https://github.com/vlang/v.git"
+clone.args = ["--depth", "1"]
+
+["roc"]
+type = "archive"
+url = "https://github.com/roc-lang/roc/releases/download/nightly/roc_nightly-macos_apple_silicon-latest.tar.gz"
+stripComponents = 1
+refreshPeriod = "24h"

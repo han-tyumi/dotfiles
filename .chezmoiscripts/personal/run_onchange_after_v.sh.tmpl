@@ -1,0 +1,8 @@
+{{ $layer := base (dir .chezmoi.sourceFile) -}}
+{{ if stat (joinPath .chezmoi.homeDir "v") -}}
+#!/bin/bash
+
+# {{ include (printf ".chezmoiexternals/%s.toml" $layer) | sha256sum }}
+
+v up
+{{ end -}}

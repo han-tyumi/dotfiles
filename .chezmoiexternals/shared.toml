@@ -1,0 +1,7 @@
+# Place under nu's default scripts dir so `use community/...` resolves via NU_LIB_DIRS.
+["Library/Application Support/nushell/scripts/community"]
+type = "git-repo"
+url = "https://github.com/nushell/nu_scripts.git"
+refreshPeriod = "24h"
+clone.args = ["--depth", "1"]
+pull.args = ["--ff-only"]

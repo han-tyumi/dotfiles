@@ -8,6 +8,14 @@
 let
   gitAliasFileName = "gitalias.txt";
   gitAliasFilePath = "gitalias/${gitAliasFileName}";
+
+  # generated from `nix run nixpkgs#nurl https://github.com/catppuccin/delta`
+  catppuccinDelta = pkgs.fetchFromGitHub {
+    owner = "catppuccin";
+    repo = "delta";
+    rev = "011516f5d14f66b771b3e716f29c77231e008c74";
+    hash = "sha256-lztkxX9O41YossvRzpR7tqxMhDNT1Efy2JvkCwtsiXQ=";
+  };
 in
 
 {
@@ -15,17 +23,9 @@ in
     enableNixpkgsReleaseCheck = false;
     sessionPath = [
       "/opt"
-      "$CARGO_HOME/bin"
       "$HOME/.local/bin"
-      "$HOME/.dotnet/tools"
     ];
-    sessionVariables = {
-      DUNE_CACHE = "enabled";
-      CARGO_HOME = "$HOME/.cargo";
-      RUSTUP_HOME = "$HOME/.rustup";
-    };
     shellAliases = {
-      ai = "aichat";
       cat = "bat";
       g = "git";
       gs = "git-spice";
@@ -53,7 +53,6 @@ in
   };
 
   programs = {
-    aichat.enable = true;
     atuin.enable = true;
     bat.enable = true;
     broot.enable = true;
@@ -61,6 +60,7 @@ in
     delta = {
       enable = true;
       enableGitIntegration = true;
+      options.features = "catppuccin-mocha";
     };
     direnv = {
       enable = true;
@@ -99,20 +99,10 @@ in
         #   editor = "code --wait --add";
         # };
         push.autoSetupRemote = true;
-        alias = {
-          resetu = "reset-to-upstream";
-        };
       };
       includes = [
         { path = "${config.xdg.configHome}/${gitAliasFilePath}"; }
-
-        # Fetch auth for the work overlay clone, needed before the work
-        # layer's own git config has ever been applied.
-        {
-          condition = "hasconfig:remote.*.url:git@github.com:chmmpagne/**";
-          contentSuffix = "chmmpagne";
-          contents.core.sshCommand = "ssh -i ~/.ssh/git_chmmpagne";
-        }
+        { path = "${catppuccinDelta}/catppuccin.gitconfig"; }
       ];
       ignores = [
         ".claude/*.local.md"
@@ -124,8 +114,6 @@ in
         "mise.local.toml"
       ];
     };
-    git-cliff.enable = true;
-    git-credential-oauth.enable = true;
     intelli-shell.enable = true;
     java = {
       enable = true;

@@ -1,4 +1,7 @@
 CLAUDE.md
-{{ if not .personal -}}
-.config/nix-darwin/private.nix
+{{ range glob (joinPath .chezmoi.sourceDir ".chezmoilayers/*.ignore") -}}
+{{ $layer := trimSuffix ".ignore" (base .) -}}
+{{ if not (has $layer $.layerList) -}}
+{{ include (joinPath ".chezmoilayers" (base .)) -}}
+{{ end -}}
 {{ end -}}

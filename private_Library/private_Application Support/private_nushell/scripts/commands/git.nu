@@ -40,6 +40,19 @@ export def gpx [
   }
 }
 
+# Hard-reset the current branch to its upstream.
+@search-terms "reset" "upstream"
+@example "Reset the branch to match its upstream" { grhx }
+export def grhx []: nothing -> nothing {
+  let upstream = (^git rev-parse --abbrev-ref '@{u}' | complete)
+  if $upstream.exit_code != 0 {
+    print "No upstream set. Run `git push -u <remote> <branch>` first."
+    return
+  }
+
+  ^git reset --hard '@{u}'
+}
+
 # List, switch, create, or interactively delete branches.
 #
 # Bare:     list branches with tracking info.

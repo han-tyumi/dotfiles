@@ -1,23 +1,8 @@
 [tools]
-bun = "latest"
-crystal = "latest"
-deno = "latest"
-dotnet = ["latest", "9"]
-elixir = "1.18"
-erlang = "latest"
-gleam = "latest"
-go = "latest"
-just = "latest"
-kotlin = "2"
 node = "latest"
-pixi = "latest"
-rust = "stable"
 usage = "latest"
-zig = "latest"
 
-"npm:@biomejs/biome" = "2.1.2"
-"npm:@google/gemini-cli" = "latest"
-"npm:git-removed-branches" = "latest"
+"npm:@biomejs/biome" = "latest"
 
 [settings]
 pin = true

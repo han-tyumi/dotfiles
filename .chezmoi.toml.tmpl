@@ -1,6 +1,8 @@
-{{- /* Prompt text doubles as the --promptBool key: `chezmoi init --promptBool personal=false,work=true`. */ -}}
-{{- $personal := promptBoolOnce . "personal" "personal" true -}}
-{{- $work := promptBoolOnce . "work" "work" true -}}
+{{- /* Prompt text doubles as the --promptString key, e.g.
+`chezmoi init --promptString "layers=personal work,overlays=work=git@github.com:user/repo.git"`.
+Both prompts are space-separated; overlays entries are name=url pairs. */ -}}
+{{- $layers := promptStringOnce . "layers" "layers" -}}
+{{- $overlays := promptStringOnce . "overlays" "overlays" -}}
 
 encryption = "age"
 [age]
@@ -10,5 +12,11 @@ encryption = "age"
   command = "zsh"
   args = ["-lc", "nu"]
 [data]
-  personal = {{ $personal }}
-  work = {{ $work }}
+  layers = {{ $layers | quote }}
+  overlays = {{ $overlays | quote }}
+  layerList = [{{ range $index, $layer := splitList " " $layers | compact }}{{ if $index }}, {{ end }}{{ $layer | quote }}{{ end }}]
+[data.overlayUrls]
+{{- range splitList " " $overlays | compact }}
+{{- $pair := splitn "=" 2 . }}
+  {{ $pair._0 }} = {{ $pair._1 | quote }}
+{{- end }}
