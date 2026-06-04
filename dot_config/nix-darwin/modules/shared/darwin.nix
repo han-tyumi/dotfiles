@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   inputs,
   machine,
@@ -59,6 +60,7 @@
       "arc"
       "bitwarden"
       "docker-desktop"
+      "keepingyouawake"
       "postgres-app"
       "raycast"
       "the-unarchiver"
@@ -72,6 +74,10 @@
       cleanup = "zap";
       extraFlags = [ "--force-cleanup" ];
     };
+
+    # An unsigned mas hangs activation waiting on the sign-in dialog, so
+    # machines without an App Store account drop masApps from every layer.
+    masApps = lib.mkIf (!machine.appStore) (lib.mkForce { });
   };
 
   users.users.${machine.username} = {

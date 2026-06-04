@@ -77,7 +77,12 @@
       testFor =
         layers:
         mkSystem {
-          inherit (machine) username hostname nixbldGid;
+          inherit (machine)
+            username
+            hostname
+            nixbldGid
+            appStore
+            ;
           inherit layers;
         };
     in

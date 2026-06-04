@@ -10,6 +10,10 @@
   # Before Nix is installed the group doesn't exist yet, so default to the
   # modern installer's value.
   nixbldGid = {{ output "bash" "-c" "dscl . -read /Groups/nixbld PrimaryGroupID 2>/dev/null | awk '{print $2}'" | trim | default "350" }};
+
+  # masApps need an App Store sign-in; headless/test bootstraps can skip them
+  # by applying with DOTFILES_NO_APP_STORE=1 (re-applying without it restores).
+  appStore = {{ ne (env "DOTFILES_NO_APP_STORE") "1" }};
   layers = [
 {{- range .layerList }}
     {{ . | quote }}

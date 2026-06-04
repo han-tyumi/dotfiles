@@ -138,6 +138,10 @@ Per-machine secrets:
   retries rather than failing). For that reason `masApps` live only in layers
   that imply a signed-in Apple ID (personal), never in shared
 
+For headless/unattended test bootstraps, `DOTFILES_NO_APP_STORE=1` at apply time
+renders `machine.nix` with `appStore = false`, dropping all `masApps` (an unsigned
+`mas` would hang activation waiting on the sign-in dialog).
+
 To smoke-test in a local VM (Apple Silicon):
 
 ```bash
