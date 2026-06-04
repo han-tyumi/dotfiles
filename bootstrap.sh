@@ -43,19 +43,19 @@ chezmoi="$bindir/chezmoi"
 # Prompts for layers/overlays and clones the source, without applying yet.
 "$chezmoi" init "$REPO"
 
-layers="$("$chezmoi" execute-template '{{ .layerList | join " " }}')"
 # shellcheck disable=SC2016 # $-expressions are Go template syntax, not shell
 overlays="$("$chezmoi" execute-template \
   '{{ range $name, $url := .overlayUrls }}{{ if has $name $.layerList }}{{ $name }}={{ $url }}{{ "\n" }}{{ end }}{{ end }}')"
 
-# The personal layer decrypts secrets at apply time, so the identity must exist first.
-case " $layers " in
-  *" personal "*)
-    while [ ! -f "$HOME/key.txt" ]; do
-      read -r -p ">> Place the age identity at ~/key.txt (Bitwarden or backup USB), then press Enter..." _
-    done
-    ;;
-esac
+# Encrypted targets are decrypted at apply time, so the configured age identity
+# must exist first. `managed` honors the layer-driven ignore rules, so machines
+# applying nothing encrypted skip this entirely.
+if [ -n "$("$chezmoi" managed --include encrypted)" ]; then
+  identity="$("$chezmoi" execute-template '{{ .chezmoi.config.age.identity }}')"
+  while [ ! -f "$identity" ]; do
+    read -r -p ">> Place the age identity at $identity (Bitwarden or backup USB), then press Enter..." _
+  done
+fi
 
 # Clone enabled overlays before the first apply so the initial rebuild already
 # includes them (chezmoi's own external clone has no ssh auth configured yet).
