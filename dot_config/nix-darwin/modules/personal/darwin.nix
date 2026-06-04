@@ -2,14 +2,10 @@
 
 {
   homebrew = {
-    taps = [
-      "knope-dev/tap"
-    ];
     brews = [
       "exercism"
       "ferium"
       "golangci-lint"
-      "knope"
     ];
     casks = [
       "claude"
