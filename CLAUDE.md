@@ -194,6 +194,13 @@ Multiple shells are configured:
 - **Nushell**: Primary interactive shell with custom config/env files
 - **Zsh**: Enabled as system shell
 
+Nu-based CLIs (`apploi`, `wt`) live in `~/.local/bin` as `#!/usr/bin/env nu`
+scripts so they run from any shell or automated session. Each is also exposed
+as a completable nu command via a `symlink_<name>.nu.tmpl` in the nushell
+`commands/` dir plus an `export use` line in its `mod.nu` (a shebang parses as
+a comment, so the one source serves both). Such scripts must stay module-clean:
+consts and defs only, no top-level statements.
+
 All shells integrate:
 - Homebrew environment via `/opt/homebrew/bin/brew shellenv`
 - mise activation for runtime management
