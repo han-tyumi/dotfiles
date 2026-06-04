@@ -4,6 +4,12 @@
   # which differs from chezmoi's .chezmoi.hostname.
   hostname = "{{ output "scutil" "--get" "LocalHostName" | trim }}";
   username = "{{ .chezmoi.username }}";
+
+  # The Nix installer's nixbld group ID changed from 30000 to 350 over time;
+  # nix-darwin aborts activation unless the configured ID matches the machine.
+  # Before Nix is installed the group doesn't exist yet, so default to the
+  # modern installer's value.
+  nixbldGid = {{ output "bash" "-c" "dscl . -read /Groups/nixbld PrimaryGroupID 2>/dev/null | awk '{print $2}'" | trim | default "350" }};
   layers = [
 {{- range .layerList }}
     {{ . | quote }}

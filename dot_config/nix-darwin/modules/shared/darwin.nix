@@ -41,6 +41,9 @@
     ];
   };
 
+  # Match the machine's actual nixbld group ID (varies by Nix installer era).
+  ids.gids.nixbld = machine.nixbldGid;
+
   homebrew = {
     enable = true;
     brews = [
