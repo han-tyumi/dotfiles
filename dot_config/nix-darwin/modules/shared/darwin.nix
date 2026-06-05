@@ -126,13 +126,22 @@
     primaryUser = machine.username;
     defaults = {
       NSGlobalDomain = {
+        AppleShowAllExtensions = true;
         AppleShowAllFiles = true;
         AppleInterfaceStyle = "Dark";
         AppleScrollerPagingBehavior = true;
         AppleShowScrollBars = "Automatic";
         "com.apple.keyboard.fnState" = true;
       };
-      finder.FXPreferredViewStyle = "Nlsv";
+      finder = {
+        FXPreferredViewStyle = "Nlsv";
+        ShowPathbar = true;
+        ShowStatusBar = true;
+      };
+
+      # The directory must exist or macOS falls back to the Desktop;
+      # home.nix creates it.
+      screencapture.location = "/Users/${machine.username}/Pictures/Screenshots";
     };
 
     # Set Git commit hash for darwin-version.

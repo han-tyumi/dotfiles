@@ -20,6 +20,11 @@ in
 
 {
   home = {
+    # darwin.nix points screencapture at this directory; macOS won't create it.
+    activation.screenshotsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run mkdir -p ~/Pictures/Screenshots
+    '';
+
     enableNixpkgsReleaseCheck = false;
     sessionPath = [
       "/opt"
