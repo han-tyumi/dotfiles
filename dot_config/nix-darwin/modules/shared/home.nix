@@ -93,15 +93,9 @@ in
       enable = true;
       lfs.enable = true;
       settings = {
-        core = {
-          # editor = "code --wait";
-        };
         init = {
           defaultBranch = "main";
         };
-        # sequence = {
-        #   editor = "code --wait --add";
-        # };
         push.autoSetupRemote = true;
       };
       includes = [
@@ -149,8 +143,9 @@ in
     zoxide.enable = true;
     zsh = {
       enable = true;
+      # Homebrew's shellenv already comes from darwin.nix environment.extraInit,
+      # which nix-darwin sources for every zsh via /etc/zshenv.
       profileExtra = ''
-        eval "$(/opt/homebrew/bin/brew shellenv)"
         eval "$(mise activate zsh --shims)"
       '';
     };
