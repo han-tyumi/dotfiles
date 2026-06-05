@@ -106,12 +106,17 @@ The Nix configuration uses a flake-based setup:
 
 ### Run Scripts
 
-Chezmoi uses special script naming conventions:
-- `run_once_after_install-*.sh`: One-time installation scripts
-  - `install-1.sh`: Installs Homebrew and Nix
-  - `install-2.sh`: Installs Nix Darwin
+Chezmoi runs scripts in lexical order of their source path, and `.chezmoiscripts/`
+entries sort before repo-root scripts; the installers therefore live in
+`.chezmoiscripts/0-install/`, whose leading digit sorts before any layer directory:
+- `.chezmoiscripts/0-install/`: One-time installers, ordered before every layer's
+  scripts
+  - `run_once_after_1-homebrew-nix.sh`: Installs Homebrew and Nix
+  - `run_once_after_2-nix-darwin.sh`: Installs Nix Darwin (channel ref read from
+    the flake's nix-darwin input)
+  - `run_once_after_3-claude-code.sh`: Installs Claude Code
 - `run_onchange_after_*.tmpl`: Scripts that run when tracked files change
-  - `1-mise-config.toml.tmpl`: Updates mise plugins and tools
+  - `1-mise-config.toml.tmpl`: Upgrades and installs mise tools
 - `.chezmoiscripts/<layer>/`: Layer-owned scripts; they derive their layer name from
   their own path (`.chezmoi.sourceFile`) rather than hardcoding it
   - `personal/run_onchange_after_v.sh.tmpl`: Updates V; renders empty (skipped)
@@ -138,9 +143,17 @@ Per-machine secrets:
   retries rather than failing). For that reason `masApps` live only in layers
   that imply a signed-in Apple ID (personal), never in shared
 
-For headless/unattended test bootstraps, `DOTFILES_NO_APP_STORE=1` at apply time
-renders `machine.nix` with `appStore = false`, dropping all `masApps` (an unsigned
-`mas` would hang activation waiting on the sign-in dialog).
+For headless/unattended bootstraps, preset the interactive prompts and apply-time
+data via environment variables; prompts that can't be answered (no terminal and no
+preset) fail fast instead of hanging:
+- `DOTFILES_SSH_KEYS="git_a git_b"` — SSH keys to generate (set empty to skip)
+- `DOTFILES_OVERLAY_KEYS="work=git_b"` — ssh key name per overlay clone
+- `DOTFILES_NO_APP_STORE=1` — renders `machine.nix` with `appStore = false`,
+  dropping all `masApps` (an unsigned `mas` would hang activation waiting on the
+  sign-in dialog)
+
+The age identity must still be pre-placed at `~/key.txt` when an enabled layer
+applies encrypted targets.
 
 To smoke-test in a local VM (Apple Silicon):
 
