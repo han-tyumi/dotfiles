@@ -11,7 +11,9 @@ fi
 
 # Install Nix
 # https://nixos.org/download
-if [[ -x /run/current-system/sw/bin/nix ]]; then
+# The base installer's profile path; /run/current-system appears only once
+# nix-darwin has activated.
+if [[ -x /nix/var/nix/profiles/default/bin/nix ]]; then
   echo "Nix is already installed."
 else
   echo "Installing Nix ..."
