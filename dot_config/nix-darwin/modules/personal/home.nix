@@ -1,7 +1,17 @@
-{ ... }:
+_:
 
 let
-  private = import ../../private.nix;
+  # private.nix is layer-gated and absent on machines without the personal
+  # layer (and in bare checkouts), where only the eval fixtures import this
+  # module; fall back to a stub so they still evaluate.
+  private =
+    if builtins.pathExists ../../private.nix then
+      import ../../private.nix
+    else
+      {
+        bitwardenEmail = "";
+        githubToken = "";
+      };
 in
 
 {
