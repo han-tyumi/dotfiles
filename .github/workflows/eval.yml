@@ -1,0 +1,42 @@
+name: eval fixtures
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [test-minimal, test-personal, test-all]
+    defaults:
+      run:
+        working-directory: dot_config/nix-darwin
+    steps:
+      - uses: actions/checkout@v4
+
+      # machine.nix is chezmoi-rendered per host, so a bare checkout lacks it.
+      # Nix only copies git-tracked files of a git worktree into the store, so
+      # the synthesized file must be staged to be visible to the flake.
+      - name: Synthesize machine.nix
+        run: |
+          cat > machine.nix << 'EOF'
+          {
+            hostname = "ci";
+            username = "runner";
+            nixbldGid = 350;
+            appStore = false;
+            layers = [ ];
+          }
+          EOF
+          git add machine.nix
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: experimental-features = nix-command flakes
+
+      - name: Evaluate ${{ matrix.fixture }}
+        run: nix eval --no-write-lock-file ".#darwinConfigurations.${{ matrix.fixture }}.system.drvPath"
