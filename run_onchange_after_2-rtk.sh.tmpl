@@ -1,8 +1,12 @@
+{{ if lookPath "rtk" -}}
 #!/bin/bash
 
 # {{ output "rtk" "--version" | trim }}
 
 set -euo pipefail
+
+# Mid-bootstrap shells don't have the Homebrew-installed rtk on PATH yet.
+export PATH="/opt/homebrew/bin:$PATH"
 
 rtk init --global --no-patch
 
@@ -16,3 +20,4 @@ if ! printf '%s\n' "$rtk_status" | grep -q '^\[ok\] settings.json:'; then
   echo "  Run 'rtk init --show' to see the expected format." >&2
   echo "  Then update dot_claude/settings.json in the chezmoi source and re-apply." >&2
 fi
+{{ end -}}
