@@ -14,11 +14,11 @@
     hostPlatform = "aarch64-darwin";
 
     overlays = [
-      (final: prev: { nodejs = prev.nodejs_24; })
+      (_: prev: { nodejs = prev.nodejs_24; })
 
       # TODO: drop once nix#15638 ships. Darwin Mach-O codesign corruption
       # in cached store paths SIGKILLs direnv's checkPhase. See nixpkgs#507531.
-      (final: prev: {
+      (_: prev: {
         direnv = prev.direnv.overrideAttrs (_: {
           doCheck = false;
         });
