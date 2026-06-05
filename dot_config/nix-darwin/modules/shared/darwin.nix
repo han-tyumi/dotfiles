@@ -26,20 +26,34 @@
     ];
   };
 
-  nix.settings = {
-    # Necessary for using flakes on this system.
-    experimental-features = "nix-command flakes auto-allocate-uids";
-    extra-nix-path = "nixpkgs=flake:nixpkgs";
+  nix = {
+    settings = {
+      # Necessary for using flakes on this system.
+      experimental-features = "nix-command flakes auto-allocate-uids";
+      extra-nix-path = "nixpkgs=flake:nixpkgs";
 
-    download-buffer-size = 512 * 1024 * 1024;
+      download-buffer-size = 512 * 1024 * 1024;
 
-    keep-derivations = true;
-    keep-outputs = true;
+      trusted-users = [
+        "root"
+        machine.username
+      ];
+    };
 
-    trusted-users = [
-      "root"
-      machine.username
-    ];
+    # Prune old system and per-user generations, then collect garbage;
+    # rollback reaches back 30 days.
+    gc = {
+      automatic = true;
+      interval = {
+        Weekday = 0;
+        Hour = 3;
+        Minute = 0;
+      };
+      options = "--delete-older-than 30d";
+    };
+
+    # Hard-link identical store files.
+    optimise.automatic = true;
   };
 
   # Match the machine's actual nixbld group ID (varies by Nix installer era).
