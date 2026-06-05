@@ -1,6 +1,16 @@
 #!/bin/bash
 
 # {{ include "dot_config/mise/config.toml" | sha256sum }}
+{{- range .layerList }}
+{{- $fragment := printf "dot_config/mise/conf.d/%s.toml" . }}
+{{- if stat (joinPath $.chezmoi.sourceDir $fragment) }}
+# {{ include $fragment | sha256sum }}
+{{- end }}
+{{- end }}
+
+# Mid-bootstrap shells don't have the Homebrew-installed mise on PATH yet.
+export PATH="/opt/homebrew/bin:$PATH"
 
 mise plugins upgrade
 mise upgrade
+mise install
