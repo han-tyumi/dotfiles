@@ -5,9 +5,26 @@
 # Installs chezmoi, prompts for layers/overlays, generates per-machine SSH keys,
 # gates on the age identity when the machine needs it, clones overlay repos, then
 # applies — which triggers the run_once scripts (Homebrew, Nix, nix-darwin).
+#
+# Unattended runs: pass --promptString "layers=...,overlays=..." (forwarded to
+# chezmoi init) and preset the interactive prompts via environment variables:
+#   DOTFILES_SSH_KEYS="git_a git_b"         keys to generate (set empty to skip)
+#   DOTFILES_OVERLAY_KEYS="work=git_b ..."  ssh key name per overlay clone
 set -euo pipefail
 
 REPO="han-tyumi"
+
+# Prompts target the terminal directly: mid-script stdin may be redirected (the
+# overlay loop reads a here-string), and unattended runs have no terminal at all.
+if { : < /dev/tty; } 2> /dev/null; then
+  prompt() { read -r -p "$1" "$2" < /dev/tty; }
+else
+  prompt() {
+    echo ">> No terminal to answer: $1" >&2
+    echo ">> Preset the matching DOTFILES_* variable for unattended runs." >&2
+    return 1
+  }
+fi
 
 # Xcode Command Line Tools provide git for chezmoi's clone.
 if ! xcode-select -p > /dev/null 2>&1; then
@@ -18,12 +35,16 @@ fi
 
 # Generate per-machine SSH identity keys; public keys get registered with the
 # matching GitHub account, so no key material is ever transported.
-read -r -p ">> SSH identity keys to generate (space-separated, e.g. 'git_han-tyumi git_chmmpagne'; empty to skip): " ssh_keys
+if [ -n "${DOTFILES_SSH_KEYS+set}" ]; then
+  ssh_keys="$DOTFILES_SSH_KEYS"
+else
+  prompt ">> SSH identity keys to generate (space-separated, e.g. 'git_han-tyumi git_chmmpagne'; empty to skip): " ssh_keys
+fi
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
 # shellcheck disable=SC2086 # word splitting is the input format
 for name in $ssh_keys; do
   key="$HOME/.ssh/$name"
-  mkdir -p "$HOME/.ssh"
-  chmod 700 "$HOME/.ssh"
   if [ -f "$key" ]; then
     echo ">> $key already exists; skipping."
   else
@@ -55,7 +76,7 @@ overlays="$("$chezmoi" execute-template \
 if [ -n "$("$chezmoi" managed --include encrypted)" ]; then
   identity="$("$chezmoi" execute-template '{{ .chezmoi.config.age.identity }}')"
   while [ ! -f "$identity" ]; do
-    read -r -p ">> Place the age identity at $identity (Bitwarden or backup USB), then press Enter..." _
+    prompt ">> Place the age identity at $identity (Bitwarden or backup USB), then press Enter..." _
   done
 fi
 
@@ -68,10 +89,22 @@ while IFS='=' read -r name url; do
     echo ">> Overlay '$name' already cloned; skipping."
     continue
   fi
-  read -r -p ">> SSH key in ~/.ssh to clone overlay '$name' with: " keyname
-  read -r -p ">> Register ~/.ssh/$keyname.pub with the overlay repo's account, then press Enter..." _
+  keyname=""
+  # shellcheck disable=SC2086 # word splitting is the input format
+  for pair in ${DOTFILES_OVERLAY_KEYS:-}; do
+    case $pair in
+    "$name"=*) keyname="${pair#*=}" ;;
+    esac
+  done
+  if [ -z "$keyname" ]; then
+    prompt ">> SSH key in ~/.ssh to clone overlay '$name' with: " keyname
+    prompt ">> Register ~/.ssh/$keyname.pub with the overlay repo's account, then press Enter..." _
+  fi
   mkdir -p "$(dirname "$dir")"
-  GIT_SSH_COMMAND="ssh -i $HOME/.ssh/$keyname" git clone "$url" "$dir"
+  # accept-new: a fresh Mac has no known_hosts entry yet, and the loop's stdin
+  # (the here-string) can't answer ssh's host-key prompt.
+  GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new -i $HOME/.ssh/$keyname" \
+    git clone "$url" "$dir"
   git -C "$dir" config core.sshCommand "ssh -i $HOME/.ssh/$keyname"
 done <<< "$overlays"
 
