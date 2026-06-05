@@ -47,7 +47,7 @@ chezmoi="$bindir/chezmoi"
 
 # shellcheck disable=SC2016 # $-expressions are Go template syntax, not shell
 overlays="$("$chezmoi" execute-template \
-  '{{ range $name, $url := .overlayUrls }}{{ if has $name $.layerList }}{{ $name }}={{ $url }}{{ "\n" }}{{ end }}{{ end }}')"
+  '{{ range $name, $url := .enabledOverlays }}{{ $name }}={{ $url }}{{ "\n" }}{{ end }}')"
 
 # Encrypted targets are decrypted at apply time, so the configured age identity
 # must exist first. `managed` honors the layer-driven ignore rules, so machines
