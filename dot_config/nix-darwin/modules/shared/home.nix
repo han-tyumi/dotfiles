@@ -97,6 +97,11 @@ in
           defaultBranch = "main";
         };
         push.autoSetupRemote = true;
+
+        # Sign with the per-identity SSH key set by each layer's user.signingKey.
+        gpg.format = "ssh";
+        commit.gpgsign = true;
+        tag.gpgsign = true;
       };
       includes = [
         { path = "${config.xdg.configHome}/${gitAliasFilePath}"; }

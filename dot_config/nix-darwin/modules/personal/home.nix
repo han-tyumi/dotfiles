@@ -19,6 +19,7 @@ _:
       user = {
         name = "Matt Champagne";
         email = "mmchamp95@gmail.com";
+        signingKey = "~/.ssh/git_han-tyumi.pub";
       };
       github.user = "han-tyumi";
       core.sshCommand = "ssh -i ~/.ssh/git_han-tyumi";
