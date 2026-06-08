@@ -20,6 +20,9 @@
       "transmit"
       "zoom"
     ];
+
+    # shared/darwin.nix force-empties masApps when appStore = false, so these
+    # never apply on a machine without a signed-in App Store account.
     masApps = {
       iMovie = 408981434;
       "Logic Pro" = 634148309;

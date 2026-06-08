@@ -25,7 +25,8 @@ Configuration is composed from **layers**, selected per machine by chezmoi data:
   templates splice optional fragments from them (e.g. `vscode-settings.jsonc` into
   the VS Code settings). Home Manager symlinks an overlay's `skills/` into
   `~/.claude/skills/` via `mkOutOfStoreSymlink`, so the clone stays the live,
-  editable copy.
+  editable copy. Shared skills differ: they are chezmoi-managed copies under
+  `dot_claude/skills/`, so you edit the source and `chezmoi apply`.
 
 A layer may exist in-repo, as an overlay, or both; any combination of layers works.
 Selection flows from chezmoi data into the flake through the generated `machine.nix`:
@@ -118,6 +119,23 @@ entries sort before repo-root scripts; the installers therefore live in
   their own path (`.chezmoi.sourceFile`) rather than hardcoding it
   - `personal/run_onchange_after_v.sh.tmpl`: Updates V; renders empty (skipped)
     unless `~/v` exists (the V external)
+
+### Adding a new layer or overlay
+
+To add a layer named `<name>` — in-repo, overlay, or both:
+
+1. **Modules** — `modules/<name>/darwin.nix` and/or `home.nix` (in-repo), or
+   `overlays/<name>/{darwin,home}.nix` (overlay clone). Either file may be omitted.
+2. **Ignore manifest** — `.chezmoilayers/<name>.ignore` listing the targets and externals
+   that layer owns, so they're skipped (and the externals not fetched) when it's off.
+3. **Layer scripts** (optional) — `.chezmoiscripts/<name>/`; they derive their layer name
+   from `.chezmoi.sourceFile`, not a hardcoded string.
+4. **mise runtimes** (optional) — a `conf.d/<name>.toml` fragment for layer-specific tools.
+5. **VS Code fragment** (optional, overlay) — a spliceable `vscode-settings.jsonc`.
+6. **Verify** — in-repo layers get a `test-<name>` fixture automatically:
+   `nix eval ~/.config/nix-darwin#darwinConfigurations.test-<name>.system.drvPath`.
+7. **Enable it** — add `<name>` to the machine's `layers` (overlays as `name=url` pairs) via
+   `chezmoi init --promptString` or by editing the chezmoi data.
 
 ## Common Commands
 
