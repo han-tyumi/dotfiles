@@ -41,8 +41,22 @@
           ]) layers
         );
 
+      # A layer is "known" if it has a module dir in either root. A typo in
+      # machine.layers otherwise contributes nothing silently while the rebuild
+      # still reports success, so warn (don't fail) when one resolves to neither.
+      knownLayer =
+        name:
+        builtins.pathExists (./modules + "/${name}")
+        || builtins.pathExists (./overlays + "/${name}");
+
       mkSystem =
         machine:
+        let
+          layers = map (
+            name:
+            lib.warnIf (!knownLayer name) "machine layer '${name}' has modules in neither modules/ nor overlays/ — typo?" name
+          ) machine.layers;
+        in
         nix-darwin.lib.darwinSystem {
           specialArgs = { inherit inputs machine; };
           modules = [
@@ -57,13 +71,13 @@
                 users.${machine.username}.imports = [
                   ./modules/shared/home.nix
                 ]
-                ++ layerModules "home.nix" machine.layers;
+                ++ layerModules "home.nix" layers;
 
                 extraSpecialArgs = { inherit inputs machine; };
               };
             }
           ]
-          ++ layerModules "darwin.nix" machine.layers;
+          ++ layerModules "darwin.nix" layers;
         };
 
       # Eval-only fixtures: every in-repo layer alone, plus everything at once.
@@ -74,17 +88,7 @@
       overlayLayers = lib.optionals (builtins.pathExists ./overlays) (
         builtins.attrNames (onlyDirs (builtins.readDir ./overlays))
       );
-      testFor =
-        layers:
-        mkSystem {
-          inherit (machine)
-            username
-            hostname
-            nixbldGid
-            appStore
-            ;
-          inherit layers;
-        };
+      testFor = layers: mkSystem (machine // { inherit layers; });
     in
     {
       # The machine's own attr is merged last so it always wins a name collision
