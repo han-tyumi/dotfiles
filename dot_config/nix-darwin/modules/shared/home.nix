@@ -25,6 +25,13 @@ in
       run mkdir -p ~/Pictures/Screenshots
     '';
 
+    # Rebuild the git allowed_signers file from scratch; each enabled identity
+    # layer appends its own signing pubkey after this (gitAllowedSigners*).
+    activation.gitAllowedSignersInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      mkdir -p "${config.xdg.configHome}/git"
+      : > "${config.xdg.configHome}/git/allowed_signers"
+    '';
+
     enableNixpkgsReleaseCheck = false;
     sessionPath = [
       "/opt"
@@ -98,8 +105,10 @@ in
         };
         push.autoSetupRemote = true;
 
-        # Sign with the per-identity SSH key set by each layer's user.signingKey.
+        # Sign with the per-identity SSH key set by each layer's user.signingKey;
+        # each identity layer drops that key's pubkey into the allowed_signers file.
         gpg.format = "ssh";
+        gpg.ssh.allowedSignersFile = "${config.xdg.configHome}/git/allowed_signers";
         commit.gpgsign = true;
         tag.gpgsign = true;
       };
