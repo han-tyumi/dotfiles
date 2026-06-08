@@ -18,7 +18,7 @@ Configuration is composed from **layers**, selected per machine by chezmoi data:
 
 - **shared** (`modules/shared/`) — always applied: dev core plus every-machine apps
 - **in-repo layers** (`modules/<name>/`) — e.g. `personal`: hobby/games/media, personal
-  git identity, `private.nix` consumers, V/Roc, personal mise runtimes
+  git identity, V/Roc, personal mise runtimes
 - **overlay layers** (`overlays/<name>/`) — private repos declared per machine in
   chezmoi data and cloned by a chezmoi external next to the flake. Their
   `darwin.nix`/`home.nix` are imported when the layer is enabled, and chezmoi
@@ -49,9 +49,8 @@ nix eval ~/.config/nix-darwin#darwinConfigurations.test-all.system.drvPath
 
 Caveats:
 - Toggling a layer **off** orphans already-applied files (chezmoi never removes
-  newly-ignored targets): manually `rm` leftovers like
-  `~/.config/nix-darwin/private.nix`; Homebrew's `cleanup = "zap"` removes the
-  casks/brews itself.
+  newly-ignored targets): manually `rm` a disabled layer's leftover targets;
+  Homebrew's `cleanup = "zap"` removes the casks/brews itself.
 - Renaming the Mac (LocalHostName) breaks `darwin-rebuild`'s attr lookup until the
   next `chezmoi apply` re-renders `machine.nix` — the failure is loud, the fix is
   one apply.
@@ -65,7 +64,7 @@ Caveats:
 ### Configuration Hierarchy
 
 1. **Chezmoi Layer** (root level): Manages all dotfiles with templating support
-   - `.chezmoi.toml.tmpl`: Main chezmoi config with age encryption + layer prompts
+   - `.chezmoi.toml.tmpl`: Main chezmoi config with layer prompts
    - `.chezmoiexternals/`: External resources (git repos, archives), one file per
      concern; plain TOML except the data-driven overlays template
    - `.chezmoilayers/<layer>.ignore`: Targets owned by a layer — regular files and
@@ -78,8 +77,6 @@ Caveats:
    - `modules/shared/{darwin,home}.nix`: Always-on system + Home Manager config
    - `modules/<layer>/{darwin,home}.nix`: In-repo layer config (e.g. `personal`)
    - `overlays/<layer>/{darwin,home}.nix`: Overlay layers (external clones, not in this repo)
-   - `private.nix`: Private user data (git-ignored)
-   - `encrypted_private.nix.age`: Encrypted private configuration
 
 3. **Tool Configuration Layer** (`dot_config/`): Individual tool configs
    - `mise/config.toml`: Language runtime versions (personal/work runtimes layer in via `conf.d` fragments)
@@ -130,14 +127,13 @@ entries sort before repo-root scripts; the installers therefore live in
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/han-tyumi/dotfiles/main/bootstrap.sh)"
 ```
 
-Per-machine secrets:
-- **personal layer**: `~/key.txt` (the age identity — from Bitwarden or the backup
-  USB) is the only file that must be transported
+Per-machine setup:
+- **GitHub token**: run `gh auth login` after bootstrap — it stores an OAuth token
+  in the macOS keychain. No token lives in the repo or a standing env var
 - **private overlays**: a fresh SSH key per machine — `bootstrap.sh` offers to
   generate them and prints the public keys to register with the matching GitHub
   account; keys are referenced by name, so per-machine material works without
   transporting anything
-- **work-only machines need no `key.txt`** — nothing encrypted is applied
 - **App Store**: sign in before bootstrapping any machine whose layers include
   `masApps` — an unsigned `mas` hangs the first activation indefinitely (it
   retries rather than failing). For that reason `masApps` live only in layers
@@ -151,9 +147,6 @@ preset) fail fast instead of hanging:
 - `DOTFILES_NO_APP_STORE=1` — renders `machine.nix` with `appStore = false`,
   dropping all `masApps` (an unsigned `mas` would hang activation waiting on the
   sign-in dialog)
-
-The age identity must still be pre-placed at `~/key.txt` when an enabled layer
-applies encrypted targets.
 
 To smoke-test in a local VM (Apple Silicon):
 
@@ -225,14 +218,7 @@ Git identities are provided by layers:
 Chezmoi uses special prefixes:
 - `dot_`: Converts to `.` (e.g., `dot_config` → `.config`)
 - `private_`: Creates files with restricted permissions
-- `encrypted_`: Files encrypted with age
 - `.tmpl`: Template files processed by chezmoi
-
-### Encryption Setup
-
-The repository uses age encryption:
-- Identity: `~/key.txt`
-- Recipient: `age1zf3ruadchuuxhhc0sq96fdn5gazryegnfprwncrprylzqt2ce3aqzm5ekc`
 
 ### Shell Integration
 

@@ -101,6 +101,7 @@
     packages = with pkgs; [
       act
       age
+      bitwarden-cli
       comma
       coreutils
       chezmoi
@@ -119,6 +120,7 @@
       shfmt
       github-mcp-server
       wget
+      yubikey-manager
     ];
   };
 
