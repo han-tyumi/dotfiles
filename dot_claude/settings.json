@@ -218,7 +218,6 @@
       "/tmp"
     ]
   },
-  "model": "us.anthropic.claude-opus-4-8[1m]",
   "hooks": {
     "PreToolUse": [
       {
