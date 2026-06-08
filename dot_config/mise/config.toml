@@ -1,4 +1,5 @@
 [tools]
+bitwarden = "latest"
 node = "latest"
 usage = "latest"
 
