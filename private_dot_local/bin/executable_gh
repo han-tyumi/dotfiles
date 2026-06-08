@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Make the GitHub CLI follow the repository's identity.
+#
+# `git config github.user` resolves per-repo via git's conditional includes
+# (the personal account by default, the work account inside work repos/remotes).
+# This feeds the matching stored account's token to gh for the current call
+# only — no global `gh auth switch` (so concurrent shells never race) and no
+# exported token. Being a PATH executable rather than a shell hook, it applies
+# in non-interactive shells too, where directory-triggered tools like direnv
+# never fire.
+#
+# `gh auth`, completion, and bare invocations pass through untouched so account
+# management and shell completion see gh's real state.
+set -euo pipefail
+
+real_gh="/etc/profiles/per-user/${USER:-$(id -un)}/bin/gh"
+
+case "${1:-}" in
+  auth | completion | __complete | "")
+    exec "$real_gh" "$@"
+    ;;
+esac
+
+want="$(git config --get github.user 2>/dev/null || true)"
+if [ -n "$want" ]; then
+  token="$(GH_TOKEN= "$real_gh" auth token --user "$want" 2>/dev/null || true)"
+  if [ -n "$token" ]; then
+    GH_TOKEN="$token" exec "$real_gh" "$@"
+  fi
+fi
+
+exec "$real_gh" "$@"
