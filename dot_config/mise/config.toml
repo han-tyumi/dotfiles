@@ -1,5 +1,6 @@
 [tools]
 bitwarden = "latest"
+ghq = "latest"
 node = "latest"
 usage = "latest"
 

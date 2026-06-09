@@ -105,6 +105,13 @@ in
         };
         push.autoSetupRemote = true;
 
+        # Fail loudly instead of guessing an identity from the host/gecos when no
+        # layer or includeIf condition has set one.
+        user.useConfigOnly = true;
+
+        # ghq clones into ~/Developer/<host>/<org>/<repo>.
+        ghq.root = "~/Developer";
+
         # Sign with the per-identity SSH key set by each layer's user.signingKey;
         # each identity layer drops that key's pubkey into the allowed_signers file.
         gpg.format = "ssh";
