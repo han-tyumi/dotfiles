@@ -66,6 +66,11 @@ chezmoi="$bindir/chezmoi"
 # unattended runs.
 "$chezmoi" init "$@" "$REPO"
 
+# init leaves an already-cloned source untouched; pull so a rerun on an
+# existing machine picks up the latest dotfiles instead of re-applying
+# whatever the first bootstrap cloned.
+git -C "$("$chezmoi" source-path)" pull --ff-only 2> /dev/null || true
+
 # shellcheck disable=SC2016 # $-expressions are Go template syntax, not shell
 overlays="$("$chezmoi" execute-template \
   '{{ range $name, $url := .enabledOverlays }}{{ $name }}={{ $url }}{{ "\n" }}{{ end }}')"
