@@ -132,18 +132,39 @@
         AppleInterfaceStyle = "Dark";
         AppleScrollerPagingBehavior = true;
         AppleShowScrollBars = "Automatic";
+
+        # Full keyboard access: Tab moves focus through all controls.
+        AppleKeyboardUIMode = 2;
         "com.apple.keyboard.fnState" = true;
+      };
+      dock = {
+        autohide = true;
+
+        # Small at rest (quieter accidental reveals), subtle growth on hover.
+        tilesize = 48;
+        magnification = true;
+        largesize = 64;
+
+        # Keep Spaces in fixed order instead of most-recently-used.
+        mru-spaces = false;
       };
       finder = {
         FXPreferredViewStyle = "Nlsv";
         ShowPathbar = true;
         ShowStatusBar = true;
+        FXRemoveOldTrashItems = true;
       };
 
       # The directory must exist or macOS falls back to the Desktop;
       # home.nix creates it.
       screencapture.location = "/Users/${machine.username}/Pictures/Screenshots";
     };
+
+    # nix-darwin only restarts the Dock after writing defaults; flush the rest
+    # into the running session instead of waiting for a re-login.
+    activationScripts.postActivation.text = ''
+      sudo -u ${machine.username} /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+    '';
 
     # Set Git commit hash for darwin-version.
     configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
