@@ -167,10 +167,10 @@
       screencapture.location = "/Users/${machine.username}/Pictures/Screenshots";
 
       CustomUserPreferences = {
-        # The profile these keys select carries binary font/color blobs nix
-        # can't express, so the terminal-profile run script imports it from
-        # a tracked file; the plain keys live here, re-asserted on every
-        # activation since Terminal rewrites its prefs on quit.
+        # The profile these keys select carries binary font/color blobs that
+        # attrs can't express, so postActivation imports its plist wholesale;
+        # everything is re-asserted on every activation since Terminal
+        # rewrites its prefs on quit.
         "com.apple.Terminal" = {
           "Default Window Settings" = "catppuccin-mocha";
           "Startup Window Settings" = "catppuccin-mocha";
@@ -183,9 +183,17 @@
       };
     };
 
-    # nix-darwin only restarts the Dock after writing defaults; flush the rest
-    # into the running session instead of waiting for a re-login.
     activationScripts.postActivation.text = ''
+      # Merge the tracked Terminal.app profile (catppuccin-mocha colors,
+      # Iosevka Term Medium font). Quit Terminal before rebuilding when
+      # iterating on it, and capture in-app tweaks back into the source with:
+      #   defaults export com.apple.Terminal - \
+      #     | plutil -extract 'Window Settings.catppuccin-mocha' xml1 -o - - \
+      #     > "$(chezmoi source-path)/dot_config/nix-darwin/modules/shared/catppuccin-mocha.terminal"
+      sudo -u ${machine.username} defaults write com.apple.Terminal "Window Settings" -dict-add catppuccin-mocha "$(cat ${./catppuccin-mocha.terminal})"
+
+      # nix-darwin only restarts the Dock after writing defaults; flush the
+      # rest into the running session instead of waiting for a re-login.
       sudo -u ${machine.username} /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
     '';
 
