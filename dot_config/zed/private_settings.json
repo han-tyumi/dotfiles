@@ -20,26 +20,12 @@
     "light": "Catppuccin Latte",
     "dark": "Catppuccin Mocha",
   },
-  "ui_font_family": "Iosevka Aile",
+  "ui_font_family": "PragmataPro VF",
   "ui_font_size": 16,
-  "buffer_font_family": "Iosevka",
+  "buffer_font_family": "PragmataPro VF Mono Liga",
   "buffer_font_fallbacks": ["Symbols Nerd Font Mono"],
   "buffer_font_weight": 500,
   "buffer_font_size": 15,
-
-  // Languages
-  "languages": {
-    // Iosevka's JavaScript ligation set adds === and !== ligatures.
-    "TypeScript": {
-      "buffer_font_features": { "JSPT": true },
-    },
-    "TSX": {
-      "buffer_font_features": { "JSPT": true },
-    },
-    "JavaScript": {
-      "buffer_font_features": { "JSPT": true },
-    },
-  },
 
   // Terminal
   // Nushell is the interactive shell; the login zsh assembles the

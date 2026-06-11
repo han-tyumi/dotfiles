@@ -185,7 +185,7 @@
 
     activationScripts.postActivation.text = ''
       # Merge the tracked Terminal.app profile (catppuccin-mocha colors,
-      # Iosevka Term Medium font). Quit Terminal before rebuilding when
+      # PragmataPro Mono font). Quit Terminal before rebuilding when
       # iterating on it, and capture in-app tweaks back into the source with:
       #   defaults export com.apple.Terminal - \
       #     | plutil -extract 'Window Settings.catppuccin-mocha' xml1 -o - - \
@@ -223,14 +223,12 @@
     ];
   };
 
+  # The editor and terminal face is PragmataPro, which is licensed per
+  # machine and therefore installed by hand into ~/Library/Fonts — never
+  # through the store or the repo. Configs list fallbacks so machines
+  # without it degrade gracefully; the prose companion (Georgia) ships
+  # with macOS.
   fonts.packages = with pkgs; [
-    # Iosevka is the editor face, with Slab kept as an alternate;
-    # Aile and Etoile are the quasi-proportional siblings for prose.
-    iosevka-bin
-    (iosevka-bin.override { variant = "Slab"; })
-    (iosevka-bin.override { variant = "Aile"; })
-    (iosevka-bin.override { variant = "Etoile"; })
-
     # Icon glyphs as a fallback font, so the editor face needs no patching.
     nerd-fonts.symbols-only
   ];

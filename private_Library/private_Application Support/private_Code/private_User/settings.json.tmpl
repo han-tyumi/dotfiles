@@ -10,7 +10,7 @@
   "catppuccin.extraBordersEnabled": true,
 
   // Editor
-  "editor.fontFamily": "'Iosevka', 'Symbols Nerd Font Mono', monospace",
+  "editor.fontFamily": "'PragmataPro VF Mono Liga', 'Symbols Nerd Font Mono', monospace",
   "editor.fontWeight": "500",
   "editor.fontLigatures": true,
   "editor.fontSize": 14,
@@ -20,14 +20,8 @@
   "editor.inlayHints.enabled": "offUnlessPressed",
   "editor.stickyScroll.maxLineCount": 10,
   "diffEditor.ignoreTrimWhitespace": false,
-  // Markdown SOURCE stays monospace so tables and indentation align;
-  // the rendered preview reads in the quasi-proportional document face.
-  "markdown.preview.fontFamily": "'Iosevka Aile', system-ui, sans-serif",
-
-  // Iosevka's JavaScript ligation set adds === and !== ligatures.
-  "[typescript][typescriptreact][javascript][javascriptreact]": {
-    "editor.fontLigatures": "'calt', 'JSPT'"
-  },
+  // Non-Liga so code ligatures don't fire inside prose.
+  "markdown.preview.fontFamily": "'PragmataPro VF', sans-serif",
   "workbench.editor.closeEmptyGroups": false,
 
   // Files
