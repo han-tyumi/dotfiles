@@ -192,6 +192,18 @@
     ];
   };
 
+  fonts.packages = with pkgs; [
+    # Iosevka Slab is the editor face (default-style Iosevka as fallback);
+    # Aile and Etoile are the quasi-proportional siblings for prose.
+    iosevka-bin
+    (iosevka-bin.override { variant = "Slab"; })
+    (iosevka-bin.override { variant = "Aile"; })
+    (iosevka-bin.override { variant = "Etoile"; })
+
+    # Icon glyphs as a fallback font, so the editor face needs no patching.
+    nerd-fonts.symbols-only
+  ];
+
   security.pam.services.sudo_local.touchIdAuth = true;
 
   programs = {
