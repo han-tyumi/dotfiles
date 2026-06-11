@@ -85,8 +85,11 @@
     onActivation = {
       autoUpdate = true;
       upgrade = true;
-      cleanup = "zap";
-      extraFlags = [ "--force-cleanup" ];
+
+      # The cleanup option emits bundle's deprecated --cleanup switch, so
+      # request zap cleanup directly; --force-cleanup also skips the
+      # confirmation prompt activation can't answer.
+      extraFlags = [ "--force-cleanup" "--zap" ];
     };
 
     # An unsigned mas hangs activation waiting on the sign-in dialog, so

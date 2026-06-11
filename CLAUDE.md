@@ -51,7 +51,8 @@ nix eval ~/.config/nix-darwin#darwinConfigurations.test-all.system.drvPath
 Caveats:
 - Toggling a layer **off** orphans already-applied files (chezmoi never removes
   newly-ignored targets): manually `rm` a disabled layer's leftover targets;
-  Homebrew's `cleanup = "zap"` removes the casks/brews itself.
+  Homebrew's zap cleanup (`--force-cleanup --zap` extraFlags) removes the
+  casks/brews itself.
 - Renaming the Mac (LocalHostName) breaks `darwin-rebuild`'s attr lookup until the
   next `chezmoi apply` re-renders `machine.nix` — the failure is loud, the fix is
   one apply.
