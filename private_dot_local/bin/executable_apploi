@@ -59,9 +59,12 @@ export def main [
     step ""
   }
 
-  if ($SYSTEM_FLAKE_DIR | path type) != 'symlink' {
-    step $"Linking ($LOCAL_FLAKE_DIR) to ($SYSTEM_FLAKE_DIR)"
-    ^sudo ln -s $LOCAL_FLAKE_DIR $SYSTEM_FLAKE_DIR
+  # Quoted strings don't tilde-expand for external commands, so expand here;
+  # -sfh also repairs a dangling or wrong link instead of skipping it.
+  let flake_link_ok = (($SYSTEM_FLAKE_DIR | path type) == 'symlink') and ($SYSTEM_FLAKE_DIR | path exists)
+  if not $flake_link_ok {
+    step $"Linking ($LOCAL_FLAKE_DIR) to ($SYSTEM_FLAKE_DIR)\n\n"
+    ^sudo ln -sfh ($LOCAL_FLAKE_DIR | path expand) $SYSTEM_FLAKE_DIR
   }
 
   step $"Changing to ($SYSTEM_FLAKE_DIR)\n\n"
