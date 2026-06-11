@@ -1,5 +1,8 @@
 command_timeout = 5000
 
+# Default 30ms times out scanning large directories like $HOME.
+scan_timeout = 100
+
 palette = "catppuccin_mocha"
 
 [direnv]
