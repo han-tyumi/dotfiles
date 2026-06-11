@@ -4,6 +4,9 @@ ghq = "latest"
 node = "latest"
 usage = "latest"
 
+# Runs pipx: backend tools via uvx, so no pipx install is needed.
+uv = "latest"
+
 "npm:@biomejs/biome" = "latest"
 
 [settings]

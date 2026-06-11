@@ -13,4 +13,9 @@ export PATH="/opt/homebrew/bin:$PATH"
 
 mise plugins upgrade
 mise upgrade
+
+# Backend tools (npm:, pipx:) resolve through runtimes declared in the same
+# config, which don't exist yet on a fresh machine: a lenient first pass
+# installs the runtimes, the strict second pass gets the rest.
+mise install || true
 mise install
