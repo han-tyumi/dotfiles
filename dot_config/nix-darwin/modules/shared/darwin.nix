@@ -129,7 +129,11 @@
       NSGlobalDomain = {
         AppleShowAllExtensions = true;
         AppleShowAllFiles = true;
+
+        # Auto appearance lives in its own flag and overrides Dark when a
+        # machine was set up with it; pin it off so Dark always wins.
         AppleInterfaceStyle = "Dark";
+        AppleInterfaceStyleSwitchesAutomatically = false;
         AppleScrollerPagingBehavior = true;
         AppleShowScrollBars = "Automatic";
 
