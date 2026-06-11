@@ -244,5 +244,6 @@
   "skipWorkflowUsageWarning": true,
   "theme": "dark-ansi",
   "preferredNotifChannel": "terminal_bell",
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "model": "best"
 }
