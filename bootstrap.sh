@@ -28,9 +28,9 @@ fi
 
 # Xcode Command Line Tools provide git for chezmoi's clone.
 if ! xcode-select -p > /dev/null 2>&1; then
-  echo ">> Installing Xcode Command Line Tools; rerun this script once they finish."
-  xcode-select --install
-  exit 1
+  echo ">> Installing Xcode Command Line Tools; waiting for the installer to finish..."
+  xcode-select --install 2> /dev/null || true
+  until xcode-select -p > /dev/null 2>&1; do sleep 10; done
 fi
 
 # Generate per-machine SSH identity keys; public keys get registered with the
@@ -93,12 +93,24 @@ while IFS='=' read -r name url; do
   mkdir -p "$(dirname "$dir")"
   # accept-new: a fresh Mac has no known_hosts entry yet, and the loop's stdin
   # (the here-string) can't answer ssh's host-key prompt.
-  GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new -i $HOME/.ssh/$keyname" \
-    git clone "$url" "$dir"
-  git -C "$dir" config core.sshCommand "ssh -i $HOME/.ssh/$keyname"
+  if GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new -i $HOME/.ssh/$keyname" \
+    git clone "$url" "$dir"; then
+    git -C "$dir" config core.sshCommand "ssh -i $HOME/.ssh/$keyname"
+  else
+    echo ">> Overlay '$name' clone failed (key not registered yet?). Continuing"
+    echo ">> without it; after registering the key run: chezmoi apply && apploi"
+  fi
 done <<< "$overlays"
 
 # Applies everything; run_once scripts install Homebrew, Nix, and nix-darwin.
 "$chezmoi" apply
 
 echo ">> Bootstrap complete. Open a new shell, then use 'apploi' for rebuilds."
+
+# Recap so key registration can happen comfortably after the machine is up
+# (Bitwarden + a real browser exist by then); overlays land on the next apply.
+# shellcheck disable=SC2086 # word splitting is the input format
+for name in $ssh_keys; do
+  echo ">> Register ~/.ssh/$name.pub as BOTH an Authentication and a Signing key:"
+  cat "$HOME/.ssh/$name.pub"
+done
