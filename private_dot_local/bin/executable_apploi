@@ -60,11 +60,12 @@ export def main [
   }
 
   # Quoted strings don't tilde-expand for external commands, so expand here;
-  # -sfh also repairs a dangling or wrong link instead of skipping it.
+  # -sfn also repairs a dangling or wrong link instead of skipping it
+  # (-n rather than -h: GNU ln from nix coreutils shadows the BSD one).
   let flake_link_ok = (($SYSTEM_FLAKE_DIR | path type) == 'symlink') and ($SYSTEM_FLAKE_DIR | path exists)
   if not $flake_link_ok {
     step $"Linking ($LOCAL_FLAKE_DIR) to ($SYSTEM_FLAKE_DIR)\n\n"
-    ^sudo ln -sfh ($LOCAL_FLAKE_DIR | path expand) $SYSTEM_FLAKE_DIR
+    ^sudo ln -sfn ($LOCAL_FLAKE_DIR | path expand) $SYSTEM_FLAKE_DIR
   }
 
   step $"Changing to ($SYSTEM_FLAKE_DIR)\n\n"
