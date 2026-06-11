@@ -1,0 +1,93 @@
+#!/usr/bin/env nu
+
+# Guided first launch for GUI apps whose setup needs a human: permission
+# grants (TCC) and onboarding flows are GUI-only by design. Walks every
+# installed catalog app, opens it, and waits; finished apps are remembered
+# so reruns only show what's left.
+
+const STATE_DIR = '~/.local/state/onboard'
+
+const APPS = [
+  {
+    bundle: "Raycast"
+    tips: [
+      "Import a raycast.rayconfig export (Settings > Advanced > Import) or sign in for Cloud Sync"
+      "Grant Accessibility when prompted"
+      "For cmd+space: disable Spotlight's shortcut first (System Settings > Keyboard > Keyboard Shortcuts > Spotlight)"
+      "Enable Launch at Login (Settings > General)"
+    ]
+  }
+  {
+    bundle: "Bitwarden"
+    tips: [
+      "Sign in: master password + second factor"
+      "Settings > Security: unlock with Touch ID, vault timeout action = Lock"
+      "Enable browser integration so the extension gets biometrics"
+    ]
+  }
+  {
+    bundle: "KeepingYouAwake"
+    tips: ["Menu bar icon > Preferences: enable Launch at Login"]
+  }
+  {
+    bundle: "eqMac"
+    tips: ["Allow the audio driver install when prompted"]
+  }
+  {
+    bundle: "Docker"
+    tips: [
+      "Accept the service agreement; skipping sign-in is fine"
+      "Allow the privileged helper install"
+    ]
+  }
+  {
+    bundle: "Private Internet Access"
+    tips: [
+      "Sign in (credentials in Bitwarden)"
+      "Settings: enable Launch at Login + connect on launch"
+    ]
+  }
+]
+
+def installed [bundle: string] {
+  $"/Applications/($bundle).app" | path exists
+}
+
+def done-marker [bundle: string] {
+  $STATE_DIR | path expand | path join $"($bundle).done"
+}
+
+@example "Tour the installed apps not yet set up" { onboard }
+@example "Revisit apps already marked done" { onboard --all }
+@example "Show the catalog and each app's status" { onboard --list }
+export def main [
+  --all (-a)   # Revisit apps already marked done.
+  --list (-l)  # Show the catalog and each app's status.
+] {
+  if $list {
+    return ($APPS | each {|app| {
+      app: $app.bundle
+      installed: (installed $app.bundle)
+      done: ((done-marker $app.bundle) | path exists)
+    }})
+  }
+
+  mkdir ($STATE_DIR | path expand)
+
+  for app in $APPS {
+    if not (installed $app.bundle) { continue }
+    if (not $all) and ((done-marker $app.bundle) | path exists) { continue }
+
+    print $"\n(ansi green_bold)($app.bundle)(ansi reset)"
+    for tip in $app.tips { print $"  • ($tip)" }
+
+    let answer = (input $"Press Enter to open ($app.bundle) — s to skip: ")
+    if $answer == "s" { continue }
+
+    ^open -a $app.bundle
+    input "Press Enter when it's set up... "
+    touch (done-marker $app.bundle)
+  }
+
+  print "\nDone. Rerun with --all to revisit, --list for status."
+}
