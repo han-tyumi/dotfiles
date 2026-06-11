@@ -165,6 +165,22 @@
       # The directory must exist or macOS falls back to the Desktop;
       # home.nix creates it.
       screencapture.location = "/Users/${machine.username}/Pictures/Screenshots";
+
+      CustomUserPreferences = {
+        # The profile these keys select carries binary font/color blobs nix
+        # can't express, so the terminal-profile run script imports it from
+        # a tracked file; the plain keys live here, re-asserted on every
+        # activation since Terminal rewrites its prefs on quit.
+        "com.apple.Terminal" = {
+          "Default Window Settings" = "catppuccin-mocha";
+          "Startup Window Settings" = "catppuccin-mocha";
+
+          # Nushell is the interactive shell; the login zsh assembles the
+          # nix/Homebrew environment it inherits. (zsh stays the login
+          # shell — nushell isn't POSIX.)
+          Shell = "/bin/zsh -lc nu";
+        };
+      };
     };
 
     # nix-darwin only restarts the Dock after writing defaults; flush the rest

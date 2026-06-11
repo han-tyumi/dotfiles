@@ -116,8 +116,10 @@ entries sort before repo-root scripts; the installers therefore live in
   - `run_once_after_3-claude-code.sh`: Installs Claude Code
 - `run_onchange_after_*.tmpl`: Scripts that run when tracked files change
   - `1-mise-config.toml.tmpl`: Upgrades and installs mise tools
-  - `4-terminal-profile.sh.tmpl`: Installs the tracked Terminal.app profile and
-    sets it as the default (the script header documents the re-export recipe)
+  - `4-terminal-profile.sh.tmpl`: Imports the tracked Terminal.app profile
+    (the script header documents the re-export recipe); default-profile
+    selection and the nushell shell command live in darwin.nix's
+    `CustomUserPreferences`
 - `.chezmoiscripts/<layer>/`: Layer-owned scripts; they derive their layer name from
   their own path (`.chezmoi.sourceFile`) rather than hardcoding it
   - `personal/run_onchange_after_v.sh.tmpl`: Updates V; renders empty (skipped)

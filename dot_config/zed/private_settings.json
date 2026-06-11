@@ -41,6 +41,18 @@
     },
   },
 
+  // Terminal
+  // Nushell is the interactive shell; the login zsh assembles the
+  // nix/Homebrew environment it inherits.
+  "terminal": {
+    "shell": {
+      "with_arguments": {
+        "program": "/bin/zsh",
+        "args": ["-lc", "nu"],
+      },
+    },
+  },
+
   // Key Bindings
   "base_keymap": "VSCode",
 
