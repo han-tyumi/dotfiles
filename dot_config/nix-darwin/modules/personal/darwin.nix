@@ -8,6 +8,11 @@
       "golangci-lint"
     ];
     casks = [
+      # Browser trials for the eventual Arc exit; a winner graduates to
+      # shared, the rest get dropped (zap cleanup uninstalls them).
+      "orion"
+      "vivaldi"
+
       "claude"
       "eqmac"
       "gimp"
