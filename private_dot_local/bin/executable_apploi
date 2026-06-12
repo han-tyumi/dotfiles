@@ -13,14 +13,14 @@ const SYSTEM_FLAKE_DIR = '/etc/nix-darwin'
 export def main [
   --all (-A)      # Apply everything (default if no flags given).
   --chezmoi (-c)  # Apply Chezmoi's state.
-  --update (-u)   # Update Nix channels and flake inputs.
+  --update (-u)   # Update the nix-darwin flake inputs.
   --switch (-s)   # Switch to the latest nix-darwin configuration.
   --clean (-C)    # Clean the Nix store.
   --mise (-m)     # Upgrade mise plugins and tools.
   --refresh (-R)  # Force-refresh Chezmoi externals (overlays) before applying.
 ]: nothing -> nothing {
   let all = $all or not ($chezmoi or $update or $switch or $clean or $mise)
-  # Overlays refresh on their own every 168h; --refresh forces it now (e.g.
+  # Overlays refresh on their own once a day; --refresh forces it now (e.g.
   # after pushing a work-overlay change) and implies the chezmoi step.
   let chezmoi = $all or $chezmoi or $refresh
   let update = $all or $update
@@ -71,7 +71,7 @@ export def main [
   # Quoted strings don't tilde-expand for external commands, so expand here;
   # -sfn also repairs a dangling or wrong link instead of skipping it
   # (-n rather than -h: GNU ln from nix coreutils shadows the BSD one).
-  let flake_link_ok = (($SYSTEM_FLAKE_DIR | path type) == 'symlink') and ($SYSTEM_FLAKE_DIR | path exists)
+  let flake_link_ok = (($SYSTEM_FLAKE_DIR | path type) == 'symlink') and ($SYSTEM_FLAKE_DIR | path exists) and (($SYSTEM_FLAKE_DIR | path expand) == ($LOCAL_FLAKE_DIR | path expand))
   if not $flake_link_ok {
     step $"Linking ($LOCAL_FLAKE_DIR) to ($SYSTEM_FLAKE_DIR)\n\n"
     ^sudo ln -sfn ($LOCAL_FLAKE_DIR | path expand) $SYSTEM_FLAKE_DIR
@@ -87,15 +87,6 @@ export def main [
     }
 
     if $switch {
-      for file in [bash zsh] {
-        let from = $'/etc/($file)rc'
-        let to = $'($from).before-nix-darwin'
-        if ($from | path exists) {
-          step $"\nBacking up ($from) to ($to)\n"
-          ^sudo mv $from $to
-        }
-      }
-
       step "\nApplying nix-darwin configuration\n\n"
 
       # --no-write-lock-file keeps the root rebuild from re-owning flake.lock,
