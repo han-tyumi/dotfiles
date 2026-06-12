@@ -119,6 +119,11 @@ entries sort before repo-root scripts; the installers therefore live in
   - `1-mise-config.toml.tmpl`: Upgrades and installs mise tools
   - `2-rtk.sh.tmpl`: Configures the RTK CLI proxy (`rtk init`), if installed
   - `3-claude-mcp.sh`: Registers Claude Code MCP servers (e.g. github)
+  - `4-vscode-extensions.sh.tmpl`: Installs the union of every enabled layer's
+    `vscode-extensions.txt`, probed like the settings splice in both
+    `modules/<layer>/` and `overlays/<layer>/` (plus `modules/shared/`);
+    install-only and warn-don't-block — when it re-runs it reports install
+    failures and installed-but-unlisted extensions instead of failing the apply
 - `.chezmoiscripts/<layer>/`: Layer-owned scripts; they derive their layer name from
   their own path (`.chezmoi.sourceFile`) rather than hardcoding it
   - `personal/run_onchange_after_v.sh.tmpl`: Updates V; renders empty (skipped)
@@ -135,7 +140,9 @@ To add a layer named `<name>` — in-repo, overlay, or both:
 3. **Layer scripts** (optional) — `.chezmoiscripts/<name>/`; they derive their layer name
    from `.chezmoi.sourceFile`, not a hardcoded string.
 4. **mise runtimes** (optional) — a `conf.d/<name>.toml` fragment for layer-specific tools.
-5. **VS Code fragment** (optional, overlay) — a spliceable `vscode-settings.jsonc`.
+5. **VS Code fragments** (optional) — a layer dir (`modules/<name>/` or the overlay
+   clone) can provide a spliceable `vscode-settings.jsonc` and/or a
+   `vscode-extensions.txt` install list; both roots are probed for both fragments.
 6. **Verify** — in-repo layers get a `test-<name>` fixture automatically:
    `nix eval ~/.config/nix-darwin#darwinConfigurations.test-<name>.system.drvPath`.
 7. **Enable it** — add `<name>` to the machine's `layers` (overlays as `name=url` pairs) via
@@ -281,4 +288,7 @@ Neovim config is managed as an external git submodule (`dot_config/external_nvim
   no explicit attribute
 - Node.js is pinned to version 24 via nixpkgs overlay
 - Homebrew auto-updates and upgrades on activation
+- VS Code Settings Sync stays OFF — settings, keybindings, and extensions are
+  dotfiles-managed; never sign into Settings Sync on any machine (user snippets
+  are deliberately local-only)
 - Git ignores `.claude/*.local.*`, `.env.local`, `.mcp.local.json`, `CLAUDE.local.md`, and `mise.local.toml` globally
