@@ -115,8 +115,10 @@ entries sort before repo-root scripts; the installers therefore live in
   - `run_once_after_2-nix-darwin.sh`: Installs Nix Darwin (channel ref read from
     the flake's nix-darwin input)
   - `run_once_after_3-claude-code.sh`: Installs Claude Code
-- `run_onchange_after_*.tmpl`: Scripts that run when tracked files change
+- `run_onchange_after_*`: Scripts that run when tracked files change
   - `1-mise-config.toml.tmpl`: Upgrades and installs mise tools
+  - `2-rtk.sh.tmpl`: Configures the RTK CLI proxy (`rtk init`), if installed
+  - `3-claude-mcp.sh`: Registers Claude Code MCP servers (e.g. github)
 - `.chezmoiscripts/<layer>/`: Layer-owned scripts; they derive their layer name from
   their own path (`.chezmoi.sourceFile`) rather than hardcoding it
   - `personal/run_onchange_after_v.sh.tmpl`: Updates V; renders empty (skipped)
@@ -246,7 +248,7 @@ Multiple shells are configured:
 - **Nushell**: Primary interactive shell with custom config/env files
 - **Zsh**: Enabled as system shell
 
-Nu-based CLIs (`apploi`, `wt`) live in `~/.local/bin` as `#!/usr/bin/env nu`
+Nu-based CLIs (`apploi`, `wt`, `onboard`) live in `~/.local/bin` as `#!/usr/bin/env nu`
 scripts so they run from any shell or automated session. Each is also exposed
 as a completable nu command via a `symlink_<name>.nu.tmpl` in the nushell
 `commands/` dir plus an `export use` line in its `mod.nu` (a shebang parses as
@@ -263,7 +265,8 @@ External resources are managed in `.chezmoiexternals/`:
 - `personal.toml` — **V language** (git clone at `~/v`) and **Roc** nightlies; pure
   TOML, gated by `.chezmoilayers/personal.ignore`
 - `overlays.toml.tmpl` — per-machine overlay repos (from chezmoi data) cloned to
-  `~/.config/nix-darwin/overlays/<name>`
+  `~/.config/nix-darwin/overlays/<name>`; `refreshPeriod = "24h"` so a pushed
+  overlay change lands on a plain `apploi` within a day (`apploi -R` forces it now)
 - `shared.toml` — **Nushell community scripts** (`nu_scripts`) under the nushell
   scripts dir
 
