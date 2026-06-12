@@ -4,10 +4,10 @@
 [".config/nix-darwin/overlays/{{ $name }}"]
 type = "git-repo"
 url = "{{ $url }}"
-# Refresh on every apply so a pushed overlay change lands on plain apploi; the
-# clone is small and the pull is ff-only. `apploi -R` additionally forces the
-# heavier, rarely-changing externals (V, Roc, nu_scripts) on demand.
-refreshPeriod = "0"
+# Refresh at most once a day so a pushed overlay change lands on a plain
+# apploi within a day (the clone is small and the pull is ff-only). A bare
+# `apploi -R` forces it — and the heavier externals — immediately.
+refreshPeriod = "24h"
 pull.args = ["--ff-only"]
 
 {{ end -}}
