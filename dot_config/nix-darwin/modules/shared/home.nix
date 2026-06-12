@@ -108,6 +108,26 @@ in
         # Rebase local commits on pull instead of merging or nagging.
         pull.rebase = true;
 
+        # Replay recorded conflict resolutions across a branch's repeated rebases.
+        rerere.enabled = true;
+        rerere.autoUpdate = true;
+
+        rebase.autoStash = true;
+        rebase.updateRefs = true;
+        fetch.prune = true;
+
+        merge.conflictStyle = "zdiff3";
+        diff.algorithm = "histogram";
+        diff.colorMoved = "default";
+        diff.mnemonicPrefix = true;
+
+        # delta is the pager (catppuccin include); add file navigation + line numbers.
+        delta.navigate = true;
+        delta.line-numbers = true;
+
+        # Safe force-push for the rebase-heavy workflow.
+        alias.pushf = "push --force-with-lease --force-if-includes";
+
         # Fail loudly instead of guessing an identity from the host/gecos when no
         # layer or includeIf condition has set one.
         user.useConfigOnly = true;
