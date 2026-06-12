@@ -98,8 +98,10 @@ export def main [
 
       step "\nApplying nix-darwin configuration\n\n"
 
+      # --no-write-lock-file keeps the root rebuild from re-owning flake.lock,
+      # which would make the next user-level `nix flake update` fail with EPERM.
       # Issue with `/tmp` symlink; we use `/private/tmp` directly instead.
-      ^sudo TMPDIR=/private/tmp darwin-rebuild switch
+      ^sudo TMPDIR=/private/tmp darwin-rebuild switch --no-write-lock-file
 
       # `brew bundle` only upgrades declared formulae; their dependencies go stale without this.
       step "\nUpgrading Homebrew dependency formulae\n\n"
