@@ -9,6 +9,7 @@ const SYSTEM_FLAKE_DIR = '/etc/nix-darwin'
 @example "Just apply chezmoi state" { apploi -c }
 @example "Switch nix-darwin to the latest config" { apploi -s }
 @example "Chezmoi apply + switch" { apploi -cs }
+@example "Force-refresh overlays, then apply everything" { apploi -R }
 export def main [
   --all (-A)      # Apply everything (default if no flags given).
   --chezmoi (-c)  # Apply Chezmoi's state.
@@ -16,9 +17,12 @@ export def main [
   --switch (-s)   # Switch to the latest nix-darwin configuration.
   --clean (-C)    # Clean the Nix store.
   --mise (-m)     # Upgrade mise plugins and tools.
+  --refresh (-R)  # Force-refresh Chezmoi externals (overlays) before applying.
 ]: nothing -> nothing {
   let all = $all or not ($chezmoi or $update or $switch or $clean or $mise)
-  let chezmoi = $all or $chezmoi
+  # Overlays refresh on their own every 168h; --refresh forces it now (e.g.
+  # after pushing a work-overlay change) and implies the chezmoi step.
+  let chezmoi = $all or $chezmoi or $refresh
   let update = $all or $update
   let switch = $all or $switch
   let clean = $all or $clean
@@ -56,7 +60,11 @@ export def main [
     }
 
     step $"\nApplying Chezmoi's state\n\n"
-    ^chezmoi apply
+    if $refresh {
+      ^chezmoi apply --refresh-externals
+    } else {
+      ^chezmoi apply
+    }
     step ""
   }
 
