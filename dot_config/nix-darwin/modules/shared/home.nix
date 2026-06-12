@@ -105,6 +105,9 @@ in
         };
         push.autoSetupRemote = true;
 
+        # Rebase local commits on pull instead of merging or nagging.
+        pull.rebase = true;
+
         # Fail loudly instead of guessing an identity from the host/gecos when no
         # layer or includeIf condition has set one.
         user.useConfigOnly = true;
