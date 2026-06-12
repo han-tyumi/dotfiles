@@ -12,3 +12,7 @@ uv = "latest"
 [settings]
 pin = true
 idiomatic_version_file_enable_tools = []
+
+# Auto-trust mise configs that live in the chezmoi source and overlay clones,
+# so running a mise shim from those trees doesn't nag for `mise trust`.
+trusted_config_paths = ["~/.local/share/chezmoi", "~/.config/nix-darwin/overlays"]
