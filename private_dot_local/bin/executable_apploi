@@ -35,10 +35,11 @@ export def main [
     # apploi; a dirty tree (mid-edit on the authoring machine) skips the pull.
     if (do { ^git diff --quiet HEAD } | complete).exit_code == 0 {
       step $"Pulling the latest dotfiles\n\n"
-      let pull = (do { ^git pull --ff-only } | complete)
-      print $pull.stdout
-      if $pull.exit_code != 0 {
-        step $"Pull skipped: ($pull.stderr | str trim)\n\n"
+      # --quiet keeps a no-op pull silent; a non-fast-forward means origin's
+      # history was rewritten (an amend + force-push from the authoring
+      # machine), so report the one-line fix instead of git's raw output.
+      if (do { ^git pull --ff-only --quiet } | complete).exit_code != 0 {
+        step $"Pull skipped — origin diverged; resync with: git fetch && git reset --hard origin/main\n\n"
       }
     }
 
