@@ -20,6 +20,11 @@ set -euo pipefail
 # Mid-bootstrap shells don't have the Homebrew-installed code on PATH yet.
 export PATH="/opt/homebrew/bin:$PATH"
 
+# The `code` CLI bundles a Node that emits a url.parse() deprecation warning
+# (DEP0169) on every marketplace fetch — VS Code's noise, not ours. Mute it;
+# real install errors still go to stderr.
+export NODE_NO_WARNINGS=1
+
 # The union of every enabled layer's vscode-extensions.txt, rendered in by
 # chezmoi so the script re-runs whenever the effective id set changes.
 wanted=$(cat <<'EOF'
