@@ -162,6 +162,15 @@
         ShowPathbar = true;
         ShowStatusBar = true;
         FXRemoveOldTrashItems = true;
+
+        # Folders before files when sorting by name.
+        _FXSortFoldersFirst = true;
+
+        # Search the current folder rather than the whole Mac by default.
+        FXDefaultSearchScope = "SCcf";
+
+        # New Finder windows open to the home folder.
+        NewWindowTarget = "Home";
       };
 
       # The directory must exist or macOS falls back to the Desktop;
@@ -194,9 +203,28 @@
       #     > "$(chezmoi source-path)/dot_config/nix-darwin/modules/shared/catppuccin-mocha.terminal"
       sudo -u ${machine.username} defaults write com.apple.Terminal "Window Settings" -dict-add catppuccin-mocha "$(cat ${./catppuccin-mocha.terminal})"
 
+      # Restore the desktop wallpaper config (Shuffle Landscape aerials, every
+      # 12 hours). macOS has no defaults key or nix-darwin option for this; the
+      # state lives in an undocumented per-user plist that references built-in
+      # aerial asset IDs present on every Mac, so the captured file replays
+      # cleanly on the same macOS major version. Recapture after changing it in
+      # System Settings with:
+      #   cp ~/Library/Application\ Support/com.apple.wallpaper/Store/Index.plist \
+      #     "$(chezmoi source-path)/dot_config/nix-darwin/modules/shared/wallpaper-shuffle.plist"
+      wallpaper_store="/Users/${machine.username}/Library/Application Support/com.apple.wallpaper/Store"
+      sudo -u ${machine.username} mkdir -p "$wallpaper_store"
+      sudo -u ${machine.username} cp ${./wallpaper-shuffle.plist} "$wallpaper_store/Index.plist"
+      sudo -u ${machine.username} killall WallpaperAgent 2>/dev/null || true
+
       # nix-darwin only restarts the Dock after writing defaults; flush the
       # rest into the running session instead of waiting for a re-login.
       sudo -u ${machine.username} /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+
+      # Restart Finder so the preferred-view-style and other finder defaults
+      # take effect now rather than at next login. (This sets the default for
+      # folders without a saved per-folder view; folders that already have a
+      # .DS_Store keep their own view.)
+      sudo -u ${machine.username} killall Finder 2>/dev/null || true
     '';
 
     # Set Git commit hash for darwin-version.
