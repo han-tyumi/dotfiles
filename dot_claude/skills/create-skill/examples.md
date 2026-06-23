@@ -244,8 +244,13 @@ Review this PR for:
 Provide feedback organized by severity: critical, warnings, suggestions.
 ```
 
-Key traits: `` !`command` `` for live data injection, `context: fork` for
-isolation, `disable-model-invocation: true` for manual review.
+Key traits: `` !`command` `` for live data injection, `context: fork` to keep
+the review's tool calls out of the main context, `disable-model-invocation: true`
+for manual review.
+
+Note: with `agent: general-purpose` the fork inherits the full parent
+conversation and CLAUDE.md; use `agent: Explore` or `Plan` when you want it to
+start fresh instead.
 
 ### 9. Navigator skill (URL-based reference)
 

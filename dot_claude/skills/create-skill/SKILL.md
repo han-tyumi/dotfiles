@@ -158,16 +158,18 @@ expected outputs, validation steps. This is the single highest-leverage thing fo
 quality.
 
 **Consider token cost.** Skills without `disable-model-invocation` have their
-description loaded into every request. Keep it concise. Reference material
-belongs in supporting files, not inlined in SKILL.md.
+description loaded into context at session start (and it stays for the session).
+Keep it concise. Reference material belongs in supporting files, not inlined in
+SKILL.md.
 
 **Lifecycle and compaction.** Full SKILL.md content only enters the
 conversation when the skill is invoked, then stays for the rest of the
-session. After auto-compaction, each invoked skill is reattached with its
-first ~5,000 tokens preserved, sharing a combined ~25,000-token budget
-across all reattached skills (filled from the most recently invoked skill
-backwards — older invocations can be dropped entirely). Front-load the most
-important instructions so they survive compaction.
+session. The startup description listing is not re-injected after
+auto-compaction; only skills you actually invoked are reattached, each capped
+at its first ~5,000 tokens and sharing a combined ~25,000-token budget (filled
+from the most recently invoked skill backwards — older invocations can be
+dropped entirely). Front-load the most important instructions so they survive
+compaction.
 
 **Extended thinking.** Including the word `ultrathink` anywhere in the skill
 content enables extended thinking when the skill is invoked. Use sparingly —
@@ -213,10 +215,18 @@ Run through [quality-checklist.md](quality-checklist.md). At minimum confirm:
 
 - SKILL.md has valid YAML frontmatter and is under 500 lines.
 - Combined `description` + `when_to_use` is under 1,536 characters and front-loads the key use case.
-- Name uses only lowercase letters, numbers, and hyphens.
+- Name uses only lowercase letters, numbers, and hyphens, contains no XML tags,
+  and isn't the reserved word `anthropic` or `claude`.
+- Description is non-empty, under 1,024 characters, and contains no XML tags.
 - `disable-model-invocation: true` is set if the skill has side effects.
 - `context: fork` is only used when content forms a complete, self-contained
   task.
+
+A skill is an addition to a model, so its effectiveness depends on the model
+running it. If the skill will run on more than one model, test it across them:
+Haiku (does it give enough guidance?), Sonnet (is it clear and efficient?), and
+Opus (does it avoid over-explaining?). What's perfect for Opus may need more
+detail for Haiku.
 
 Report: skill name, location, invocation method (`/name` or auto), and a brief
 summary.

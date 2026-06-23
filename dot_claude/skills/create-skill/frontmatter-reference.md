@@ -1,6 +1,11 @@
 # Frontmatter Reference
 
-All fields are optional. Only `description` is recommended for every skill.
+Both `name` and `description` are required; all other fields are optional. This
+table documents Claude Code's skill frontmatter, which extends the
+[Agent Skills base spec](https://agentskills.io/specification). The spec's three
+portability fields — `license`, `compatibility`, and `metadata` — are valid here
+but rarely needed; see the spec for them. Everything else below is Claude
+Code's own.
 
 For deep dives, fetch these authoritative sources:
 - Claude Code skills: `https://code.claude.com/docs/en/skills`
@@ -16,21 +21,22 @@ For deep dives, fetch these authoritative sources:
 
 | Field                      | Description                                                                                                            |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------|
-| `name`                     | Display name and `/slash-command`. Lowercase letters, numbers, hyphens. Max 64 chars. Defaults to directory name.      |
-| `description`              | What the skill does and when to use it. Front-load the key use case. Combined with `when_to_use`, truncated at 1,536 chars in listings. |
+| `name`                     | Display name and `/slash-command`. Lowercase letters, numbers, hyphens only. Max 64 chars. No XML tags. Not the reserved words `anthropic` or `claude`. Defaults to directory name. |
+| `description`              | What the skill does and when to use it. Front-load the key use case. Non-empty, max 1,024 chars, no XML tags. Combined with `when_to_use`, truncated at 1,536 chars in listings. |
 | `when_to_use`              | Extra trigger phrases / example requests, appended to `description` in the listing. Counts toward the 1,536-char cap.  |
 | `argument-hint`            | Hint shown during autocomplete. E.g., `[issue-number]` or `[filename] [format]`.                                      |
 | `arguments`                | Named positional arguments for `$name` substitution in the skill content. Space-separated string or YAML list.         |
 | `disable-model-invocation` | `true` prevents Claude from loading the skill automatically. Use for workflows with side effects or manual triggers.   |
 | `user-invocable`           | `false` hides from the `/` menu. Use for background knowledge users shouldn't invoke directly.                         |
 | `allowed-tools`            | Tools allowed without permission prompts. Supports patterns -- see [Tool patterns](#tool-patterns-for-allowed-tools).  |
-| `model`                    | Model override: `sonnet`, `opus`, `haiku`, or a full model ID like `claude-opus-4-6`.                                  |
-| `effort`                   | Effort level: `low`, `medium`, `high`, `max`. Overrides session effort. `max` is Opus 4.6 only.                        |
-| `context`                  | Set to `fork` to run in a forked subagent context. Content becomes the subagent's task prompt.                         |
+| `disallowed-tools`         | Tools removed from Claude's available pool while the skill is active. Use for autonomous skills that must never call certain tools (e.g. `AskUserQuestion` in a background loop). Supports patterns; clears on your next message. |
+| `model`                    | Model override: `sonnet`, `opus`, `haiku`, a full model ID like `claude-opus-4-8`, or `inherit` to keep the active model. Applies for the rest of the current turn only -- the session model resumes on your next prompt. |
+| `effort`                   | Effort level: `low`, `medium`, `high`, `xhigh`, `max`. Overrides session effort; defaults to inheriting it. Available levels depend on the model. |
+| `context`                  | Set to `fork` to run in a forked subagent context. The fork inherits the conversation, system prompt, tools, and model from the main session; its content becomes the task prompt. (With `agent: Explore` or `Plan`, the fork starts fresh instead.) |
 | `agent`                    | Subagent type when `context: fork` is set. Built-in: `Explore` (read-only, optimized for codebase research), `Plan` (planning-only, no execution), `general-purpose` (full tools). Or a custom agent from `.claude/agents/`. |
 | `hooks`                    | Hooks scoped to this skill's lifecycle. Same format as settings-based hooks. Active only while skill is running.        |
 | `paths`                    | Glob patterns limiting auto-activation. Accepts a comma-separated string or YAML list. Only affects model invocation.  |
-| `shell`                    | Shell for `` !`command` `` blocks: `bash` (default) or `powershell`.                                                   |
+| `shell`                    | Shell for `` !`command` `` and ```` ```! ```` blocks: `bash` (default) or `powershell`. On Windows, `powershell` requires `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. |
 
 ## String substitutions
 
@@ -38,8 +44,9 @@ For deep dives, fetch these authoritative sources:
 |---------------------------|---------------------------------------------------------------------------------|
 | `$ARGUMENTS`              | All arguments passed when invoking the skill.                                   |
 | `$ARGUMENTS[N]` or `$N`  | Specific argument by 0-based index. `$0` is the first argument.                |
+| `$name`                   | Named argument from the `arguments` frontmatter list. Names map to positions in order, so `arguments: [issue, branch]` makes `$issue` the first argument and `$branch` the second. |
 | `${CLAUDE_SESSION_ID}`    | Current session ID. Useful for logging or session-specific files.               |
-| `${CLAUDE_EFFORT}`        | Current effort level: `low`, `medium`, `high`, `xhigh`, or `max`. Use to adapt instructions to active effort. |
+| `${CLAUDE_EFFORT}`        | Current effort level: `low`, `medium`, `high`, `xhigh`, or `max`. Ultracode is not a distinct level and reports as `xhigh`. Use to adapt instructions to active effort. |
 | `${CLAUDE_SKILL_DIR}`     | Directory containing this SKILL.md. Use for referencing bundled scripts.        |
 
 If `$ARGUMENTS` is not present in the skill content, arguments are appended
@@ -154,9 +161,11 @@ Use for:
 - Running linters after file edits (PostToolUse).
 - One-time setup when skill starts (`once: true`).
 
-Four handler types are available:
+Five handler types are available:
 - `command` -- run a shell script. Most common.
 - `http` -- POST to an HTTP endpoint.
+- `mcp_tool` -- call a tool on an already-connected MCP server; its text output
+  is treated like command-hook stdout.
 - `prompt` -- evaluate with a fast model (no tool use).
 - `agent` -- evaluate with a model that has tool access.
 
@@ -168,8 +177,16 @@ Additional hook fields:
 - `async: true` -- run in background without blocking (command hooks only).
 - `once: true` -- run only once per session, then removed (skills only).
 
-Hooks receive JSON input on stdin (command) or POST body (http). Exit code 2
-blocks the operation. See the
+Each handler type also takes its own fields (`command` takes `args`/`shell`;
+`http` takes `headers`/`allowedEnvVars`; `mcp_tool` takes `server`/`tool`/`input`;
+`prompt`/`agent` take `prompt`/`model`).
+
+Hooks receive JSON input on stdin (command) or POST body (http). For most events
+only exit code 2 blocks the operation (stderr is fed back to Claude); exit code 1
+is a non-blocking error and execution proceeds. `WorktreeCreate` is the
+exception -- any non-zero exit aborts it. Instead of exit 2, a hook may exit 0
+and print a JSON object to stdout for finer control (e.g. `continue`,
+`stopReason`, `suppressOutput`, `systemMessage`). See the
 [hooks reference](https://code.claude.com/docs/en/hooks) for complete details.
 
 ### Combining fields

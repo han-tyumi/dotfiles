@@ -16,7 +16,9 @@ If any of the above fail, redirect to the correct mechanism.
 
 - [ ] SKILL.md exists with valid YAML frontmatter between `---` markers.
 - [ ] SKILL.md is under 500 lines.
-- [ ] Name uses only lowercase letters, numbers, and hyphens (max 64 chars).
+- [ ] Name uses only lowercase letters, numbers, and hyphens (max 64 chars), has
+      no XML tags, and isn't the reserved word `anthropic` or `claude`.
+- [ ] Description is non-empty, under 1,024 characters, and has no XML tags.
 - [ ] Combined `description` + `when_to_use` is under 1,536 characters and front-loads the key use case.
 - [ ] Description is written in third person ("Processes files", not "I can
       help" or "Use this to").
@@ -56,7 +58,7 @@ If any of the above fail, redirect to the correct mechanism.
 
 ## Token efficiency
 
-- [ ] Description is concise (loaded into every request unless
+- [ ] Description is concise (loaded into context at session start unless
       `disable-model-invocation: true`).
 - [ ] Reference material is in supporting files, not inlined in SKILL.md.
 - [ ] Dynamic context injection (`` !`command` ``) is used instead of asking
@@ -66,6 +68,13 @@ If any of the above fail, redirect to the correct mechanism.
 - [ ] Most useful instructions live in the first ~5,000 tokens of SKILL.md.
       After auto-compaction, reattached skills keep only their first 5K
       tokens (combined 25K budget across all reattached skills).
+
+## Testing
+
+- [ ] Tested with real usage scenarios, not just inspected.
+- [ ] If the skill runs on more than one model, tested across them (Haiku for
+      enough guidance, Sonnet for clarity/efficiency, Opus for not
+      over-explaining).
 
 ## Safety
 

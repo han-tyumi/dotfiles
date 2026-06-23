@@ -4,7 +4,7 @@ This skill is a curated, synthesized digest of Anthropic's skill-authoring guida
 
 ## Last reviewed
 
-`2026-05-01`
+`2026-06-23`
 
 ## Sources to verify
 
@@ -48,6 +48,32 @@ When auditing, fetch each source and look for changes that affect the local file
 ## Audit log
 
 Newest first. Record what changed upstream and what was updated locally.
+
+### 2026-06-23
+
+Fanned out one fetcher per source and adversarially re-verified each flagged drift.
+
+- `frontmatter-reference.md`: opening line claimed "all fields are optional" — `name` and `description` are both required per the spec; corrected, and noted the table extends the agentskills.io base spec (the spec's `license`/`compatibility`/`metadata` portability fields are valid but rarely needed, deferred to the spec link).
+- `frontmatter-reference.md`: `effort` row omitted `xhigh` (which the same file's substitutions table listed — an internal inconsistency) and pinned `max` to "Opus 4.6 only". Upstream: options are `low/medium/high/xhigh/max`, availability depends on the model. Fixed.
+- `frontmatter-reference.md`: added the new `disallowed-tools` field (removes tools from Claude's pool while the skill is active).
+- `frontmatter-reference.md`: `name`/`description` rows gained the validation constraints (no XML tags, no reserved words `anthropic`/`claude`, description non-empty/max 1,024 chars).
+- `frontmatter-reference.md`: `model` row updated to a current id (`claude-opus-4-8`), plus the `inherit` value and current-turn-only scope.
+- `frontmatter-reference.md`: `shell` row now covers ` ```! ` blocks and the Windows `CLAUDE_CODE_USE_POWERSHELL_TOOL=1` requirement; `context` row clarifies a fork inherits the parent conversation (fresh only with Explore/Plan).
+- `frontmatter-reference.md`: substitutions table gained the `$name` named-argument row; `${CLAUDE_EFFORT}` notes Ultracode reports as `xhigh`.
+- `frontmatter-reference.md`: hooks section corrected from four to five handler types (added `mcp_tool`), added per-handler field summary, and corrected exit-code semantics (exit 1 non-blocking, WorktreeCreate aborts on any non-zero, exit-0-with-JSON for finer control).
+- `SKILL.md`: "description loaded into every request" corrected to "at session start" and noted the startup listing is not re-injected after compaction; Step 5 gained name/description validation checks and multi-model testing guidance.
+- `quality-checklist.md`: added XML-tag/reserved-word/length checks to Frontmatter and a new Testing section.
+- `examples.md`: archetype 8 reworded — `context: fork` keeps tool calls out of main context but (with `general-purpose`) inherits the full parent conversation.
+- No fetch failures across all sources. Six alleged drifts were refuted on re-check (license field is out of scope; subagents already in the checklist; plugin-conversion is documented; `context: fork`/`agent:` are valid skill fields) and intentionally not changed.
+
+A follow-up review pass (three lenses — upstream fidelity, mechanics/consistency, dogfooding — each finding adversarially re-verified) caught issues in the edits above:
+
+- `quality-checklist.md`: the "Token efficiency" bullet still read "loaded into every request"; corrected to "at session start" to match `SKILL.md`.
+- `frontmatter-reference.md`: the `shell` row's ```` ```! ```` example was malformed markdown (single-backtick span around literal backticks); fixed the escaping.
+- `frontmatter-reference.md`: the intro's "superset" framing named base-spec fields it didn't list, reading as incomplete; reworded to "extends" and deferred `license`/`compatibility`/`metadata` to the spec link.
+- `SKILL.md`: the compaction behavior was explained twice (token-cost paragraph + lifecycle paragraph); consolidated into the lifecycle paragraph.
+- `examples.md`: archetype 8's fork-inheritance caveat was moved out of the key-traits line into its own note to match the other archetypes' concise style.
+- Verified against the live context-window doc that the startup skill-description listing genuinely is NOT re-injected after `/compact` ("the skill listing is the one exception. Only skills you actually invoked are preserved") — a review finding that called this wording "misleading" was itself refuted and the wording kept.
 
 ### 2026-05-01
 
