@@ -71,18 +71,15 @@
       "zstd"
     ];
     casks = [
-      "arc"
       "bitwarden"
       "docker-desktop"
       "keepingyouawake"
-      "orion"
       "postgres-app"
       "raycast"
       "the-unarchiver"
       "visual-studio-code"
       "vivaldi"
       "zed"
-      "zen"
     ];
     onActivation = {
       autoUpdate = true;
