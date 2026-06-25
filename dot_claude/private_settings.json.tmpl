@@ -1,4 +1,21 @@
 {
+{{- /* Each enabled layer may own a claude-settings.json.tmpl fragment under its
+       modules/ or overlays/ directory. Fragments are evaluated as templates (not
+       pasted raw), so they can resolve machine-local values such as secrets, then
+       spliced ahead of this shared base. A fragment provides the env block and
+       "model" pin; when none does, fall back to the default model. Each fragment's
+       text is a comma-terminated run of top-level keys. */ -}}
+{{- $layerContributions := list -}}
+{{- range $layer := .layerList -}}
+{{-   range $root := list "modules" "overlays" -}}
+{{-     $fragment := joinPath $.chezmoi.homeDir ".config/nix-darwin" $root $layer "claude-settings.json.tmpl" -}}
+{{-     if stat $fragment -}}
+{{-       $rendered := output "chezmoi" "execute-template" (include $fragment) | trimAll "\n" -}}
+{{-       if trim $rendered -}}{{- $layerContributions = append $layerContributions $rendered -}}{{- end -}}
+{{-     end -}}
+{{-   end -}}
+{{- end }}
+{{ if $layerContributions }}{{ join "\n" $layerContributions }}{{ else }}  "model": "best",{{ end }}
   "permissions": {
     "allow": [
       "Edit(**/.claude/**)",
@@ -240,6 +257,5 @@
   "skipWorkflowUsageWarning": true,
   "theme": "dark-ansi",
   "preferredNotifChannel": "terminal_bell",
-  "agentPushNotifEnabled": true,
-  "model": "best"
+  "agentPushNotifEnabled": true
 }
