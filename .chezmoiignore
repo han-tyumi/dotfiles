@@ -1,4 +1,5 @@
 CLAUDE.md
+README.md
 bootstrap.sh
 {{ range glob (joinPath .chezmoi.sourceDir ".chezmoilayers/*.ignore") -}}
 {{ $layer := trimSuffix ".ignore" (base .) -}}
