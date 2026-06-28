@@ -32,6 +32,19 @@ in
       : > "${config.xdg.configHome}/git/allowed_signers"
     '';
 
+    # Homebrew installs agent-browser earlier in this same activation, so its
+    # daemon's Chrome for Testing build is fetched here rather than on a later
+    # apply. The download is idempotent (skipped when already present) and
+    # non-fatal so a flaky network can't block activation; the brew's node
+    # dependency also resolves from /opt/homebrew/bin.
+    activation.agentBrowserChrome = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      export PATH="/opt/homebrew/bin:$PATH"
+      if command -v agent-browser > /dev/null; then
+        run agent-browser install \
+          || echo "agent-browser install failed; run it manually to fetch Chrome for Testing" >&2
+      fi
+    '';
+
     enableNixpkgsReleaseCheck = false;
     sessionPath = [
       "/opt"
