@@ -129,6 +129,17 @@ entries sort before repo-root scripts; the installers therefore live in
   - `personal/run_onchange_after_v.sh.tmpl`: Updates V; renders empty (skipped)
     unless `~/v` exists (the V external)
 
+A post-install step that depends on a Homebrew/cask tool belongs in a Home
+Manager `home.activation` entry, not a `run_onchange` script. Home Manager
+activation runs after the Homebrew bundle within the same `darwin-rebuild
+switch`, so the freshly installed tool is on hand; a `run_onchange` script runs
+earlier during `chezmoi apply`, before `apploi`'s switch installs the tool, so on
+an already-provisioned machine it skips on the first apply and only fires on the
+next one. See `agentBrowserChrome` in `modules/shared/home.nix`, which fetches
+agent-browser's Chrome for Testing build right after the brew lands. Keep a step
+as a `run_onchange` script when it instead needs chezmoi templating over layer
+files (as `1-mise-config` and `4-vscode-extensions` do).
+
 ### Adding a new layer or overlay
 
 To add a layer named `<name>` — in-repo, overlay, or both:
