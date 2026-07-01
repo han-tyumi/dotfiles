@@ -24,7 +24,13 @@ else
     fi
   done
 
+  # Generate flake.lock as the invoking user so root never owns it. A
+  # root-owned lock makes every later user-level `nix flake update` fail with
+  # EPERM; --no-write-lock-file below keeps the root rebuild from re-owning it.
+  "$nix" --extra-experimental-features 'nix-command flakes' \
+    flake lock ~/.config/nix-darwin
+
   echo "Installing Nix Darwin..."
   sudo "$nix" run --extra-experimental-features 'nix-command flakes' \
-    "nix-darwin/$ref#darwin-rebuild" -- switch --flake ~/.config/nix-darwin
+    "nix-darwin/$ref#darwin-rebuild" -- switch --flake ~/.config/nix-darwin --no-write-lock-file
 fi
