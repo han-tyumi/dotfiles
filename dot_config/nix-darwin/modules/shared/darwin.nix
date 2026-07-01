@@ -75,6 +75,10 @@
       "bitwarden"
       "docker-desktop"
       "keepingyouawake"
+
+      # Blocks keyboard + Touch Bar input (trackpad stays live) so the laptop
+      # can be wiped down without stray keystrokes; quit the app to re-enable.
+      "keyboardcleantool"
       "postgres-app"
       "raycast"
       "the-unarchiver"
