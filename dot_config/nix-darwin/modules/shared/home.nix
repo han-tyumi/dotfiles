@@ -32,6 +32,15 @@ in
       : > "${config.xdg.configHome}/git/allowed_signers"
     '';
 
+    # Populate the init.templateDir exclude that seeds new repos with .scratch/.
+    # Written as a plain file rather than an xdg.configFile symlink: git copies a
+    # symlinked template entry verbatim, so a store symlink would leave every repo
+    # pointing at a path that dangles on the next garbage collection.
+    activation.gitInitTemplate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      mkdir -p "${config.xdg.configHome}/git/template/info"
+      printf '.scratch/\n' > "${config.xdg.configHome}/git/template/info/exclude"
+    '';
+
     # Homebrew installs agent-browser earlier in this same activation, so its
     # daemon's Chrome for Testing build is fetched here rather than on a later
     # apply. The download is idempotent (skipped when already present) and
@@ -115,6 +124,11 @@ in
       settings = {
         init = {
           defaultBranch = "main";
+
+          # Seed every new/cloned repo's .git/info/exclude from this template
+          # (populated by the gitInitTemplate activation). Keeps tree walkers
+          # that ignore the global excludesFile — e.g. Biome — out of .scratch/.
+          templateDir = "${config.xdg.configHome}/git/template";
         };
         push.autoSetupRemote = true;
 
