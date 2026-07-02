@@ -1,0 +1,19 @@
+# Ghostty configuration.
+# Reference: https://ghostty.org/docs/config/reference
+
+font-family = PragmataPro Mono
+font-size = 14
+
+# Thicken glyph stems to match the heavier weight CoreText renders at.
+font-thicken = true
+
+theme = Catppuccin Mocha
+
+# Inset the grid so the first column clears the window controls, and spread
+# the leftover sub-cell space evenly across all four edges.
+window-padding-x = 10
+window-padding-balance = true
+
+# nushell is the interactive shell; the login zsh assembles the Nix/Homebrew
+# environment it inherits.
+command = /bin/zsh -lc nu

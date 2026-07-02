@@ -74,6 +74,7 @@
     casks = [
       "bitwarden"
       "docker-desktop"
+      "ghostty"
       "keepingyouawake"
 
       # Blocks keyboard + Touch Bar input (trackpad stays live) so the laptop
