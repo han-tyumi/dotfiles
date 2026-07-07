@@ -30,11 +30,14 @@ GREY=$'\033[90m'
 # them. One subprocess vs fourteen.
 eval "$(jq -r '
     @sh "model=\(.model.display_name // "?")",
+    @sh "model_id=\(.model.id // "")",
     @sh "cwd=\(.workspace.current_dir // .cwd // "")",
     @sh "project_dir=\(.workspace.project_dir // "")",
     @sh "cost=\(.cost.total_cost_usd // 0)",
     @sh "worktree=\(.workspace.git_worktree // "")",
     @sh "context_pct=\(.context_window.used_percentage // "")",
+    @sh "context_tokens=\(.context_window.total_input_tokens // 0)",
+    @sh "context_window_size=\(.context_window.context_window_size // 0)",
     @sh "five_hour_pct=\(.rate_limits.five_hour.used_percentage // "")",
     @sh "seven_day_pct=\(.rate_limits.seven_day.used_percentage // "")",
     @sh "duration_ms=\(.cost.total_duration_ms // 0)",
@@ -52,6 +55,20 @@ model=${model/ (1M context)/ (1M)}
 duration_ms=${duration_ms%%.*}
 lines_added=${lines_added%%.*}
 lines_removed=${lines_removed%%.*}
+context_tokens=${context_tokens%%.*}
+context_window_size=${context_window_size%%.*}
+
+# Claude Code reports a 200k context_window_size for natively-1M models on
+# Bedrock, clamping used_percentage to 100 once real usage passes 200k
+# (https://github.com/anthropics/claude-code/issues/63447). Recompute against
+# the true 1M window for the affected models until the upstream fix lands.
+if [ "${context_window_size:-0}" = "200000" ] && [ "${context_tokens:-0}" -gt 0 ]; then
+    case "$model_id" in
+        *fable-5*|*mythos-5*|*opus-4-7*|*opus-4-8*|*sonnet-5*)
+            context_pct=$(( context_tokens * 100 / 1000000 ))
+            ;;
+    esac
+fi
 
 # Detect the real terminal width by reading the parent Claude Code process's
 # controlling TTY — Claude Code pipes the statusline's stdin/stdout so $COLUMNS
