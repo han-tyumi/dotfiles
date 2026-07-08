@@ -6,7 +6,10 @@
        claude-settings.json.tmpl contributes top-level keys (the env block and
        "model" pin), spliced ahead of this shared base; when no layer provides one,
        fall back to the default model. Its text is a comma-terminated run of
-       top-level keys.
+       top-level keys. A contribution that sets CLAUDE_CODE_ENABLE_AUTO_MODE also
+       makes this base emit "defaultMode": "auto" (a user-settings-only key that
+       Claude Code ignores from project/local files), so auto mode both unlocks and
+       becomes the default in one place.
 
        claude-permissions.json.tmpl contributes extra permissions.allow entries
        (layer-specific tools, e.g. a work layer's MCP servers), spliced into the
@@ -29,8 +32,12 @@
 {{-     end -}}
 {{-   end -}}
 {{- end }}
-{{ if $layerContributions }}{{ join "\n" $layerContributions }}{{ else }}  "model": "best",{{ end }}
+{{- $joinedContributions := join "\n" $layerContributions }}
+{{ if $layerContributions }}{{ $joinedContributions }}{{ else }}  "model": "best",{{ end }}
   "permissions": {
+{{- if contains "CLAUDE_CODE_ENABLE_AUTO_MODE" $joinedContributions }}
+    "defaultMode": "auto",
+{{- end }}
     "allow": [
 {{- if $permissionContributions }}
 {{ join "\n" $permissionContributions }}
