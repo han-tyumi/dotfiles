@@ -58,13 +58,16 @@ lines_removed=${lines_removed%%.*}
 context_tokens=${context_tokens%%.*}
 context_window_size=${context_window_size%%.*}
 
-# Claude Code reports a 200k context_window_size for natively-1M models on
+# Claude Code reports a 200k context_window_size for Fable-class models on
 # Bedrock, clamping used_percentage to 100 once real usage passes 200k
-# (https://github.com/anthropics/claude-code/issues/63447). Recompute against
-# the true 1M window for the affected models until the upstream fix lands.
+# (https://github.com/anthropics/claude-code/issues/63447). 1M is these
+# models' only window (no 200k variant exists), so a 200k report is always
+# wrong for them — recompute against the true window. Opus and Sonnet models
+# are deliberately excluded: their plain (non-"[1m]") variants really are
+# 200k-limited on Bedrock, so a 200k report is correct there.
 if [ "${context_window_size:-0}" = "200000" ] && [ "${context_tokens:-0}" -gt 0 ]; then
     case "$model_id" in
-        *fable-5*|*mythos-5*|*opus-4-7*|*opus-4-8*|*sonnet-5*)
+        *fable-5*|*mythos-5*)
             context_pct=$(( context_tokens * 100 / 1000000 ))
             ;;
     esac
