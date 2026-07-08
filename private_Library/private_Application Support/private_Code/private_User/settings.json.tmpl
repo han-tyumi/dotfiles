@@ -23,10 +23,15 @@
   // Non-Liga so code ligatures don't fire inside prose.
   "markdown.preview.fontFamily": "'PragmataPro VF', sans-serif",
   "workbench.editor.closeEmptyGroups": false,
+  "workbench.editor.tabSizing": "shrink",
 
   // Files
   "files.associations": {
     "**/zed/*.json": "jsonc"
+  },
+  // Keep the file watcher out of nested .worktrees/<name> checkouts.
+  "files.watcherExclude": {
+    "**/.worktrees/**": true
   },
 
   // Terminal
@@ -94,5 +99,7 @@
 
   // Git
   "git.autofetch": true,
-  "git.confirmSync": false
+  "git.confirmSync": false,
+  // List nested .worktrees/<name> checkouts as their own repos in Source Control.
+  "git.detectWorktrees": true
 }
