@@ -82,6 +82,10 @@
       "keyboardcleantool"
       "postgres-app"
       "raycast"
+
+      # GUI for orchestrating parallel Claude Code sessions, each in its own
+      # git worktree, with per-session diff review.
+      "sculptor"
       "the-unarchiver"
       "visual-studio-code"
       "vivaldi"

@@ -43,9 +43,29 @@
   "base_keymap": "VSCode",
 
   // Agent
+  // The registry "Claude Agent" runs the local Claude Code CLI over ACP, so it
+  // inherits ~/.claude/settings.json — Bedrock env on work machines, subscription
+  // auth elsewhere. Provider-agnostic: works on any layer with no config here.
   "agent_servers": {
     "claude-acp": {
       "type": "registry",
+    },
+  },
+
+  // Language Models
+  // Optional native path: Zed's own agent panel driving Claude on AWS Bedrock,
+  // separate from the Claude Code CLI above. Inert (shows "not signed in", no
+  // errors) on machines without a Bedrock token, so it is safe everywhere. The
+  // token is never read from this file — Zed reads ZED_BEDROCK_BEARER_TOKEN from
+  // its own process environment, or a keychain entry set via the agent settings
+  // UI. Region falls back to us-east-1 (override with ZED_AWS_REGION). No
+  // agent.default_model is set: pointing it at Bedrock would break Zed's native
+  // AI features on subscription-only machines. Pick claude-opus-4-8 (1M context)
+  // in the model picker when using this native agent.
+  "language_models": {
+    "bedrock": {
+      "authentication_method": "api_key",
+      "region": "us-east-1",
     },
   },
 
