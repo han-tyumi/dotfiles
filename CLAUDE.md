@@ -23,7 +23,8 @@ Configuration is composed from **layers**, selected per machine by chezmoi data:
   chezmoi data and cloned by a chezmoi external next to the flake. Their
   `darwin.nix`/`home.nix` are imported when the layer is enabled, and chezmoi
   templates splice optional fragments from them (e.g. `vscode-settings.jsonc` into
-  the VS Code settings). Home Manager symlinks an overlay's `skills/` into
+  the VS Code settings, `claude-permissions.json.tmpl` into the Claude Code allow
+  list). Home Manager symlinks an overlay's `skills/` into
   `~/.claude/skills/` via `mkOutOfStoreSymlink`, so the clone stays the live,
   editable copy. Shared skills differ: they are chezmoi-managed copies under
   `dot_claude/skills/`, so you edit the source and `chezmoi apply`.
@@ -154,9 +155,14 @@ To add a layer named `<name>` — in-repo, overlay, or both:
 5. **VS Code fragments** (optional) — a layer dir (`modules/<name>/` or the overlay
    clone) can provide a spliceable `vscode-settings.jsonc` and/or a
    `vscode-extensions.txt` install list; both roots are probed for both fragments.
-6. **Verify** — in-repo layers get a `test-<name>` fixture automatically:
+6. **Claude Code fragments** (optional) — a layer dir can provide a
+   `claude-settings.json.tmpl` (top-level keys such as the env block and `model`
+   pin, spliced ahead of the shared base) and/or a `claude-permissions.json.tmpl`
+   (extra `permissions.allow` rules merged into the single allow array). Both are
+   evaluated as templates, so they can resolve machine-local secrets.
+7. **Verify** — in-repo layers get a `test-<name>` fixture automatically:
    `nix eval ~/.config/nix-darwin#darwinConfigurations.test-<name>.system.drvPath`.
-7. **Enable it** — add `<name>` to the machine's `layers` (overlays as `name=url` pairs) via
+8. **Enable it** — add `<name>` to the machine's `layers` (overlays as `name=url` pairs) via
    `chezmoi init --promptString` or by editing the chezmoi data.
 
 ## Common Commands

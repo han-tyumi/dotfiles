@@ -1,11 +1,20 @@
 {
-{{- /* Each enabled layer may own a claude-settings.json.tmpl fragment under its
-       modules/ or overlays/ directory. Fragments are evaluated as templates (not
-       pasted raw), so they can resolve machine-local values such as secrets, then
-       spliced ahead of this shared base. A fragment provides the env block and
-       "model" pin; when none does, fall back to the default model. Each fragment's
-       text is a comma-terminated run of top-level keys. */ -}}
+{{- /* Each enabled layer may own two fragments under its modules/ or overlays/
+       directory. Both are evaluated as templates (not pasted raw), so they can
+       resolve machine-local values such as secrets.
+
+       claude-settings.json.tmpl contributes top-level keys (the env block and
+       "model" pin), spliced ahead of this shared base; when no layer provides one,
+       fall back to the default model. Its text is a comma-terminated run of
+       top-level keys.
+
+       claude-permissions.json.tmpl contributes extra permissions.allow entries
+       (layer-specific tools, e.g. a work layer's MCP servers), spliced into the
+       single allow array below. Its text is a comma-terminated run of JSON string
+       rules. Claude Code reads only one permissions block per file, so layer rules
+       must merge into this array rather than living in a separate block. */ -}}
 {{- $layerContributions := list -}}
+{{- $permissionContributions := list -}}
 {{- range $layer := .layerList -}}
 {{-   range $root := list "modules" "overlays" -}}
 {{-     $fragment := joinPath $.chezmoi.homeDir ".config/nix-darwin" $root $layer "claude-settings.json.tmpl" -}}
@@ -13,11 +22,19 @@
 {{-       $rendered := output "chezmoi" "execute-template" (include $fragment) | trimAll "\n" -}}
 {{-       if trim $rendered -}}{{- $layerContributions = append $layerContributions $rendered -}}{{- end -}}
 {{-     end -}}
+{{-     $permFragment := joinPath $.chezmoi.homeDir ".config/nix-darwin" $root $layer "claude-permissions.json.tmpl" -}}
+{{-     if stat $permFragment -}}
+{{-       $renderedPerm := output "chezmoi" "execute-template" (include $permFragment) | trimAll "\n" -}}
+{{-       if trim $renderedPerm -}}{{- $permissionContributions = append $permissionContributions $renderedPerm -}}{{- end -}}
+{{-     end -}}
 {{-   end -}}
 {{- end }}
 {{ if $layerContributions }}{{ join "\n" $layerContributions }}{{ else }}  "model": "best",{{ end }}
   "permissions": {
     "allow": [
+{{- if $permissionContributions }}
+{{ join "\n" $permissionContributions }}
+{{- end }}
       "Edit(**/.claude/**)",
       "Read(**/.claude/**)",
       "Read({{ $.chezmoi.homeDir }}/.claude/**)",
@@ -26,6 +43,7 @@
       "Bash(chezmoi data *)",
       "Bash(chezmoi diff *)",
       "Bash(chezmoi status *)",
+      "Bash(dprint check *)",
       "Bash(find *)",
       "Bash(gh issue view *)",
       "Bash(gh pr checks *)",
@@ -128,6 +146,9 @@
       "Bash(yarn test *)",
       "Bash(yarn tsc *)",
       "Bash(yarn why *)",
+      "mcp__agent-browser__agent_browser_get_text",
+      "mcp__agent-browser__agent_browser_snapshot",
+      "mcp__agent-browser__agent_browser_wait_for_text",
       "mcp__context7__query-docs",
       "mcp__context7__resolve-library-id",
       "mcp__github__get_commit",
