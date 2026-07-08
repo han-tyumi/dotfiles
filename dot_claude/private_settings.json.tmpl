@@ -5,11 +5,15 @@
 
        claude-settings.json.tmpl contributes top-level keys (the env block and
        "model" pin), spliced ahead of this shared base; when no layer provides one,
-       fall back to the default model. Its text is a comma-terminated run of
-       top-level keys. A contribution that sets CLAUDE_CODE_ENABLE_AUTO_MODE also
-       makes this base emit "defaultMode": "auto" (a user-settings-only key that
-       Claude Code ignores from project/local files), so auto mode both unlocks and
-       becomes the default in one place.
+       fall back to the latest 1M-context Opus. Its text is a comma-terminated run
+       of top-level keys.
+
+       The base sets "defaultMode": "auto" unconditionally. Auto mode is available
+       by default on the Anthropic API, so a subscription profile gets it directly;
+       on Bedrock the work layer's env block sets CLAUDE_CODE_ENABLE_AUTO_MODE=1 to
+       unlock it. Where auto mode is unavailable, Claude Code silently starts in
+       default mode instead. The key is honored only from user settings (ignored in
+       project/local files), which is what this template renders.
 
        claude-permissions.json.tmpl contributes extra permissions.allow entries
        (layer-specific tools, e.g. a work layer's MCP servers), spliced into the
@@ -33,11 +37,9 @@
 {{-   end -}}
 {{- end }}
 {{- $joinedContributions := join "\n" $layerContributions }}
-{{ if $layerContributions }}{{ $joinedContributions }}{{ else }}  "model": "best",{{ end }}
+{{ if $layerContributions }}{{ $joinedContributions }}{{ else }}  "model": "opus[1m]",{{ end }}
   "permissions": {
-{{- if contains "CLAUDE_CODE_ENABLE_AUTO_MODE" $joinedContributions }}
     "defaultMode": "auto",
-{{- end }}
     "allow": [
 {{- if $permissionContributions }}
 {{ join "\n" $permissionContributions }}
