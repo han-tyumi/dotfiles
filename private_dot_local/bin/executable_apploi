@@ -84,6 +84,18 @@ export def main [
     if $update {
       step "Updating nix-darwin flake inputs\n\n"
       ^nix flake update
+
+      # nix flake update rewrites the live lock; re-add it so chezmoi's source
+      # tracks the new inputs rather than reverting them on the next apply.
+      ^chezmoi re-add ~/.config/nix-darwin/flake.lock
+
+      # Surface a captured-but-uncommitted lock change so pinned inputs get
+      # committed instead of drifting silently.
+      let source_root = (^chezmoi source-path)
+      if (do { ^git -C $source_root diff --quiet HEAD -- dot_config/nix-darwin/flake.lock } | complete).exit_code != 0 {
+        step $"\nPending flake.lock changes\n\n"
+        ^git -C $source_root --no-pager diff HEAD -- dot_config/nix-darwin/flake.lock
+      }
     }
 
     if $switch {
