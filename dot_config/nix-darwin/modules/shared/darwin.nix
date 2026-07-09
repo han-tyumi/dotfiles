@@ -87,12 +87,10 @@
       "postgres-app"
       "raycast"
 
-      # GUIs for orchestrating parallel Claude Code sessions with per-session
-      # diff review: Conductor and Nimbalyst run each session in a git worktree,
-      # Sculptor runs each in a Docker sandbox.
+      # GUIs for orchestrating parallel Claude Code sessions in per-worktree
+      # workspaces with per-session diff review.
       "conductor"
       "nimbalyst"
-      "sculptor"
       "the-unarchiver"
       "visual-studio-code"
       "vivaldi"
