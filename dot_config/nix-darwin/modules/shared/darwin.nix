@@ -63,15 +63,11 @@
     enable = true;
     brews = [
       "agent-browser"
-
-      # TUI for managing parallel Claude Code sessions; needs tmux and gh.
-      "claude-squad"
       "git-spice"
       "mas"
       "mise"
       "poppler"
       "rtk"
-      "tmux"
       "zlib"
       "zstd"
     ];
