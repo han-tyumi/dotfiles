@@ -63,11 +63,15 @@
     enable = true;
     brews = [
       "agent-browser"
+
+      # TUI for managing parallel Claude Code sessions; needs tmux and gh.
+      "claude-squad"
       "git-spice"
       "mas"
       "mise"
       "poppler"
       "rtk"
+      "tmux"
       "zlib"
       "zstd"
     ];
@@ -83,8 +87,11 @@
       "postgres-app"
       "raycast"
 
-      # GUI for orchestrating parallel Claude Code sessions, each in its own
-      # git worktree, with per-session diff review.
+      # GUIs for orchestrating parallel Claude Code sessions with per-session
+      # diff review: Conductor and Nimbalyst run each session in a git worktree,
+      # Sculptor runs each in a Docker sandbox.
+      "conductor"
+      "nimbalyst"
       "sculptor"
       "the-unarchiver"
       "visual-studio-code"
