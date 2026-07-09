@@ -95,8 +95,9 @@ export def main [
       ^sudo TMPDIR=/private/tmp darwin-rebuild switch --no-write-lock-file
 
       # `brew bundle` only upgrades declared formulae; their dependencies go stale without this.
+      # --no-ask skips Homebrew's confirmation prompt so the unattended run doesn't block.
       step "\nUpgrading Homebrew dependency formulae\n\n"
-      ^brew upgrade --formula
+      ^brew upgrade --formula --no-ask
     }
 
     if $clean {
