@@ -1,2 +1,5 @@
 # Playwright MCP drops session artifacts in the working directory.
 .playwright-mcp/
+
+# Conductor per-machine config; a shared .conductor/settings.toml stays committable.
+.conductor/settings.local.toml
