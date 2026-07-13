@@ -244,6 +244,12 @@
   };
 
   environment = {
+    # Default every shell to a UTF-8 locale. With LANG unset, pbcopy and other
+    # locale-sensitive tools decode piped bytes as legacy Mac Roman, mangling
+    # UTF-8 (em-dashes, curly quotes, emoji). LANG alone covers every LC_*
+    # category; a forcible LC_ALL would stomp individually-set ones.
+    variables.LANG = "en_US.UTF-8";
+
     etc = {
       "sudoers.d/nix-darwin".text = ''
         Defaults timestamp_timeout=360
