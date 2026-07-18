@@ -1,4 +1,0 @@
-# VS Code extensions for the personal layer.
-astro-build.astro-vscode
-denoland.vscode-deno
-gleam.gleam

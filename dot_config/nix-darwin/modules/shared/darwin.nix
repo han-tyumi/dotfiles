@@ -83,12 +83,10 @@
       "postgres-app"
       "raycast"
 
-      # GUIs for orchestrating parallel Claude Code sessions in per-worktree
+      # GUI for orchestrating parallel Claude Code sessions in per-worktree
       # workspaces with per-session diff review.
       "conductor"
-      "nimbalyst"
       "the-unarchiver"
-      "visual-studio-code"
       "vivaldi"
       "zed"
     ];
