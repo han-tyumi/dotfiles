@@ -1,6 +1,33 @@
 CLAUDE.md
 README.md
 bootstrap.sh
+bootstrap.ps1
+{{ if ne .chezmoi.os "windows" -}}
+# Windows-only targets — skipped on macOS/Linux.
+AppData
+Documents
+.config/winget
+.gitconfig
+5-emdash.ps1
+10-winget-packages.ps1
+20-mise-install.ps1
+{{ end -}}
+{{ if ne .chezmoi.os "darwin" -}}
+# macOS-only targets (Nix/Homebrew tree + Mac shell/editor config) — skipped on Windows/Linux.
+.config/nix-darwin
+.config/nvim
+.config/ghostty
+.config/zed
+.claude
+.local
+Library
+v
+roc
+.chezmoiscripts/**
+1-mise-config.toml
+2-rtk.sh
+3-claude-mcp.sh
+{{ end -}}
 {{ range glob (joinPath .chezmoi.sourceDir ".chezmoilayers/*.ignore") -}}
 {{ $layer := trimSuffix ".ignore" (base .) -}}
 {{ if not (has $layer $.layerList) -}}

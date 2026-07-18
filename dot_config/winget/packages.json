@@ -1,0 +1,32 @@
+{
+  "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
+  "CreationDate": "2026-07-18T00:00:00.000-00:00",
+  "Sources": [
+    {
+      "Packages": [
+        { "PackageIdentifier": "Git.Git" },
+        { "PackageIdentifier": "twpayne.chezmoi" },
+        { "PackageIdentifier": "jdx.mise" },
+        { "PackageIdentifier": "Nushell.Nushell" },
+        { "PackageIdentifier": "Starship.Starship" },
+        { "PackageIdentifier": "ajeetdsouza.zoxide" },
+        { "PackageIdentifier": "junegunn.fzf" },
+        { "PackageIdentifier": "sharkdp.bat" },
+        { "PackageIdentifier": "BurntSushi.ripgrep.MSVC" },
+        { "PackageIdentifier": "Neovim.Neovim" },
+        { "PackageIdentifier": "Microsoft.PowerShell" },
+        { "PackageIdentifier": "Microsoft.WindowsTerminal" },
+        { "PackageIdentifier": "ZedIndustries.Zed" },
+        { "PackageIdentifier": "Anthropic.Claude" },
+        { "PackageIdentifier": "Anthropic.ClaudeCode" }
+      ],
+      "SourceDetails": {
+        "Argument": "https://cdn.winget.microsoft.com/cache",
+        "Identifier": "Microsoft.Winget.Source_8wekyb3d8bbwe",
+        "Name": "winget",
+        "Type": "Microsoft.PreIndexed.Package"
+      }
+    }
+  ],
+  "WinGetVersion": "1.9.0"
+}

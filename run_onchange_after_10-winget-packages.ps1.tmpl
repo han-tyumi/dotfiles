@@ -1,0 +1,17 @@
+# winget packages hash: {{ include "dot_config/winget/packages.json" | sha256sum }}
+#
+# Converge to the declared winget package set. `winget import` skips packages
+# that are already installed, so this is an install-if-missing pass; it does NOT
+# upgrade (that is what `apploi -u` does). Kept PowerShell 5.1-safe: on a fresh
+# machine pwsh 7 is not installed yet, so chezmoi runs this under Windows
+# PowerShell 5.1 on the first apply.
+$manifest = Join-Path $env:USERPROFILE '.config\winget\packages.json'
+if (-not (Test-Path $manifest)) {
+  Write-Host "winget manifest not found at $manifest; skipping."
+  return
+}
+winget import --import-file $manifest `
+  --accept-package-agreements --accept-source-agreements `
+  --ignore-unavailable --disable-interactivity
+# winget returns non-zero when everything is already installed; that is success.
+exit 0

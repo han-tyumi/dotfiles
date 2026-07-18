@@ -4,11 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a personal dotfiles repository managed by chezmoi for macOS (specifically aarch64-darwin). The repository configures a complete development environment using:
+This is a personal dotfiles repository managed by chezmoi, primarily for macOS (aarch64-darwin), with a lighter native-Windows profile for Windows machines. The macOS environment is built from:
 - **Nix Darwin** with flakes for system-level package management
 - **Home Manager** for user-level configuration
 - **mise** for language version management
 - **Homebrew** for macOS-specific applications
+
+Windows can't run the Nix/Homebrew stack, so the same chezmoi source drives a
+lighter native-Windows profile (shell + editor + Claude Code) provisioned with
+**winget** and **mise** instead of Nix — see [Bootstrap on Windows](#bootstrap-on-windows).
 
 ## Architecture
 
@@ -192,6 +196,41 @@ brew install cirruslabs/cli/tart
 tart clone ghcr.io/cirruslabs/macos-sequoia-base:latest dotfiles-test
 tart run dotfiles-test   # log in (admin/admin), open Terminal, run the curl one-liner
 ```
+
+### Bootstrap on Windows
+
+Windows can't run the Nix/Homebrew stack, so the same chezmoi source drives a
+lighter native-Windows profile for Windows machines: shell + editor + Claude Code,
+provisioned with **winget** and **mise** instead of Nix.
+
+- `.chezmoiignore` splits targets by `.chezmoi.os`: on Windows the whole
+  `dot_config/nix-darwin` tree, the Mac installers (`.chezmoiscripts/**`, the root
+  `*.sh`/`*.toml` run scripts), and the Mac shell/editor targets (`.config/zed`,
+  `.config/nvim`, `.config/ghostty`, `.claude`, `.local`, `Library`) are skipped; on
+  macOS the Windows targets (`AppData`, `Documents`, `.config/winget`, `.gitconfig`,
+  the `*.ps1` provisioners) are skipped. Root run-scripts are ignored by their
+  attribute-stripped name (e.g. `1-mise-config.toml`, `10-winget-packages.ps1`).
+- `bootstrap.ps1` (flash-drive or `irm https://raw.githubusercontent.com/han-tyumi/dotfiles/main/bootstrap.ps1 | iex`)
+  installs Git + chezmoi via winget, then `chezmoi init --apply`, which fires the
+  provisioners. Pass `--promptString "layers=personal gaming"` to pick layers.
+- Provisioning is hash-gated `run_onchange` PowerShell, kept PowerShell 5.1-safe
+  since pwsh 7 isn't present on the first apply: `10-winget-packages` imports
+  `dot_config/winget/packages.json`; `20-mise-install` runs `mise install` against
+  the shared `dot_config/mise/config.toml`. `run_once_after_5-emdash.ps1` installs
+  Emdash (not in winget) from its GitHub release.
+- One-command sync mirrors the Mac `apploi`: `apploi` (defined in the PowerShell
+  profile and the Windows nushell config) runs `chezmoi update --apply`; `apploi -u`
+  also runs `winget upgrade --all` + `mise upgrade`.
+- Windows config lives under OS-native paths: PowerShell profile in
+  `Documents/PowerShell/`, nushell + Zed under `AppData/Roaming/` (Zed on Windows
+  reads `%APPDATA%\Zed`, not `~/.config/zed`), git identity in `dot_gitconfig`.
+
+Known parity gaps (on-device follow-ups): the Windows nushell config ships without
+the mise/starship/zoxide activations wired (nushell resolves `source` at parse time,
+so they need generated-then-sourced files — pwsh already has them); `.claude`
+(skills/settings) is skipped on Windows until the Mac-only rtk hook is made OS-aware;
+Windows Terminal settings, a Nerd Font install, and Zed file associations (prefer the
+MIT/no-WMIC PS-SFTA over SetUserFTA) are manual for now.
 
 ### System Management
 

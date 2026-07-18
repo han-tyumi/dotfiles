@@ -1,0 +1,20 @@
+; Windows git config — managed by chezmoi. On macOS git is configured by
+; Home Manager instead, so this file is ignored there (see .chezmoiignore).
+; SSH commit signing (as on the Mac) is a follow-up once a per-machine key
+; exists on this device.
+{{- if has "personal" .layerList }}
+[user]
+	name = Matt Champagne
+	email = mmchamp95@gmail.com
+{{- end }}
+[init]
+	defaultBranch = main
+[pull]
+	rebase = true
+[core]
+	autocrlf = false
+	editor = nvim
+[column]
+	ui = auto
+[branch]
+	sort = -committerdate

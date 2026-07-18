@@ -1,0 +1,54 @@
+// Zed settings for Windows — managed by chezmoi. Mirrors the macOS config at
+// dot_config/zed/private_settings.json, with two intentional differences: the
+// integrated terminal launches nushell directly (no login-zsh wrapper), and the
+// macOS `language_models.bedrock` block is omitted (that path is for work machines
+// on AWS Bedrock; this machine uses subscription auth via the claude-acp agent).
+//
+// Font: PragmataPro is a paid family — install it on this machine, or swap
+// buffer_font_family/ui_font_family for an installed font (e.g. "Cascadia Code").
+{
+  "$schema": "zed://schemas/settings",
+
+  // Appearance
+  "theme": {
+    "mode": "system",
+    "light": "Catppuccin Latte",
+    "dark": "Catppuccin Mocha",
+  },
+  "icon_theme": {
+    "mode": "system",
+    "light": "Catppuccin Latte",
+    "dark": "Catppuccin Mocha",
+  },
+  "ui_font_family": "PragmataPro VF",
+  "ui_font_size": 16,
+  "buffer_font_family": "PragmataPro VF Mono Liga",
+  "buffer_font_fallbacks": ["Symbols Nerd Font Mono"],
+  "buffer_font_weight": 500,
+  "buffer_font_size": 15,
+
+  // Terminal — nushell is the interactive shell.
+  "terminal": {
+    "shell": {
+      "program": "nu",
+    },
+  },
+
+  // Key Bindings
+  "base_keymap": "VSCode",
+
+  // Agent — the "Claude Agent" registry runs the local Claude Code CLI over ACP,
+  // inheriting ~/.claude/settings.json (subscription auth on this machine).
+  "agent_servers": {
+    "claude-acp": {
+      "type": "registry",
+    },
+  },
+
+  // Extensions
+  "auto_install_extensions": {
+    "catppuccin": true,
+    "catppuccin-icons": true,
+    "nu": true,
+  },
+}

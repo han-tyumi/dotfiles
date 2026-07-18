@@ -6,8 +6,12 @@ Both prompts are space-separated; overlays entries are name=url pairs. */ -}}
 {{- $layerList := splitList " " $layers | compact -}}
 
 [cd]
+{{- if eq .chezmoi.os "windows" }}
+  command = "nu"
+{{- else }}
   command = "zsh"
   args = ["-lc", "nu"]
+{{- end }}
 [data]
   layers = {{ $layers | quote }}
   overlays = {{ $overlays | quote }}

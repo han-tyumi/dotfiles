@@ -1,0 +1,31 @@
+# mise config hash: {{ include "dot_config/mise/config.toml" | sha256sum }}
+{{- range .layerList }}
+{{- $fragment := printf "dot_config/mise/conf.d/%s.toml" . }}
+{{- if stat (joinPath $.chezmoi.sourceDir $fragment) }}
+# {{ include $fragment | sha256sum }}
+{{- end }}
+{{- end }}
+#
+# Install the mise-managed runtimes from the shared config (the same config.toml
+# the Mac uses). winget updates PATH in the registry but not this session, so add
+# its link dir before probing for mise (installed by the winget-import script that
+# ran just above). Two passes: backend tools (npm:, pipx:) resolve through runtimes
+# declared in the same file, which do not exist on the first pass. Non-fatal: some
+# Mac runtimes (e.g. V, Roc) have no Windows build, so a partial failure is
+# expected here until the Windows mise config is trimmed on-device.
+$wingetLinks = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
+if (Test-Path $wingetLinks) { $env:PATH = "$wingetLinks;$env:PATH" }
+$mise = (Get-Command mise -ErrorAction SilentlyContinue).Source
+if (-not $mise) { $mise = Join-Path $wingetLinks 'mise.exe' }
+if (-not (Test-Path $mise)) {
+  # Non-zero exit so chezmoi re-fires this on the next apply instead of recording
+  # the run_onchange as done with nothing installed.
+  Write-Warning "mise not found after the winget install; run 'mise install' in a new shell."
+  exit 1
+}
+& $mise install 2>&1 | Out-Null
+& $mise install
+if ($LASTEXITCODE -ne 0) {
+  Write-Warning "mise install reported errors - some runtimes may lack Windows builds. Trim ~/.config/mise/config.toml, then re-run 'mise install'."
+}
+exit 0

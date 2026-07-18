@@ -1,0 +1,32 @@
+# PowerShell 7 profile — mirrors the Mac shell (mise + starship + zoxide) and
+# defines `apploi` for one-command sync. Managed by chezmoi.
+#
+# Note: if OneDrive Known Folder redirection is on, "Documents" resolves under
+# %USERPROFILE%\OneDrive\Documents and this file must live there instead.
+
+# mise: shims + env for this shell.
+if (Get-Command mise -ErrorAction SilentlyContinue) {
+  (& mise activate pwsh | Out-String) | Invoke-Expression
+}
+
+# starship prompt.
+if (Get-Command starship -ErrorAction SilentlyContinue) {
+  (& starship init powershell | Out-String) | Invoke-Expression
+}
+
+# zoxide (`z <dir>` to jump).
+if (Get-Command zoxide -ErrorAction SilentlyContinue) {
+  (& zoxide init powershell | Out-String) | Invoke-Expression
+}
+
+# One-command sync, mirroring the Mac `apploi`:
+#   apploi      converge to the declared dotfiles + package state
+#   apploi -u   also upgrade winget packages and mise runtimes
+function apploi {
+  param([switch] $Upgrade)
+  chezmoi update --apply
+  if ($Upgrade) {
+    winget upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity
+    mise upgrade
+  }
+}
