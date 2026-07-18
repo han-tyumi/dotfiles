@@ -18,7 +18,9 @@
         { "PackageIdentifier": "Microsoft.WindowsTerminal" },
         { "PackageIdentifier": "ZedIndustries.Zed" },
         { "PackageIdentifier": "Anthropic.Claude" },
-        { "PackageIdentifier": "Anthropic.ClaudeCode" }
+        { "PackageIdentifier": "Anthropic.ClaudeCode" },
+        { "PackageIdentifier": "Vivaldi.Vivaldi" },
+        { "PackageIdentifier": "Bitwarden.Bitwarden" }
       ],
       "SourceDetails": {
         "Argument": "https://cdn.winget.microsoft.com/cache",
