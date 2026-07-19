@@ -54,44 +54,6 @@ in
       fi
     '';
 
-    # Make Zed the default app for source files. Zed's bundle registers a fixed
-    # extension list but not public.source-code, and LaunchServices resolves the
-    # most specific UTI, so both the broad UTIs and a per-extension long tail are
-    # set. Folders are left out so Finder still opens them (use `zed .` instead).
-    # Each call is non-fatal so a single unmapped type can't block activation.
-    activation.zedDefaultEditor =
-      let
-        zedBundleId = "dev.zed.Zed";
-        duti = "${pkgs.duti}/bin/duti";
-        utis = [
-          "public.plain-text"
-          "public.utf8-plain-text"
-          "public.text"
-          "public.source-code"
-          "public.shell-script"
-          "public.json"
-          "public.yaml"
-          "public.xml"
-          "net.daringfireball.markdown"
-        ];
-        extensions = [
-          "js" "jsx" "mjs" "cjs" "ts" "tsx" "mts" "cts"
-          "json" "jsonc" "json5" "py" "rs" "go" "rb" "java" "kt"
-          "c" "h" "cc" "cpp" "hpp" "cs" "php" "lua"
-          "sh" "bash" "zsh" "nu" "toml" "yaml" "yml"
-          "md" "markdown" "mdx" "css" "scss" "sass" "less"
-          "html" "htm" "xml" "svg" "vue" "svelte" "astro"
-          "nix" "sql" "graphql" "gql" "swift" "dart"
-          "ex" "exs" "hs" "clj" "vim" "conf" "ini" "env"
-          "gleam" "roc" "v" "zig" "tf" "hcl" "proto"
-        ];
-        setType = type: ''run ${duti} -s ${zedBundleId} ${type} all || echo "duti: could not set ${type}" >&2'';
-        setExtension = ext: setType ".${ext}";
-      in
-      lib.hm.dag.entryAfter [ "writeBoundary" ] (
-        lib.concatStringsSep "\n" ((map setType utis) ++ (map setExtension extensions))
-      );
-
     enableNixpkgsReleaseCheck = false;
     sessionPath = [
       "/opt"
