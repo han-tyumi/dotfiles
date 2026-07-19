@@ -1,17 +1,14 @@
 # Nushell config for Windows — managed by chezmoi. Nushell is the interactive
 # shell; PowerShell 7 stays available and carries the same activations.
 #
-# mise/starship/zoxide activations are intentionally left commented out: each
-# must `source` a generated file, and nushell resolves `source` paths at PARSE
-# time, so sourcing a not-yet-generated file hard-fails shell startup. After a
-# fresh `apploi` (tools installed + on PATH), generate them once:
-#   ^mise activate nu    | save -f ($nu.default-config-dir | path join mise.nu)
-#   ^starship init nu    | save -f ($nu.default-config-dir | path join starship.nu)
-#   ^zoxide init nushell | save -f ($nu.default-config-dir | path join zoxide.nu)
-# then uncomment:
-# source mise.nu
-# source starship.nu
-# source zoxide.nu
+# mise/starship/zoxide activations: nushell resolves `source` at PARSE time, so
+# these files must already exist when this config is parsed. The
+# run_onchange_after_30-nushell-activations provisioner generates them (the real
+# activation when the tool is present, an empty placeholder otherwise), so the
+# sources below are always safe and stay chezmoi-managed instead of hand-wired.
+source mise.nu
+source starship.nu
+source zoxide.nu
 
 $env.config.show_banner = false
 

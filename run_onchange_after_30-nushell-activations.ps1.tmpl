@@ -1,0 +1,42 @@
+# mise config hash: {{ include "dot_config/mise/config.toml" | sha256sum }}
+#
+# Generate the nushell activation files for mise / starship / zoxide. Nushell
+# resolves `source` at PARSE time, so config.nu can only source these
+# unconditionally if they already exist - this provisioner guarantees that. A tool
+# that is present gets its real activation; a missing one gets an empty
+# placeholder so the `source` still succeeds and simply fills in on a later apply
+# once the tool lands. Keeping this in a provisioner is what lets config.nu stay
+# chezmoi-managed without the activations being clobbered on every apploi.
+$nushellDir = Join-Path $env:APPDATA 'nushell'
+New-Item -ItemType Directory -Force -Path $nushellDir | Out-Null
+
+# winget updates PATH in the registry but not this session; prepend its link dir
+# so the freshly-installed tools resolve here (same as the mise-install provisioner).
+$wingetLinks = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
+if (Test-Path $wingetLinks) { $env:PATH = "$wingetLinks;$env:PATH" }
+
+# Write UTF-8 without a BOM: nushell parses a leading BOM as content and errors.
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
+function Write-Activation($tool, $initArgs, $outFile) {
+  $dest = Join-Path $nushellDir $outFile
+  $command = Get-Command $tool -ErrorAction SilentlyContinue
+  if ($command) {
+    try {
+      $content = & $command.Source @initArgs | Out-String
+      [System.IO.File]::WriteAllText($dest, $content, $utf8NoBom)
+      Write-Host "Generated $outFile"
+      return
+    } catch {
+      Write-Warning "Couldn't generate $outFile from $tool ($($_.Exception.Message)); writing an empty placeholder."
+    }
+  }
+  # Empty placeholder so `source $outFile` in config.nu never fails at parse time.
+  $placeholder = "# $tool was not available when generated; re-run 'apploi' after installing it.`n"
+  [System.IO.File]::WriteAllText($dest, $placeholder, $utf8NoBom)
+}
+
+Write-Activation 'mise'     @('activate', 'nu')   'mise.nu'
+Write-Activation 'starship' @('init', 'nu')       'starship.nu'
+Write-Activation 'zoxide'   @('init', 'nushell')  'zoxide.nu'
+exit 0
