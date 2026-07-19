@@ -21,7 +21,7 @@
     "defaults": {
       "colorScheme": "Catppuccin Mocha",
       "font": {
-        "face": "PragmataPro VF Mono, Iosevka Nerd Font Mono",
+        "face": "PragmataPro VF Mono, Iosevka Nerd Font Mono, Consolas",
         "size": 11,
         "weight": "normal",
         "features": { "liga": 0, "calt": 0, "dlig": 0 }
