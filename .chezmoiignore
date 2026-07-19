@@ -11,6 +11,7 @@ Documents
 5-emdash.ps1
 10-winget-packages.ps1
 20-mise-install.ps1
+30-nushell-activations.ps1
 {{ end -}}
 {{ if ne .chezmoi.os "darwin" -}}
 # macOS-only targets (Nix/Homebrew tree + Mac shell/editor config) — skipped on Windows/Linux.
