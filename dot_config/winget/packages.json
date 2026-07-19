@@ -12,6 +12,7 @@
         { "PackageIdentifier": "ajeetdsouza.zoxide" },
         { "PackageIdentifier": "junegunn.fzf" },
         { "PackageIdentifier": "sharkdp.bat" },
+        { "PackageIdentifier": "eza-community.eza" },
         { "PackageIdentifier": "BurntSushi.ripgrep.MSVC" },
         { "PackageIdentifier": "Neovim.Neovim" },
         { "PackageIdentifier": "Microsoft.PowerShell" },

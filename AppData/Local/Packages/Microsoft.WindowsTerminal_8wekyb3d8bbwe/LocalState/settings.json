@@ -1,0 +1,54 @@
+// Windows Terminal settings — managed by chezmoi. Targets the stable Store/winget
+// build (package family Microsoft.WindowsTerminal_8wekyb3d8bbwe); the Preview
+// build uses a different package dir. Nushell is the default profile; glyphs come
+// from the Symbols Nerd Font installed by run_once_after_60-nerdfont.ps1, which
+// Windows Terminal falls back to for anything missing from Cascadia Mono.
+{
+  "$help": "https://aka.ms/terminal-documentation",
+  "$schema": "https://aka.ms/terminal-profiles-schema",
+  "defaultProfile": "{2c4de342-38b7-51cf-b940-2309a097f589}",
+  "copyOnSelect": true,
+  "copyFormatting": "none",
+  "profiles": {
+    "defaults": {
+      "colorScheme": "Catppuccin Mocha",
+      "font": {
+        "face": "Cascadia Mono",
+        "size": 11
+      }
+    },
+    "list": [
+      {
+        "guid": "{2c4de342-38b7-51cf-b940-2309a097f589}",
+        "name": "Nushell",
+        "commandline": "nu",
+        "startingDirectory": "%USERPROFILE%"
+      }
+    ]
+  },
+  "schemes": [
+    {
+      "name": "Catppuccin Mocha",
+      "cursorColor": "#F5E0DC",
+      "selectionBackground": "#585B70",
+      "background": "#1E1E2E",
+      "foreground": "#CDD6F4",
+      "black": "#45475A",
+      "red": "#F38BA8",
+      "green": "#A6E3A1",
+      "yellow": "#F9E2AF",
+      "blue": "#89B4FA",
+      "purple": "#F5C2E7",
+      "cyan": "#94E2D5",
+      "white": "#BAC2DE",
+      "brightBlack": "#585B70",
+      "brightRed": "#F38BA8",
+      "brightGreen": "#A6E3A1",
+      "brightYellow": "#F9E2AF",
+      "brightBlue": "#89B4FA",
+      "brightPurple": "#F5C2E7",
+      "brightCyan": "#94E2D5",
+      "brightWhite": "#A6ADC8"
+    }
+  ]
+}

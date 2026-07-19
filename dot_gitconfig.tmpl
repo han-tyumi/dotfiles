@@ -1,16 +1,40 @@
 ; Windows git config — managed by chezmoi. On macOS git is configured by
 ; Home Manager instead, so this file is ignored there (see .chezmoiignore).
-; SSH commit signing (as on the Mac) is a follow-up once a per-machine key
-; exists on this device.
+; This mirrors the dependency-free subset of the Mac's programs.git settings;
+; delta, ghq, gitalias, and SSH commit signing are omitted until those tools /
+; per-machine keys exist on this device.
 {{- if has "personal" .layerList }}
 [user]
 	name = Matt Champagne
 	email = mmchamp95@gmail.com
+	; Fail loudly rather than committing under a host-guessed identity.
+	useConfigOnly = true
+{{- else }}
+[user]
+	; No identity layer is enabled; set name/email here or enable the personal
+	; layer. useConfigOnly makes git refuse to guess one from the host/gecos.
+	useConfigOnly = true
 {{- end }}
 [init]
 	defaultBranch = main
 [pull]
 	rebase = true
+[push]
+	autoSetupRemote = true
+[fetch]
+	prune = true
+[rerere]
+	enabled = true
+	autoUpdate = true
+[rebase]
+	autoStash = true
+	updateRefs = true
+[merge]
+	conflictStyle = zdiff3
+[diff]
+	algorithm = histogram
+	colorMoved = default
+	mnemonicPrefix = true
 [core]
 	autocrlf = false
 	editor = nvim
@@ -18,3 +42,5 @@
 	ui = auto
 [branch]
 	sort = -committerdate
+[alias]
+	pushf = push --force-with-lease --force-if-includes

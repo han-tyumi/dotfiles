@@ -29,6 +29,9 @@
 - For mise, always use `mise outdated --bump` (or `-l`) to check for tool upgrades. Default `mise outdated` only reports updates *within* the configured version constraint, which means exact pins (e.g. `rclone 1.73.3`) always appear up to date even when newer versions exist.
 - Don't prefix shell commands with `mise exec --`. mise installs shims on `PATH`, so `pnpm`, `node`, etc. resolve directly to the version pinned in `.tool-versions` / `mise.toml`. Using `mise exec` is redundant noise.
 
+{{- if eq .chezmoi.os "darwin" }}
+
 RTK is a token-optimized CLI proxy. See `RTK.md` for the command reference and bypass patterns.
 
 @RTK.md
+{{- end }}

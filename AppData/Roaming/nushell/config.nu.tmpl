@@ -1,27 +1,45 @@
 # Nushell config for Windows — managed by chezmoi. Nushell is the interactive
 # shell; PowerShell 7 stays available and carries the same activations.
-#
-# mise/starship/zoxide activations are intentionally left commented out: each
-# must `source` a generated file, and nushell resolves `source` paths at PARSE
-# time, so sourcing a not-yet-generated file hard-fails shell startup. After a
-# fresh `apploi` (tools installed + on PATH), generate them once:
-#   ^mise activate nu    | save -f ($nu.default-config-dir | path join mise.nu)
-#   ^starship init nu    | save -f ($nu.default-config-dir | path join starship.nu)
-#   ^zoxide init nushell | save -f ($nu.default-config-dir | path join zoxide.nu)
-# then uncomment:
-# source mise.nu
-# source starship.nu
-# source zoxide.nu
 
 $env.config.show_banner = false
 
+# mise/starship/zoxide activations. Nushell resolves `source` at parse time, so
+# these modules are generated on apply (from the tools' own `activate`/`init`
+# output) and seeded as empty stubs — sourcing them here always parses.
+source mise.nu
+source starship.nu
+source zoxide.nu
+
 # One-command sync, mirroring the Mac `apploi`:
 #   apploi       converge to the declared dotfiles + package state
-#   apploi -u    also upgrade winget packages and mise runtimes
+#   apploi -u    also upgrade winget packages and mise plugins + runtimes
+# (On the Mac, -u updates the nix-darwin flake inputs; Windows has no flake, so
+# here it means the package/runtime upgrade a plain Mac apploi does every run.)
 def apploi [--upgrade (-u)] {
-  chezmoi update --apply
+  let source = (^chezmoi source-path)
+
+  # Consumer machines stay current through plain apploi; a dirty tree skips the pull.
+  if (do { ^git -C $source diff --quiet HEAD } | complete).exit_code == 0 {
+    if (do { ^git -C $source pull --ff-only --quiet } | complete).exit_code != 0 {
+      print ">> Pull skipped — origin diverged; resync with: git fetch && git reset --hard origin/main"
+    }
+  }
+
+  # Claude Code rewrites its own settings; capture them first, then surface the diff.
+  let claude_settings = ("~/.claude/settings.json" | path expand)
+  if ($claude_settings | path exists) {
+    ^chezmoi re-add $claude_settings
+    if (do { ^git -C $source diff --quiet HEAD -- dot_claude/private_settings.json.tmpl } | complete).exit_code != 0 {
+      print ">> Pending Claude settings changes:"
+      ^git -C $source --no-pager diff HEAD -- dot_claude/private_settings.json.tmpl
+    }
+  }
+
+  ^chezmoi apply
+
   if $upgrade {
     winget upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity
+    mise plugins upgrade
     mise upgrade
   }
 }

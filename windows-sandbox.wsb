@@ -1,0 +1,24 @@
+<!--
+  Windows Sandbox harness to smoke-test the Windows bootstrap — the counterpart to
+  the Mac tart recipe in CLAUDE.md. Enable Windows Sandbox first (Windows Features
+  -> "Windows Sandbox"), then double-click this file to get a throwaway VM with
+  this checkout mapped read-only at C:\dotfiles.
+
+  Windows Sandbox ships WITHOUT winget (App Installer), which bootstrap.ps1
+  requires, so install App Installer inside the sandbox first (Microsoft Store, or
+  your preferred method), then run the printed command. bootstrap.ps1 pulls the
+  dotfiles source from GitHub main, so push source changes before testing them
+  (bootstrap.ps1 itself is exercised from the mapping).
+-->
+<Configuration>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>.</HostFolder>
+      <SandboxFolder>C:\dotfiles</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>powershell -ExecutionPolicy Bypass -NoExit -Command "Write-Host 'Checkout mapped at C:\dotfiles.'; Write-Host 'Sandbox has no winget — install App Installer, then run:'; Write-Host '  $env:DOTFILES_LAYERS=''personal''; C:\dotfiles\bootstrap.ps1'"</Command>
+  </LogonCommand>
+</Configuration>

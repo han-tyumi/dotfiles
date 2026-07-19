@@ -1,10 +1,14 @@
 [tools]
 bun = "latest"
+{{- if ne .chezmoi.os "windows" }}
 crystal = "latest"
+{{- end }}
 deno = "latest"
 dotnet = ["latest", "9"]
+{{- if ne .chezmoi.os "windows" }}
 elixir = "1.18"
 erlang = "latest"
+{{- end }}
 gleam = "latest"
 go = "latest"
 just = "latest"
