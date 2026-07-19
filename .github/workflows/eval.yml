@@ -96,14 +96,19 @@ jobs:
           $res | Format-Table -AutoSize
           if ($res) { throw "PSScriptAnalyzer found $($res.Count) error(s)." }
 
-      - name: Parse under Windows PowerShell 5.1
+      - name: Parse first-apply scripts under Windows PowerShell 5.1
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
+          # Only the scripts chezmoi runs during apply on a fresh box (the
+          # provisioners + bootstrap) must parse under 5.1; the interactive pwsh 7
+          # profile is loaded only once pwsh 7 is present, so it is exempt.
           $bad = @()
-          Get-ChildItem rendered -Filter *.ps1 | ForEach-Object {
-            $errs = $null
-            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errs) | Out-Null
-            if ($errs) { $bad += $_.Name; $errs | ForEach-Object { Write-Host $_ } }
-          }
+          Get-ChildItem rendered -Filter *.ps1 |
+            Where-Object { $_.Name -ne 'Microsoft.PowerShell_profile.ps1' } |
+            ForEach-Object {
+              $errs = $null
+              [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errs) | Out-Null
+              if ($errs) { $bad += $_.Name; $errs | ForEach-Object { Write-Host $_ } }
+            }
           if ($bad.Count) { throw "Windows PowerShell 5.1 parse errors in: $($bad -join ', ')" }
