@@ -39,7 +39,8 @@ function apploi {
     }
   }
 
-  chezmoi apply
+  # --keep-going so one failing target doesn't skip every later target.
+  chezmoi apply --keep-going
 
   if ($Upgrade) {
     winget upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity
