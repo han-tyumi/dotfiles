@@ -1,0 +1,11 @@
+# chezmoi:modify-template
+{{- /* Merge the managed Claude settings over the live file so Claude Code's own
+       writes (any keys it adds) survive, while the managed config wins for the
+       keys it defines (model pin, permissions, hooks, statusLine, toggles). This
+       runs in-process (Go template), so it works on macOS and Windows without an
+       external interpreter. The managed config lives in
+       .chezmoitemplates/claude-settings.json. */ -}}
+{{- $live := dict -}}
+{{- if trim .chezmoi.stdin -}}{{- $live = .chezmoi.stdin | fromJson -}}{{- end -}}
+{{- $managed := includeTemplate "claude-settings.json" . | fromJson -}}
+{{- mergeOverwrite $live $managed | toPrettyJson -}}
