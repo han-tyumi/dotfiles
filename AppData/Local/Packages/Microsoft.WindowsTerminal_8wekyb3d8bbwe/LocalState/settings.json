@@ -1,25 +1,28 @@
 // Windows Terminal settings — managed by chezmoi. Targets the stable Store/winget
 // build (package family Microsoft.WindowsTerminal_8wekyb3d8bbwe); the Preview
-// build uses a different package dir. Nushell is the default profile; glyphs come
-// from the Symbols Nerd Font installed by run_once_after_60-nerdfont.ps1, which
-// Windows Terminal falls back to for anything missing from Cascadia Mono.
+// build uses a different package dir. Nushell is the default profile; its guid
+// matches the profile the nushell installer's WT fragment contributes, so the two
+// merge into one entry instead of showing a duplicate (and this stands alone with
+// its own commandline if that fragment is absent). Glyphs come from the Symbols
+// Nerd Font installed by run_once_after_60-nerdfont.ps1, which Windows Terminal
+// falls back to for anything the primary font lacks.
 {
   "$help": "https://aka.ms/terminal-documentation",
   "$schema": "https://aka.ms/terminal-profiles-schema",
-  "defaultProfile": "{2c4de342-38b7-51cf-b940-2309a097f589}",
+  "defaultProfile": "{47302f9c-1ac4-566c-aa3e-8cf29889d6ab}",
   "copyOnSelect": true,
   "copyFormatting": "none",
   "profiles": {
     "defaults": {
       "colorScheme": "Catppuccin Mocha",
       "font": {
-        "face": "Cascadia Mono",
+        "face": "PragmataPro VF Mono Liga",
         "size": 11
       }
     },
     "list": [
       {
-        "guid": "{2c4de342-38b7-51cf-b940-2309a097f589}",
+        "guid": "{47302f9c-1ac4-566c-aa3e-8cf29889d6ab}",
         "name": "Nushell",
         "commandline": "nu",
         "startingDirectory": "%USERPROFILE%"
