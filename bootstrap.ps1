@@ -52,12 +52,19 @@ if (-not (Test-Path $chezmoi)) {
 # which cannot forward args). With neither, .chezmoi.toml.tmpl prompts — which
 # hangs on a non-interactive host, so fail fast there instead of stalling.
 $initArgs = @($ChezmoiArgs)
-$hasLayerArg = $initArgs -contains '--promptString'
-if (-not $hasLayerArg -and $env:DOTFILES_LAYERS) {
+$joinedArgs = $initArgs -join ' '
+$hasLayers = $joinedArgs -match 'layers='
+if (-not $hasLayers -and $env:DOTFILES_LAYERS) {
   $initArgs += @('--promptString', "layers=$env:DOTFILES_LAYERS")
-  $hasLayerArg = $true
+  $hasLayers = $true
+  $joinedArgs = $initArgs -join ' '
 }
-if (-not $hasLayerArg -and -not [Environment]::UserInteractive) {
+# .chezmoi.toml.tmpl prompts for both layers AND overlays; Windows has no overlays,
+# so preset that prompt too or a non-interactive init stalls on it.
+if ($joinedArgs -notmatch 'overlays=') {
+  $initArgs += @('--promptString', "overlays=$env:DOTFILES_OVERLAYS")
+}
+if (-not $hasLayers -and -not [Environment]::UserInteractive) {
   throw 'No layers selected and no interactive console. Pass --promptString "layers=..." or set $env:DOTFILES_LAYERS.'
 }
 
@@ -66,24 +73,33 @@ Write-Host ">> Initializing dotfiles from $repo ..."
 
 # init leaves an already-cloned source untouched; pull so a re-run on an existing
 # machine applies the latest dotfiles instead of whatever the first clone had.
-# chezmoi git runs in the source dir, reusing the git chezmoi already found for
-# the clone (git may not be on this session's PATH yet after a fresh install).
-& $chezmoi git -- pull --ff-only 2>$null
+# chezmoi git runs in the source dir, reusing the git chezmoi already found for the
+# clone. git writes its fetch summary to stderr, which under 5.1 + $ErrorActionPreference
+# 'Stop' surfaces as a terminating error, so swallow it for this best-effort pull.
+try { & $chezmoi git -- pull --ff-only 2>&1 | Out-Null } catch { }
 
 # Generate a per-machine SSH key for commit signing (and SSH remotes), mirroring
 # bootstrap.sh. Done before apply so the gitconfig signing block (gated on the key
-# existing) turns on this first apply. Set $env:DOTFILES_SSH_KEY="" to skip; no
-# private key material ever leaves the machine.
-$keyName = if ($null -ne $env:DOTFILES_SSH_KEY) { $env:DOTFILES_SSH_KEY } else { 'git_han-tyumi' }
+# existing) turns on this first apply. Set $env:DOTFILES_SSH_KEY="none" to skip
+# (PowerShell deletes an env var assigned "", so "" can't signal skip). No private
+# key material ever leaves the machine.
+$keyName = if ($env:DOTFILES_SSH_KEY) { $env:DOTFILES_SSH_KEY } else { 'git_han-tyumi' }
+$generateKey = $keyName -ne 'none'
 $keyPath = Join-Path $HOME ".ssh\$keyName"
-if ($keyName) {
+if ($generateKey) {
   $sshDir = Join-Path $HOME '.ssh'
   if (-not (Test-Path $sshDir)) { New-Item -ItemType Directory -Path $sshDir | Out-Null }
   if (-not (Test-Path $keyPath)) {
     $sshKeygen = (Get-Command ssh-keygen -ErrorAction SilentlyContinue).Source
     if (-not $sshKeygen) { $sshKeygen = Join-Path $env:ProgramFiles 'Git\usr\bin\ssh-keygen.exe' }
     Write-Host ">> Generating SSH key $keyName ..."
-    & $sshKeygen @('-t', 'ed25519', '-N', '', '-C', "$keyName@$env:COMPUTERNAME", '-f', $keyPath)
+    # Pass the empty passphrase as a literal "" in one argument string: PowerShell
+    # 5.1 drops an empty-string array element, so `-N ''` would vanish and ssh-keygen
+    # would misparse the rest ("Too many arguments"). Start-Process passes the string
+    # verbatim, and CommandLineToArgvW turns "" into an empty arg in any PS version.
+    $kgArgs = "-t ed25519 -N `"`" -C `"$keyName@$env:COMPUTERNAME`" -f `"$keyPath`""
+    $proc = Start-Process -FilePath $sshKeygen -ArgumentList $kgArgs -Wait -NoNewWindow -PassThru
+    if ($proc.ExitCode -ne 0) { Write-Warning "ssh-keygen exited $($proc.ExitCode); no signing key generated." }
   } else {
     Write-Host ">> SSH key $keyName already exists; skipping."
   }
@@ -95,7 +111,7 @@ Write-Host ">> Applying dotfiles..."
 # Record the signing key in allowed_signers so `git log --show-signature` verifies
 # locally (GitHub's Verified badge needs only the key registered there). Runs after
 # apply so the committer email from the applied gitconfig is available.
-if ($keyName -and (Test-Path "$keyPath.pub")) {
+if ($generateKey -and (Test-Path "$keyPath.pub")) {
   $git = (Get-Command git -ErrorAction SilentlyContinue).Source
   if (-not $git) { $git = Join-Path $env:ProgramFiles 'Git\cmd\git.exe' }
   if (Test-Path $git) {
@@ -110,7 +126,7 @@ if ($keyName -and (Test-Path "$keyPath.pub")) {
 }
 
 Write-Host ">> Bootstrap complete. Open a new terminal (pwsh or nushell), then use 'apploi' to sync."
-if ($keyName -and (Test-Path "$keyPath.pub")) {
+if ($generateKey -and (Test-Path "$keyPath.pub")) {
   Write-Host ">> Register this key on GitHub as BOTH an Authentication and a Signing key (https://github.com/settings/keys):"
   Get-Content "$keyPath.pub"
 }

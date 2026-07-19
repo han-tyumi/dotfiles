@@ -19,11 +19,6 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
   (& zoxide init powershell | Out-String) | Invoke-Expression
 }
 
-# fzf key bindings (Ctrl-R history, Ctrl-T files); needs fzf >= 0.48.
-if (Get-Command fzf -ErrorAction SilentlyContinue) {
-  (& fzf --powershell | Out-String) | Invoke-Expression
-}
-
 # One-command sync, mirroring the Mac `apploi`:
 #   apploi      converge to the declared dotfiles + package state
 #   apploi -u   also upgrade winget packages and mise plugins + runtimes
@@ -44,23 +39,20 @@ function apploi {
     }
   }
 
-  # Claude Code rewrites its own settings (model, effort, toggles); capture them
-  # into the source first so apply doesn't revert them, then surface the diff.
-  $claudeSettings = Join-Path $HOME '.claude\settings.json'
-  if (Test-Path $claudeSettings) {
-    chezmoi re-add $claudeSettings
-    git -C $source diff --quiet HEAD -- dot_claude/private_settings.json.tmpl
-    if ($LASTEXITCODE -ne 0) {
-      Write-Host ">> Pending Claude settings changes:"
-      git -C $source --no-pager diff HEAD -- dot_claude/private_settings.json.tmpl
-    }
-  }
-
   chezmoi apply
 
   if ($Upgrade) {
     winget upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity
     mise plugins upgrade
     mise upgrade
+
+    # Regenerate nushell's activation modules against the upgraded tools: the
+    # provisioner that writes them is keyed on packages.json, which an upgrade
+    # doesn't touch. (pwsh re-runs its own activations at every start.)
+    if (Get-Command nu -ErrorAction SilentlyContinue) {
+      nu -c '^mise activate nu | save -f ($nu.default-config-dir | path join mise.nu)'
+      nu -c '^starship init nu | save -f ($nu.default-config-dir | path join starship.nu)'
+      nu -c '^zoxide init nushell | save -f ($nu.default-config-dir | path join zoxide.nu)'
+    }
   }
 }

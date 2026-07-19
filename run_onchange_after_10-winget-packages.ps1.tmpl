@@ -24,11 +24,13 @@ if (-not (Test-Path $winget)) {
   --accept-package-agreements --accept-source-agreements `
   --ignore-unavailable --disable-interactivity
 # winget import returns non-zero when every package is already installed
-# (-1978335189 / 0x8A15002B, "no applicable update"); that is success. Surface
-# any other non-zero as a real failure rather than swallowing it with exit 0.
+# (-1978335189 / 0x8A15002B, "no applicable update"); that is success. Any other
+# non-zero is a real (often transient) failure — exit non-zero so this run_onchange
+# re-fires on the next apply instead of recording its hash as done.
 $importExit = $LASTEXITCODE
 if ($importExit -ne 0 -and $importExit -ne -1978335189) {
-  Write-Warning "winget import exited $importExit; some packages may not have installed."
+  Write-Warning "winget import exited $importExit; retrying on the next apply."
+  exit 1
 }
 
 # --ignore-unavailable silently skips a delisted, renamed, or arch-unavailable

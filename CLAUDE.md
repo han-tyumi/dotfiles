@@ -216,7 +216,7 @@ provisioned with **winget** and **mise** instead of Nix.
   fires the provisioners. Pass `--promptString "layers=personal"` to pick layers (or,
   for the `irm | iex` form which can't forward args, set `$env:DOTFILES_LAYERS`); a
   non-interactive run with neither fails fast instead of hanging on the prompt. It
-  also generates a per-machine ed25519 key (`git_han-tyumi`, `$env:DOTFILES_SSH_KEY=""`
+  also generates a per-machine ed25519 key (`git_han-tyumi`, `$env:DOTFILES_SSH_KEY="none"`
   to skip) and prints the public key to register on GitHub as both an Authentication
   and a Signing key — enabling SSH commit signing (see the git identity note below).
 - Provisioning is hash-gated `run_onchange` PowerShell, kept PowerShell 5.1-safe
@@ -226,7 +226,7 @@ provisioned with **winget** and **mise** instead of Nix.
   (the personal layer's crystal/erlang/elixir are OS-gated out of `conf.d/personal.toml`
   on Windows); `30-nushell-activations` generates nushell's mise/starship/zoxide
   modules. `run_once_after_50-emdash.ps1` installs Emdash and `run_once_after_60-nerdfont.ps1`
-  installs the Symbols Nerd Font per-user; both fail loudly so a transient error
+  installs Iosevka Nerd Font (Mono) per-user; both fail loudly so a transient error
   re-fires on the next apply instead of recording the run_once done with nothing done.
 - One-command sync mirrors the Mac `apploi`: `apploi` (defined in the PowerShell
   profile and the Windows nushell config) does an `--ff-only` pull, re-adds
@@ -251,14 +251,15 @@ provisioned with **winget** and **mise** instead of Nix.
   Windows PowerShell 5.1 to guard the first-apply-safety invariant. `windows-sandbox.wsb`
   is the throwaway-VM smoke test (counterpart to the Mac tart recipe).
 
-Remaining parity gaps (on-device follow-ups): the github MCP server is not registered
-on Windows (its `github-mcp-server` binary is a Homebrew brew with no clean winget
-package); Zed's primary font is PragmataPro (paid — a Nerd Font now covers the glyph
-fallback, but the buffer/UI face falls back until PragmataPro or a free face is set);
-Zed default-app / file associations are manual (prefer the MIT/no-WMIC PS-SFTA over
-SetUserFTA); nushell has no fzf key bindings (pwsh does); and if OneDrive Known Folder
-redirection is on, the pwsh profile must live under `%USERPROFILE%\OneDrive\Documents`
-or it (and `apploi`) won't load.
+Remaining parity gaps (on-device follow-ups): the github MCP server is intentionally
+not registered on Windows — `gh` (winget) covers the CLI flows instead, and
+`github-mcp-server` has no clean winget package. Zed's primary buffer/UI font is
+PragmataPro (paid); machines without it fall back to the bundled Iosevka Nerd Font
+Mono, a close condensed coding face. Zed default-app / file associations are manual
+(prefer the MIT/no-WMIC PS-SFTA over SetUserFTA); neither shell wires fzf key bindings
+yet (PSFzf is the pwsh route); and if OneDrive Known Folder redirection is on, the
+pwsh profile must live under `%USERPROFILE%\OneDrive\Documents` or it (and `apploi`)
+won't load.
 
 ### System Management
 

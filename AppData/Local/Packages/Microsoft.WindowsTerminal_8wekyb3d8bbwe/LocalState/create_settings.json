@@ -1,6 +1,9 @@
-// Windows Terminal settings — managed by chezmoi. Targets the stable Store/winget
-// build (package family Microsoft.WindowsTerminal_8wekyb3d8bbwe); the Preview
-// build uses a different package dir. Nushell is the default profile; its guid
+// Windows Terminal settings — seeded by chezmoi (create_: written once, then WT
+// owns it). Windows Terminal rewrites this file to persist dynamic profiles and UI
+// tweaks, so a fully-managed file would fight it into a conflict loop on every
+// apply; write-once seeds the defaults and lets WT take over. Targets the stable
+// Store/winget build (package family Microsoft.WindowsTerminal_8wekyb3d8bbwe); the
+// Preview build uses a different package dir. Nushell is the default profile; its guid
 // matches the profile the nushell installer's WT fragment contributes, so the two
 // merge into one entry instead of showing a duplicate (and this stands alone with
 // its own commandline if that fragment is absent). Font: the no-ligature

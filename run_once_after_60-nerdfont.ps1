@@ -5,6 +5,9 @@
 # non-zero so chezmoi re-fires it on the next apply instead of recording it done
 # with nothing done.
 $ErrorActionPreference = 'Stop'
+# Progress rendering makes 5.1's Invoke-WebRequest an order of magnitude slower and
+# buffers the whole (large) body in memory; off, the download doesn't look hung.
+$ProgressPreference = 'SilentlyContinue'
 
 $url = 'https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Iosevka.zip'
 $zip = Join-Path $env:TEMP 'Iosevka.zip'

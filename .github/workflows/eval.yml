@@ -59,8 +59,8 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           Get-Content dot_config/winget/packages.json -Raw | Test-Json | Out-Null
-          # Windows Terminal settings is JSONC; drop // line comments before Test-Json.
-          $wt = 'AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json'
+          # Windows Terminal settings is JSONC (create_, write-once); drop // line comments before Test-Json.
+          $wt = 'AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/create_settings.json'
           (((Get-Content $wt) -notmatch '^\s*//') -join "`n") | Test-Json | Out-Null
 
       - name: Render managed templates as os = windows
@@ -83,8 +83,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path rendered | Out-Null
           Get-ChildItem -Recurse -Filter *.ps1.tmpl | ForEach-Object {
             $name = $_.Name -replace '\.tmpl$', ''
-            & chezmoi --source "$PWD" execute-template (Get-Content $_.FullName -Raw) |
-              Set-Content "rendered/$name"
+            $rendered = & chezmoi --source "$PWD" execute-template (Get-Content $_.FullName -Raw)
+            # A failed render must fail the job, not write an empty file that
+            # vacuously passes PSScriptAnalyzer and the 5.1 parse.
+            if ($LASTEXITCODE) { throw "execute-template failed for $($_.Name)" }
+            $rendered | Set-Content "rendered/$name"
           }
           Get-ChildItem -Filter *.ps1 | ForEach-Object { Copy-Item $_.FullName "rendered/$($_.Name)" }
 

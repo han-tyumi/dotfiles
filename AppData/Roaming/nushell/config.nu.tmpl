@@ -25,21 +25,17 @@ def apploi [--upgrade (-u)] {
     }
   }
 
-  # Claude Code rewrites its own settings; capture them first, then surface the diff.
-  let claude_settings = ("~/.claude/settings.json" | path expand)
-  if ($claude_settings | path exists) {
-    ^chezmoi re-add $claude_settings
-    if (do { ^git -C $source diff --quiet HEAD -- dot_claude/private_settings.json.tmpl } | complete).exit_code != 0 {
-      print ">> Pending Claude settings changes:"
-      ^git -C $source --no-pager diff HEAD -- dot_claude/private_settings.json.tmpl
-    }
-  }
-
   ^chezmoi apply
 
   if $upgrade {
     winget upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity
     mise plugins upgrade
     mise upgrade
+
+    # Regenerate these activation modules against the upgraded tools; the
+    # provisioner that writes them is keyed on packages.json, which -u doesn't touch.
+    ^mise activate nu | save -f ($nu.default-config-dir | path join mise.nu)
+    ^starship init nu | save -f ($nu.default-config-dir | path join starship.nu)
+    ^zoxide init nushell | save -f ($nu.default-config-dir | path join zoxide.nu)
   }
 }
