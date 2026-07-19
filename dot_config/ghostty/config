@@ -1,10 +1,21 @@
 # Ghostty configuration.
 # Reference: https://ghostty.org/docs/config/reference
 
-font-family = PragmataPro Mono
+# Primary: PragmataPro's no-ligature, grid-monospaced VF face — byte fidelity for
+# logs/diffs, and the same VF family-set the editor uses. Falls back per-codepoint
+# to Iosevka Nerd Font Mono, a condensed PragmataPro-like coding face with letters
+# + icons, so a machine without PragmataPro still renders text and glyphs.
+font-family = PragmataPro VF Mono
+font-family = Iosevka Nerd Font Mono
 font-size = 14
 
-# Thicken glyph stems to match the heavier weight CoreText renders at.
+# Ligatures off (terminal = byte fidelity). calt gates programming ligatures;
+# liga/dlig cover standard/discretionary. Applies to every font in the chain.
+font-feature = -calt
+font-feature = -liga
+font-feature = -dlig
+
+# Thicken glyph stems to match the heavier weight CoreText renders at (macOS only).
 font-thicken = true
 
 theme = Catppuccin Mocha
