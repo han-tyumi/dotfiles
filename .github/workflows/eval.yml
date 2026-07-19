@@ -40,3 +40,76 @@ jobs:
 
       - name: Evaluate ${{ matrix.fixture }}
         run: nix eval --no-write-lock-file ".#darwinConfigurations.${{ matrix.fixture }}.system.drvPath"
+
+  # The Windows profile has no Nix fixture to eval; validate its templates,
+  # manifests, and provisioner scripts instead — including a Windows PowerShell
+  # 5.1 parse to guard the documented first-apply-safety invariant (pwsh 7 is
+  # absent on the first apply, so the provisioners must parse under 5.1).
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        shell: pwsh
+        run: choco install chezmoi --yes --no-progress
+
+      - name: Validate JSON manifests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-Content dot_config/winget/packages.json -Raw | Test-Json | Out-Null
+          # Windows Terminal settings is JSONC; drop // line comments before Test-Json.
+          $wt = 'AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json'
+          (((Get-Content $wt) -notmatch '^\s*//') -join "`n") | Test-Json | Out-Null
+
+      - name: Render every template as os = windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Config/host templates and ones that resolve .chezmoi.sourceFile can't
+          # render from piped content (no source path), so validate the rest.
+          $skip = @('.chezmoi.toml.tmpl', 'machine.nix.tmpl')
+          $failed = @()
+          Get-ChildItem -Recurse -Filter *.tmpl |
+            Where-Object {
+              $skip -notcontains $_.Name -and
+              (Get-Content $_.FullName -Raw) -notmatch 'chezmoi\.sourceFile'
+            } |
+            ForEach-Object {
+              & chezmoi --source "$PWD" execute-template (Get-Content $_.FullName -Raw) *> $null
+              if ($LASTEXITCODE -ne 0) { $failed += (Resolve-Path -Relative $_.FullName) }
+            }
+          if ($failed.Count) { throw "Template render failed: $($failed -join ', ')" }
+
+      - name: Render provisioner scripts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path rendered | Out-Null
+          Get-ChildItem -Recurse -Filter *.ps1.tmpl | ForEach-Object {
+            $name = $_.Name -replace '\.tmpl$', ''
+            & chezmoi --source "$PWD" execute-template (Get-Content $_.FullName -Raw) |
+              Set-Content "rendered/$name"
+          }
+          Get-ChildItem -Filter *.ps1 | ForEach-Object { Copy-Item $_.FullName "rendered/$($_.Name)" }
+
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $res = Invoke-ScriptAnalyzer -Path rendered -Severity Error
+          $res | Format-Table -AutoSize
+          if ($res) { throw "PSScriptAnalyzer found $($res.Count) error(s)." }
+
+      - name: Parse under Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bad = @()
+          Get-ChildItem rendered -Filter *.ps1 | ForEach-Object {
+            $errs = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errs) | Out-Null
+            if ($errs) { $bad += $_.Name; $errs | ForEach-Object { Write-Host $_ } }
+          }
+          if ($bad.Count) { throw "Windows PowerShell 5.1 parse errors in: $($bad -join ', ')" }
