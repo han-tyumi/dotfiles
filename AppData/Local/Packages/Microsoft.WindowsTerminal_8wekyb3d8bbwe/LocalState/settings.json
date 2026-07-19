@@ -3,9 +3,11 @@
 // build uses a different package dir. Nushell is the default profile; its guid
 // matches the profile the nushell installer's WT fragment contributes, so the two
 // merge into one entry instead of showing a duplicate (and this stands alone with
-// its own commandline if that fragment is absent). Glyphs come from the Symbols
-// Nerd Font installed by run_once_after_60-nerdfont.ps1, which Windows Terminal
-// falls back to for anything the primary font lacks.
+// its own commandline if that fragment is absent). Font: the no-ligature
+// PragmataPro VF Mono (byte fidelity for logs/diffs), falling back per-glyph to
+// Iosevka Nerd Font Mono (installed by run_once_after_60-nerdfont.ps1) for text +
+// icons on a machine without PragmataPro. Set weight via font.weight only, never
+// font.axes.wght (that breaks SGR-bold rendering).
 {
   "$help": "https://aka.ms/terminal-documentation",
   "$schema": "https://aka.ms/terminal-profiles-schema",
@@ -16,8 +18,10 @@
     "defaults": {
       "colorScheme": "Catppuccin Mocha",
       "font": {
-        "face": "PragmataPro VF Mono Liga",
-        "size": 11
+        "face": "PragmataPro VF Mono, Iosevka Nerd Font Mono",
+        "size": 11,
+        "weight": "normal",
+        "features": { "liga": 0, "calt": 0, "dlig": 0 }
       }
     },
     "list": [
