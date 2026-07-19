@@ -21,10 +21,10 @@
     "dark": "Catppuccin Mocha",
   },
   "ui_font_family": "PragmataPro VF",
-  "ui_font_fallbacks": ["Iosevka Nerd Font Mono"],
+  "ui_font_fallbacks": ["Iosevka Nerd Font", "Menlo"],
   "ui_font_size": 16,
   "buffer_font_family": "PragmataPro VF Mono Liga",
-  "buffer_font_fallbacks": ["Iosevka Nerd Font Mono"],
+  "buffer_font_fallbacks": ["Iosevka Nerd Font Mono", "Menlo"],
   "buffer_font_features": { "calt": true, "liga": true },
   "buffer_font_weight": 500,
   "buffer_font_size": 15,
@@ -40,7 +40,7 @@
       },
     },
     "font_family": "PragmataPro VF Mono",
-    "font_fallbacks": ["Iosevka Nerd Font Mono"],
+    "font_fallbacks": ["Iosevka Nerd Font Mono", "Menlo"],
   },
 
   // Key Bindings

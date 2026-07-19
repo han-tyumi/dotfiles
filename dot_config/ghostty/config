@@ -7,6 +7,7 @@
 # + icons, so a machine without PragmataPro still renders text and glyphs.
 font-family = PragmataPro VF Mono
 font-family = Iosevka Nerd Font Mono
+font-family = Menlo
 font-size = 14
 
 # Ligatures off (terminal = byte fidelity). calt gates programming ligatures;
