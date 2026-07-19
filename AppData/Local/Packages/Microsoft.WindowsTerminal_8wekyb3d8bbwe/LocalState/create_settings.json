@@ -1,0 +1,64 @@
+// Windows Terminal settings — seeded by chezmoi (create_: written once, then WT
+// owns it). Windows Terminal rewrites this file to persist dynamic profiles and UI
+// tweaks, so a fully-managed file would fight it into a conflict loop on every
+// apply; write-once seeds the defaults and lets WT take over. Targets the stable
+// Store/winget build (package family Microsoft.WindowsTerminal_8wekyb3d8bbwe); the
+// Preview build uses a different package dir. Nushell is the default profile; its guid
+// matches the profile the nushell installer's WT fragment contributes, so the two
+// merge into one entry instead of showing a duplicate (and this stands alone with
+// its own commandline if that fragment is absent). Font: the no-ligature
+// PragmataPro VF Mono (byte fidelity for logs/diffs), falling back per-glyph to
+// Iosevka Nerd Font Mono (installed by run_once_after_60-nerdfont.ps1) for text +
+// icons on a machine without PragmataPro. Set weight via font.weight only, never
+// font.axes.wght (that breaks SGR-bold rendering).
+{
+  "$help": "https://aka.ms/terminal-documentation",
+  "$schema": "https://aka.ms/terminal-profiles-schema",
+  "defaultProfile": "{47302f9c-1ac4-566c-aa3e-8cf29889d6ab}",
+  "copyOnSelect": true,
+  "copyFormatting": "none",
+  "profiles": {
+    "defaults": {
+      "colorScheme": "Catppuccin Mocha",
+      "font": {
+        "face": "PragmataPro VF Mono, Iosevka Nerd Font Mono",
+        "size": 11,
+        "weight": "normal",
+        "features": { "liga": 0, "calt": 0, "dlig": 0 }
+      }
+    },
+    "list": [
+      {
+        "guid": "{47302f9c-1ac4-566c-aa3e-8cf29889d6ab}",
+        "name": "Nushell",
+        "commandline": "nu",
+        "startingDirectory": "%USERPROFILE%"
+      }
+    ]
+  },
+  "schemes": [
+    {
+      "name": "Catppuccin Mocha",
+      "cursorColor": "#F5E0DC",
+      "selectionBackground": "#585B70",
+      "background": "#1E1E2E",
+      "foreground": "#CDD6F4",
+      "black": "#45475A",
+      "red": "#F38BA8",
+      "green": "#A6E3A1",
+      "yellow": "#F9E2AF",
+      "blue": "#89B4FA",
+      "purple": "#F5C2E7",
+      "cyan": "#94E2D5",
+      "white": "#BAC2DE",
+      "brightBlack": "#585B70",
+      "brightRed": "#F38BA8",
+      "brightGreen": "#A6E3A1",
+      "brightYellow": "#F9E2AF",
+      "brightBlue": "#89B4FA",
+      "brightPurple": "#F5C2E7",
+      "brightCyan": "#94E2D5",
+      "brightWhite": "#A6ADC8"
+    }
+  ]
+}

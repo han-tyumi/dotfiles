@@ -40,3 +40,78 @@ jobs:
 
       - name: Evaluate ${{ matrix.fixture }}
         run: nix eval --no-write-lock-file ".#darwinConfigurations.${{ matrix.fixture }}.system.drvPath"
+
+  # The Windows profile has no Nix fixture to eval; validate its templates,
+  # manifests, and provisioner scripts instead — including a Windows PowerShell
+  # 5.1 parse to guard the documented first-apply-safety invariant (pwsh 7 is
+  # absent on the first apply, so the provisioners must parse under 5.1).
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install chezmoi
+        shell: pwsh
+        run: choco install chezmoi --yes --no-progress
+
+      - name: Validate JSON manifests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-Content dot_config/winget/packages.json -Raw | Test-Json | Out-Null
+          # Windows Terminal settings is JSONC (create_, write-once); drop // line comments before Test-Json.
+          $wt = 'AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/create_settings.json'
+          (((Get-Content $wt) -notmatch '^\s*//') -join "`n") | Test-Json | Out-Null
+
+      - name: Render managed templates as os = windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # init writes a config with the layer data the templates read; apply
+          # --dry-run then renders every managed template under os=windows,
+          # respecting .chezmoiignore. It runs no scripts and changes nothing, but
+          # errors on any template failure.
+          chezmoi init --source "$PWD" --promptString "layers=personal" --promptString "overlays="
+          if ($LASTEXITCODE) { throw "chezmoi init failed" }
+          $out = chezmoi --source "$PWD" apply --dry-run --force 2>&1
+          if ($LASTEXITCODE) { $out; throw "template render failed" }
+
+      - name: Render provisioner scripts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path rendered | Out-Null
+          Get-ChildItem -Recurse -Filter *.ps1.tmpl | ForEach-Object {
+            $name = $_.Name -replace '\.tmpl$', ''
+            $rendered = & chezmoi --source "$PWD" execute-template (Get-Content $_.FullName -Raw)
+            # A failed render must fail the job, not write an empty file that
+            # vacuously passes PSScriptAnalyzer and the 5.1 parse.
+            if ($LASTEXITCODE) { throw "execute-template failed for $($_.Name)" }
+            $rendered | Set-Content "rendered/$name"
+          }
+          Get-ChildItem -Filter *.ps1 | ForEach-Object { Copy-Item $_.FullName "rendered/$($_.Name)" }
+
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $res = Invoke-ScriptAnalyzer -Path rendered -Severity Error
+          $res | Format-Table -AutoSize
+          if ($res) { throw "PSScriptAnalyzer found $($res.Count) error(s)." }
+
+      - name: Parse first-apply scripts under Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Only the scripts chezmoi runs during apply on a fresh box (the
+          # provisioners + bootstrap) must parse under 5.1; the interactive pwsh 7
+          # profile is loaded only once pwsh 7 is present, so it is exempt.
+          $bad = @()
+          Get-ChildItem rendered -Filter *.ps1 |
+            Where-Object { $_.Name -ne 'Microsoft.PowerShell_profile.ps1' } |
+            ForEach-Object {
+              $errs = $null
+              [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errs) | Out-Null
+              if ($errs) { $bad += $_.Name; $errs | ForEach-Object { Write-Host $_ } }
+            }
+          if ($bad.Count) { throw "Windows PowerShell 5.1 parse errors in: $($bad -join ', ')" }

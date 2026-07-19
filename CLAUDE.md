@@ -211,26 +211,55 @@ provisioned with **winget** and **mise** instead of Nix.
   the `*.ps1` provisioners) are skipped. Root run-scripts are ignored by their
   attribute-stripped name (e.g. `1-mise-config.toml`, `10-winget-packages.ps1`).
 - `bootstrap.ps1` (flash-drive or `irm https://raw.githubusercontent.com/han-tyumi/dotfiles/main/bootstrap.ps1 | iex`)
-  installs Git + chezmoi via winget, then `chezmoi init --apply`, which fires the
-  provisioners. Pass `--promptString "layers=personal gaming"` to pick layers.
+  installs Git + chezmoi via winget, then `chezmoi init` + `chezmoi apply` (a re-run
+  pulls the already-cloned source `--ff-only` first, mirroring `bootstrap.sh`), which
+  fires the provisioners. Pass `--promptString "layers=personal"` to pick layers (or,
+  for the `irm | iex` form which can't forward args, set `$env:DOTFILES_LAYERS`); a
+  non-interactive run with neither fails fast instead of hanging on the prompt. It
+  also generates a per-machine ed25519 key (`git_han-tyumi`, `$env:DOTFILES_SSH_KEY="none"`
+  to skip) and prints the public key to register on GitHub as both an Authentication
+  and a Signing key — enabling SSH commit signing (see the git identity note below).
 - Provisioning is hash-gated `run_onchange` PowerShell, kept PowerShell 5.1-safe
   since pwsh 7 isn't present on the first apply: `10-winget-packages` imports
-  `dot_config/winget/packages.json`; `20-mise-install` runs `mise install` against
-  the shared `dot_config/mise/config.toml`. `run_once_after_5-emdash.ps1` installs
-  Emdash (not in winget) from its GitHub release.
+  `dot_config/winget/packages.json` (and verifies each declared package installed);
+  `20-mise-install` runs `mise install` against the shared `dot_config/mise/config.toml`
+  (the personal layer's crystal/erlang/elixir are OS-gated out of `conf.d/personal.toml`
+  on Windows); `30-nushell-activations` generates nushell's mise/starship/zoxide
+  modules. `run_once_after_50-emdash.ps1` installs Emdash and `run_once_after_60-nerdfont.ps1`
+  installs Iosevka Nerd Font (Mono) per-user; both fail loudly so a transient error
+  re-fires on the next apply instead of recording the run_once done with nothing done.
 - One-command sync mirrors the Mac `apploi`: `apploi` (defined in the PowerShell
-  profile and the Windows nushell config) runs `chezmoi update --apply`; `apploi -u`
-  also runs `winget upgrade --all` + `mise upgrade`.
+  profile and the Windows nushell config) does an `--ff-only` pull, re-adds
+  Claude-written `~/.claude/settings.json`, then `chezmoi apply`; `apploi -u` also
+  runs `winget upgrade --all` + `mise plugins upgrade` + `mise upgrade`. (On the Mac,
+  `-u` updates the flake inputs; Windows has no flake, so it means the package/runtime
+  upgrade a plain Mac apploi does every run.)
 - Windows config lives under OS-native paths: PowerShell profile in
-  `Documents/PowerShell/`, nushell + Zed under `AppData/Roaming/` (Zed on Windows
-  reads `%APPDATA%\Zed`, not `~/.config/zed`), git identity in `dot_gitconfig`.
+  `Documents/PowerShell/`, nushell + Zed under `AppData/Roaming/`, Windows Terminal
+  settings under `AppData/Local/Packages/.../LocalState/` (Zed on Windows reads
+  `%APPDATA%\Zed`, not `~/.config/zed`), git identity in `dot_gitconfig` (single
+  identity; the GitHub CLI is a winget package authed once via `gh auth login`, and
+  SSH commit signing turns on when `dot_gitconfig`'s `stat` gate sees the bootstrap
+  key). `.claude`
+  applies on Windows too — settings.json (with the rtk hook, unix statusline, and
+  `/tmp` gated to macOS), the global CLAUDE.md, and the portable `create-skill` skill;
+  the bash statusline, the agent-browser symlink, and the `gs`/`wt`-dependent skills
+  stay Mac-only via `.chezmoiignore`.
+- CI (`.github/workflows/eval.yml`, `windows` job) validates the Windows path the way
+  the `nix eval` matrix covers the Mac: it renders every template as `os = windows`,
+  Test-Jsons the manifests, runs PSScriptAnalyzer, and parses the provisioners under
+  Windows PowerShell 5.1 to guard the first-apply-safety invariant. `windows-sandbox.wsb`
+  is the throwaway-VM smoke test (counterpart to the Mac tart recipe).
 
-Known parity gaps (on-device follow-ups): the Windows nushell config ships without
-the mise/starship/zoxide activations wired (nushell resolves `source` at parse time,
-so they need generated-then-sourced files — pwsh already has them); `.claude`
-(skills/settings) is skipped on Windows until the Mac-only rtk hook is made OS-aware;
-Windows Terminal settings, a Nerd Font install, and Zed file associations (prefer the
-MIT/no-WMIC PS-SFTA over SetUserFTA) are manual for now.
+Remaining parity gaps (on-device follow-ups): the github MCP server is intentionally
+not registered on Windows — `gh` (winget) covers the CLI flows instead, and
+`github-mcp-server` has no clean winget package. Zed's primary buffer/UI font is
+PragmataPro (paid); machines without it fall back to the bundled Iosevka Nerd Font
+Mono, a close condensed coding face. Zed default-app / file associations are manual
+(prefer the MIT/no-WMIC PS-SFTA over SetUserFTA); neither shell wires fzf key bindings
+yet (PSFzf is the pwsh route); and if OneDrive Known Folder redirection is on, the
+pwsh profile must live under `%USERPROFILE%\OneDrive\Documents` or it (and `apploi`)
+won't load.
 
 ### System Management
 

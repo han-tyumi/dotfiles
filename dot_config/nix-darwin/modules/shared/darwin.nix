@@ -272,8 +272,9 @@
   # without it degrade gracefully; the prose companion (Georgia) ships
   # with macOS.
   fonts.packages = with pkgs; [
-    # Icon glyphs as a fallback font, so the editor face needs no patching.
-    nerd-fonts.symbols-only
+    # Iosevka Nerd Font: a condensed coding face close to PragmataPro, carrying
+    # icon glyphs — the fallback for surfaces where PragmataPro isn't installed.
+    nerd-fonts.iosevka
   ];
 
   security.pam.services.sudo_local.touchIdAuth = true;

@@ -106,6 +106,7 @@
       "Bash(pnpm outdated *)",
       "Bash(pnpm tsc *)",
       "Bash(rg *)",
+{{- if eq .chezmoi.os "darwin" }}
       "Bash(rtk find *)",
       "Bash(rtk gh issue view *)",
       "Bash(rtk gh pr checks *)",
@@ -141,6 +142,7 @@
       "Bash(rtk rg *)",
       "Bash(rtk shellcheck *)",
       "Bash(rtk wc *)",
+{{- end }}
       "Bash(shellcheck *)",
       "Bash(tail *)",
       "Bash(test *)",
@@ -257,9 +259,12 @@
     ],
     "deny": [],
     "additionalDirectories": [
+{{- if eq .chezmoi.os "darwin" }}
       "/tmp"
+{{- end }}
     ]
   },
+{{- if eq .chezmoi.os "darwin" }}
   "hooks": {
     "PreToolUse": [
       {
@@ -278,6 +283,7 @@
     "command": "~/.claude/statusline.sh",
     "refreshInterval": 3
   },
+{{- end }}
   "enabledPlugins": {},
   "extraKnownMarketplaces": {},
   "alwaysThinkingEnabled": true,

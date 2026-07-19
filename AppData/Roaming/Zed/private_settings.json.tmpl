@@ -4,8 +4,9 @@
 // macOS `language_models.bedrock` block is omitted (that path is for work machines
 // on AWS Bedrock; this machine uses subscription auth via the claude-acp agent).
 //
-// Font: PragmataPro is a paid family — install it on this machine, or swap
-// buffer_font_family/ui_font_family for an installed font (e.g. "Cascadia Code").
+// Font: PragmataPro is a paid family (install it per-machine); every font key
+// falls back to Iosevka Nerd Font Mono, so a machine without PragmataPro still
+// gets a close, condensed coding face plus icon glyphs.
 {
   "$schema": "zed://schemas/settings",
 
@@ -21,17 +22,21 @@
     "dark": "Catppuccin Mocha",
   },
   "ui_font_family": "PragmataPro VF",
+  "ui_font_fallbacks": ["Iosevka Nerd Font Mono"],
   "ui_font_size": 16,
   "buffer_font_family": "PragmataPro VF Mono Liga",
-  "buffer_font_fallbacks": ["Symbols Nerd Font Mono"],
+  "buffer_font_fallbacks": ["Iosevka Nerd Font Mono"],
+  "buffer_font_features": { "calt": true, "liga": true },
   "buffer_font_weight": 500,
   "buffer_font_size": 15,
 
-  // Terminal — nushell is the interactive shell.
+  // Terminal — nushell is the interactive shell; byte-fidelity (no-ligature) font.
   "terminal": {
     "shell": {
       "program": "nu",
     },
+    "font_family": "PragmataPro VF Mono",
+    "font_fallbacks": ["Iosevka Nerd Font Mono"],
   },
 
   // Key Bindings

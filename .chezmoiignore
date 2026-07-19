@@ -2,15 +2,18 @@ CLAUDE.md
 README.md
 bootstrap.sh
 bootstrap.ps1
+windows-sandbox.wsb
 {{ if ne .chezmoi.os "windows" -}}
 # Windows-only targets — skipped on macOS/Linux.
 AppData
 Documents
 .config/winget
 .gitconfig
-5-emdash.ps1
 10-winget-packages.ps1
 20-mise-install.ps1
+30-nushell-activations.ps1
+50-emdash.ps1
+60-nerdfont.ps1
 {{ end -}}
 {{ if ne .chezmoi.os "darwin" -}}
 # macOS-only targets (Nix/Homebrew tree + Mac shell/editor config) — skipped on Windows/Linux.
@@ -18,7 +21,13 @@ Documents
 .config/nvim
 .config/ghostty
 .config/zed
-.claude
+# .claude applies on Windows too (settings + CLAUDE.md + portable skills); only
+# these Mac-only pieces are skipped: the bash statusline, the agent-browser
+# symlink into /opt/homebrew, and skills whose CLIs (gs, wt) are Mac-only.
+.claude/statusline.sh
+.claude/skills/agent-browser
+.claude/skills/git-spice
+.claude/skills/git-worktree
 .local
 Library
 v

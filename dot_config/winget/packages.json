@@ -5,6 +5,7 @@
     {
       "Packages": [
         { "PackageIdentifier": "Git.Git" },
+        { "PackageIdentifier": "GitHub.cli" },
         { "PackageIdentifier": "twpayne.chezmoi" },
         { "PackageIdentifier": "jdx.mise" },
         { "PackageIdentifier": "Nushell.Nushell" },
@@ -12,6 +13,7 @@
         { "PackageIdentifier": "ajeetdsouza.zoxide" },
         { "PackageIdentifier": "junegunn.fzf" },
         { "PackageIdentifier": "sharkdp.bat" },
+        { "PackageIdentifier": "eza-community.eza" },
         { "PackageIdentifier": "BurntSushi.ripgrep.MSVC" },
         { "PackageIdentifier": "Neovim.Neovim" },
         { "PackageIdentifier": "Microsoft.PowerShell" },

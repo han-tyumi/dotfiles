@@ -10,8 +10,43 @@ if (-not (Test-Path $manifest)) {
   Write-Host "winget manifest not found at $manifest; skipping."
   return
 }
-winget import --import-file $manifest `
+
+# winget updates PATH in the registry but not this session; resolve it from its
+# link dir when it is not yet on PATH.
+$winget = (Get-Command winget -ErrorAction SilentlyContinue).Source
+if (-not $winget) { $winget = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\winget.exe' }
+if (-not (Test-Path $winget)) {
+  Write-Warning "winget not found; install 'App Installer' from the Microsoft Store, then re-run."
+  exit 1
+}
+
+& $winget import --import-file $manifest `
   --accept-package-agreements --accept-source-agreements `
   --ignore-unavailable --disable-interactivity
-# winget returns non-zero when everything is already installed; that is success.
+# winget import returns non-zero when every package is already installed
+# (-1978335189 / 0x8A15002B, "no applicable update"); that is success. Any other
+# non-zero is a real (often transient) failure — exit non-zero so this run_onchange
+# re-fires on the next apply instead of recording its hash as done.
+$importExit = $LASTEXITCODE
+if ($importExit -ne 0 -and $importExit -ne -1978335189) {
+  Write-Warning "winget import exited $importExit; retrying on the next apply."
+  exit 1
+}
+
+# --ignore-unavailable silently skips a delisted, renamed, or arch-unavailable
+# PackageIdentifier, so confirm each declared package is present and name any
+# that are missing instead of leaving the gap invisible.
+$missing = @()
+try {
+  $ids = (Get-Content $manifest -Raw | ConvertFrom-Json).Sources[0].Packages | ForEach-Object { $_.PackageIdentifier }
+  foreach ($id in $ids) {
+    & $winget list --id $id --exact --disable-interactivity --accept-source-agreements | Out-Null
+    if ($LASTEXITCODE -ne 0) { $missing += $id }
+  }
+} catch {
+  Write-Warning "Could not verify installed packages: $($_.Exception.Message)"
+}
+if ($missing.Count -gt 0) {
+  Write-Warning ("Declared winget packages not installed: " + ($missing -join ', '))
+}
 exit 0

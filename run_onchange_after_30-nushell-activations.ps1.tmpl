@@ -1,0 +1,39 @@
+# nushell activations hash: {{ include "dot_config/winget/packages.json" | sha256sum }}
+#
+# Generate nushell's mise/starship/zoxide activation modules. Nushell resolves
+# `source` at parse time, so config.nu sources these unconditionally and they
+# must exist before the first nushell launch; chezmoi runs this during the same
+# apply (after the winget + mise scripts), and the create_*.nu stubs guarantee
+# the files exist even before this runs. Kept PowerShell 5.1-safe for the first
+# apply (no pwsh 7 yet).
+
+# winget updates PATH in the registry but not this session; fold the Machine +
+# User registry PATH in so both installer packages (nu) and winget portable
+# links (mise) resolve during this same apply.
+$machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+$env:PATH = "$machinePath;$userPath;$env:PATH"
+
+$nushellDir = Join-Path $env:APPDATA 'nushell'
+if (-not (Test-Path $nushellDir)) { New-Item -ItemType Directory -Path $nushellDir | Out-Null }
+
+# Write UTF-8 without a BOM; nushell chokes on a leading BOM in a sourced file
+# (Set-Content -Encoding UTF8 emits one under PowerShell 5.1).
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+function Write-NuActivation($exe, $activateArgs, $outFile) {
+  $target = Join-Path $nushellDir $outFile
+  $cmd = (Get-Command $exe -ErrorAction SilentlyContinue).Source
+  if ($cmd) {
+    $content = (& $cmd @activateArgs | Out-String)
+    [System.IO.File]::WriteAllText($target, $content, $utf8NoBom)
+    Write-Host ">> Generated $outFile"
+  } else {
+    [System.IO.File]::WriteAllText($target, "# $exe not found; activation skipped until it is installed.`n", $utf8NoBom)
+    Write-Warning "$exe not found; wrote an empty $outFile so nushell startup still parses."
+  }
+}
+
+Write-NuActivation 'mise' @('activate', 'nu') 'mise.nu'
+Write-NuActivation 'starship' @('init', 'nu') 'starship.nu'
+Write-NuActivation 'zoxide' @('init', 'nushell') 'zoxide.nu'

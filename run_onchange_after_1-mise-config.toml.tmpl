@@ -3,8 +3,11 @@
 # {{ include "dot_config/mise/config.toml" | sha256sum }}
 {{- range .layerList }}
 {{- $fragment := printf "dot_config/mise/conf.d/%s.toml" . }}
+{{- $fragmentTmpl := printf "dot_config/mise/conf.d/%s.toml.tmpl" . }}
 {{- if stat (joinPath $.chezmoi.sourceDir $fragment) }}
 # {{ include $fragment | sha256sum }}
+{{- else if stat (joinPath $.chezmoi.sourceDir $fragmentTmpl) }}
+# {{ include $fragmentTmpl | sha256sum }}
 {{- end }}
 {{- end }}
 

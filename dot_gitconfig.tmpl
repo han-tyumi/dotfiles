@@ -1,16 +1,41 @@
 ; Windows git config — managed by chezmoi. On macOS git is configured by
 ; Home Manager instead, so this file is ignored there (see .chezmoiignore).
-; SSH commit signing (as on the Mac) is a follow-up once a per-machine key
-; exists on this device.
+; This mirrors the dependency-free subset of the Mac's programs.git settings;
+; delta, ghq, and gitalias are omitted (those tools aren't installed here). SSH
+; commit signing turns on once bootstrap.ps1 has generated the per-machine key.
 {{- if has "personal" .layerList }}
 [user]
 	name = Matt Champagne
 	email = mmchamp95@gmail.com
+	signingKey = ~/.ssh/git_han-tyumi.pub
+	; Fail loudly rather than committing under a host-guessed identity.
+	useConfigOnly = true
+{{- else }}
+[user]
+	; No identity layer is enabled; set name/email here or enable the personal
+	; layer. useConfigOnly makes git refuse to guess one from the host/gecos.
+	useConfigOnly = true
 {{- end }}
 [init]
 	defaultBranch = main
 [pull]
 	rebase = true
+[push]
+	autoSetupRemote = true
+[fetch]
+	prune = true
+[rerere]
+	enabled = true
+	autoUpdate = true
+[rebase]
+	autoStash = true
+	updateRefs = true
+[merge]
+	conflictStyle = zdiff3
+[diff]
+	algorithm = histogram
+	colorMoved = default
+	mnemonicPrefix = true
 [core]
 	autocrlf = false
 	editor = nvim
@@ -18,3 +43,15 @@
 	ui = auto
 [branch]
 	sort = -committerdate
+[alias]
+	pushf = push --force-with-lease --force-if-includes
+{{- if and (has "personal" .layerList) (stat (joinPath .chezmoi.homeDir ".ssh/git_han-tyumi.pub")) }}
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	allowedSignersFile = ~/.config/git/allowed_signers
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true
+{{- end }}
