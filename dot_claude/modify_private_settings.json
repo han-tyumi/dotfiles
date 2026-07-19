@@ -4,8 +4,16 @@
        keys it defines (model pin, permissions, hooks, statusLine, toggles). This
        runs in-process (Go template), so it works on macOS and Windows without an
        external interpreter. The managed config lives in
-       .chezmoitemplates/claude-settings.json. */ -}}
+       .chezmoitemplates/claude-settings.json.
+
+       If the live file is ever corrupt (hand-edit, partial write), fromJson errors
+       and apply stops on this target; recover with:
+         rm ~/.claude/settings.json && chezmoi apply
+       Claude Code writes atomically, so this is rare; apploi runs apply with
+       --keep-going so one bad target doesn't block the rest. */ -}}
 {{- $live := dict -}}
-{{- if trim .chezmoi.stdin -}}{{- $live = .chezmoi.stdin | fromJson -}}{{- end -}}
+{{- /* strip a leading UTF-8 BOM (a Windows text-editor artifact) before parsing */ -}}
+{{- $in := trimPrefix "﻿" .chezmoi.stdin -}}
+{{- if trim $in -}}{{- $live = $in | fromJson -}}{{- end -}}
 {{- $managed := includeTemplate "claude-settings.json" . | fromJson -}}
 {{- mergeOverwrite $live $managed | toPrettyJson -}}

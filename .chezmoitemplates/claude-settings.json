@@ -256,13 +256,15 @@
       "WebFetch(domain:www.w3.org)",
       "WebFetch(domain:xhr.spec.whatwg.org)",
       "WebSearch"
-    ],
-    "deny": [],
-    "additionalDirectories": [
-{{- if eq .chezmoi.os "darwin" }}
-      "/tmp"
-{{- end }}
     ]
+{{- /* deny + additionalDirectories are omitted (not emitted as []) so the modify_
+       merge preserves any live entries instead of wholesale-replacing them with an
+       empty array; /tmp is enforced only on macOS. */ -}}
+{{- if eq .chezmoi.os "darwin" }},
+    "additionalDirectories": [
+      "/tmp"
+    ]
+{{- end }}
   },
 {{- if eq .chezmoi.os "darwin" }}
   "hooks": {
