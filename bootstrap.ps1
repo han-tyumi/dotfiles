@@ -70,7 +70,48 @@ Write-Host ">> Initializing dotfiles from $repo ..."
 # the clone (git may not be on this session's PATH yet after a fresh install).
 & $chezmoi git -- pull --ff-only 2>$null
 
+# Generate a per-machine SSH key for commit signing (and SSH remotes), mirroring
+# bootstrap.sh. Done before apply so the gitconfig signing block (gated on the key
+# existing) turns on this first apply. Set $env:DOTFILES_SSH_KEY="" to skip; no
+# private key material ever leaves the machine.
+$keyName = if ($null -ne $env:DOTFILES_SSH_KEY) { $env:DOTFILES_SSH_KEY } else { 'git_han-tyumi' }
+$keyPath = Join-Path $HOME ".ssh\$keyName"
+if ($keyName) {
+  $sshDir = Join-Path $HOME '.ssh'
+  if (-not (Test-Path $sshDir)) { New-Item -ItemType Directory -Path $sshDir | Out-Null }
+  if (-not (Test-Path $keyPath)) {
+    $sshKeygen = (Get-Command ssh-keygen -ErrorAction SilentlyContinue).Source
+    if (-not $sshKeygen) { $sshKeygen = Join-Path $env:ProgramFiles 'Git\usr\bin\ssh-keygen.exe' }
+    Write-Host ">> Generating SSH key $keyName ..."
+    & $sshKeygen @('-t', 'ed25519', '-N', '', '-C', "$keyName@$env:COMPUTERNAME", '-f', $keyPath)
+  } else {
+    Write-Host ">> SSH key $keyName already exists; skipping."
+  }
+}
+
 Write-Host ">> Applying dotfiles..."
 & $chezmoi apply
 
+# Record the signing key in allowed_signers so `git log --show-signature` verifies
+# locally (GitHub's Verified badge needs only the key registered there). Runs after
+# apply so the committer email from the applied gitconfig is available.
+if ($keyName -and (Test-Path "$keyPath.pub")) {
+  $git = (Get-Command git -ErrorAction SilentlyContinue).Source
+  if (-not $git) { $git = Join-Path $env:ProgramFiles 'Git\cmd\git.exe' }
+  if (Test-Path $git) {
+    $signerEmail = (& $git config --global user.email)
+    if ($signerEmail) {
+      $gitCfgDir = Join-Path $HOME '.config\git'
+      if (-not (Test-Path $gitCfgDir)) { New-Item -ItemType Directory -Path $gitCfgDir | Out-Null }
+      $pub = (Get-Content "$keyPath.pub" -Raw).Trim()
+      "$signerEmail $pub" | Set-Content -Path (Join-Path $gitCfgDir 'allowed_signers') -Encoding ascii
+    }
+  }
+}
+
 Write-Host ">> Bootstrap complete. Open a new terminal (pwsh or nushell), then use 'apploi' to sync."
+if ($keyName -and (Test-Path "$keyPath.pub")) {
+  Write-Host ">> Register this key on GitHub as BOTH an Authentication and a Signing key (https://github.com/settings/keys):"
+  Get-Content "$keyPath.pub"
+}
+Write-Host ">> Then authenticate the GitHub CLI: gh auth login"

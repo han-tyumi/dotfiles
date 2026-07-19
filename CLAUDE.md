@@ -215,7 +215,10 @@ provisioned with **winget** and **mise** instead of Nix.
   pulls the already-cloned source `--ff-only` first, mirroring `bootstrap.sh`), which
   fires the provisioners. Pass `--promptString "layers=personal"` to pick layers (or,
   for the `irm | iex` form which can't forward args, set `$env:DOTFILES_LAYERS`); a
-  non-interactive run with neither fails fast instead of hanging on the prompt.
+  non-interactive run with neither fails fast instead of hanging on the prompt. It
+  also generates a per-machine ed25519 key (`git_han-tyumi`, `$env:DOTFILES_SSH_KEY=""`
+  to skip) and prints the public key to register on GitHub as both an Authentication
+  and a Signing key — enabling SSH commit signing (see the git identity note below).
 - Provisioning is hash-gated `run_onchange` PowerShell, kept PowerShell 5.1-safe
   since pwsh 7 isn't present on the first apply: `10-winget-packages` imports
   `dot_config/winget/packages.json` (and verifies each declared package installed);
@@ -234,7 +237,10 @@ provisioned with **winget** and **mise** instead of Nix.
 - Windows config lives under OS-native paths: PowerShell profile in
   `Documents/PowerShell/`, nushell + Zed under `AppData/Roaming/`, Windows Terminal
   settings under `AppData/Local/Packages/.../LocalState/` (Zed on Windows reads
-  `%APPDATA%\Zed`, not `~/.config/zed`), git identity in `dot_gitconfig`. `.claude`
+  `%APPDATA%\Zed`, not `~/.config/zed`), git identity in `dot_gitconfig` (single
+  identity; the GitHub CLI is a winget package authed once via `gh auth login`, and
+  SSH commit signing turns on when `dot_gitconfig`'s `stat` gate sees the bootstrap
+  key). `.claude`
   applies on Windows too — settings.json (with the rtk hook, unix statusline, and
   `/tmp` gated to macOS), the global CLAUDE.md, and the portable `create-skill` skill;
   the bash statusline, the agent-browser symlink, and the `gs`/`wt`-dependent skills

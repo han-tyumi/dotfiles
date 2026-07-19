@@ -1,12 +1,13 @@
 ; Windows git config — managed by chezmoi. On macOS git is configured by
 ; Home Manager instead, so this file is ignored there (see .chezmoiignore).
 ; This mirrors the dependency-free subset of the Mac's programs.git settings;
-; delta, ghq, gitalias, and SSH commit signing are omitted until those tools /
-; per-machine keys exist on this device.
+; delta, ghq, and gitalias are omitted (those tools aren't installed here). SSH
+; commit signing turns on once bootstrap.ps1 has generated the per-machine key.
 {{- if has "personal" .layerList }}
 [user]
 	name = Matt Champagne
 	email = mmchamp95@gmail.com
+	signingKey = ~/.ssh/git_han-tyumi.pub
 	; Fail loudly rather than committing under a host-guessed identity.
 	useConfigOnly = true
 {{- else }}
@@ -44,3 +45,13 @@
 	sort = -committerdate
 [alias]
 	pushf = push --force-with-lease --force-if-includes
+{{- if and (has "personal" .layerList) (stat (joinPath .chezmoi.homeDir ".ssh/git_han-tyumi.pub")) }}
+[gpg]
+	format = ssh
+[gpg "ssh"]
+	allowedSignersFile = ~/.config/git/allowed_signers
+[commit]
+	gpgsign = true
+[tag]
+	gpgsign = true
+{{- end }}
