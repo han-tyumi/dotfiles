@@ -24,6 +24,7 @@ Documents
 20-mise-install.ps1
 30-nushell-activations.ps1
 35-registry-tweaks.ps1
+45-windows-features.ps1
 50-emdash.ps1
 60-nerdfont.ps1
 70-psfzf.ps1
