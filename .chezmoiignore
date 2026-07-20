@@ -22,6 +22,7 @@ Documents
 10-winget-packages.ps1
 20-mise-install.ps1
 30-nushell-activations.ps1
+35-registry-tweaks.ps1
 50-emdash.ps1
 60-nerdfont.ps1
 {{ end -}}
