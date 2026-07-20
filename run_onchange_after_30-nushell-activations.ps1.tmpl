@@ -16,11 +16,11 @@ $env:PATH = "$machinePath;$userPath;$env:PATH"
 
 # mise lives in a bin subdirectory of its winget package that the registry PATH
 # does not reliably surface within an apply (unlike zoxide, whose exe sits at its
-# package root), so resolve that dir directly and prepend it. Otherwise mise.nu is
-# written as a not-found stub and nushell never activates mise.
-$miseBin = Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\jdx.mise_*\mise\bin" -Directory -ErrorAction SilentlyContinue |
+# package root), so resolve the exe directly and prepend its directory. Otherwise
+# mise.nu is written as a not-found stub and nushell never activates mise.
+$miseExe = Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\jdx.mise_*\mise\bin\mise.exe" -ErrorAction SilentlyContinue |
   Sort-Object FullName | Select-Object -Last 1 -ExpandProperty FullName
-if ($miseBin) { $env:PATH = "$miseBin;$env:PATH" }
+if ($miseExe) { $env:PATH = (Split-Path $miseExe -Parent) + ';' + $env:PATH }
 
 $nushellDir = Join-Path $env:APPDATA 'nushell'
 if (-not (Test-Path $nushellDir)) { New-Item -ItemType Directory -Path $nushellDir | Out-Null }
