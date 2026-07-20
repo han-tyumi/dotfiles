@@ -27,7 +27,7 @@ function Write-NuActivation($exe, $activateArgs, $outFile, $exePath) {
   if ($cmd) {
     $content = (& $cmd @activateArgs | Out-String)
     [System.IO.File]::WriteAllText($target, $content, $utf8NoBom)
-    Write-Host ">> Generated $outFile"
+    Write-Host "Generated $outFile"
   } else {
     [System.IO.File]::WriteAllText($target, "# $exe not found; activation skipped until it is installed.`n", $utf8NoBom)
     Write-Warning "$exe not found; wrote an empty $outFile so nushell startup still parses."

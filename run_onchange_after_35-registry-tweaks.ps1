@@ -83,7 +83,7 @@ if ($isAdmin) {
 }
 
 if ($shellChanged) {
-  Write-Output '>> Explorer shell tweaks changed; restarting Explorer.'
+  Write-Output 'Explorer shell tweaks changed; restarting Explorer.'
   Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
 }
 exit 0
