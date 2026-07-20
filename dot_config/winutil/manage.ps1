@@ -1,6 +1,6 @@
 # WinUtil tweak-config manager.
 #   manage.ps1            (no args) check whether a newer WinUtil release exists
-#   manage.ps1 -Apply     open the pinned WinUtil GUI to import + apply config.json
+#   manage.ps1 -Apply     null-guard the pinned WinUtil and apply config.json headless
 #
 # Run -Apply from an ELEVATED shell. If the execution policy blocks the script
 # (Windows PowerShell 5.1 defaults to Restricted), invoke it as:
@@ -37,19 +37,26 @@ if ($Apply) {
     Invoke-WebRequest "https://github.com/ChrisTitusTech/winutil/releases/download/$PinnedVersion/winutil.ps1" -OutFile $winutil -UseBasicParsing
     Unblock-File $winutil
   }
-  # WinUtil's headless -Config apply is broken upstream in every current release
-  # (the tweak path dereferences a GUI window that -Config never builds - the
-  # unresolved recurrence of issue #4376), so apply through the GUI, which uses
-  # the working interactive Run Tweaks path.
-  Write-Host ''
-  Write-Host 'WinUtil headless apply is broken upstream; apply via the GUI it opens:' -ForegroundColor Cyan
-  Write-Host '  1. Click the gear icon (top-right) -> Import' -ForegroundColor Cyan
-  Write-Host "  2. Select:  $configPath" -ForegroundColor Cyan
-  Write-Host '  3. Tweaks tab -> click Run Tweaks (bottom)' -ForegroundColor Cyan
-  Write-Host ''
-  Write-Host "Launching WinUtil $PinnedVersion..." -ForegroundColor Cyan
-  & $winutil
-  Write-Host 'WinUtil closed. Some tweaks need a reboot to fully take effect.'
+  # WinUtil's headless -Config crashes because the tweak path calls
+  # Invoke-WPFUIThread, which dereferences $sync.form - a window that -Config never
+  # builds (the unresolved recurrence of issue #4376; WinUtil guards its AppX path
+  # this way but never the tweaks path). That is the only unguarded form reference a
+  # tweaks-only config hits, so null-guard that one line in the downloaded copy and
+  # the tweaks apply headless (the progress UI is simply skipped). Fall back to the
+  # GUI if the line cannot be found (WinUtil changed - re-verify on a version bump).
+  $needle = '$sync.form.Dispatcher.Invoke([action]$ScriptBlock)'
+  $guarded = 'if ($sync.form) { $sync.form.Dispatcher.Invoke([action]$ScriptBlock) }'
+  $source = [System.IO.File]::ReadAllText($winutil)
+  if (-not $source.Contains($needle)) {
+    Write-Warning "Could not find the UI-thread call to guard in WinUtil $PinnedVersion (it may have changed). Launching the GUI instead - import $configPath, then click Run Tweaks."
+    & $winutil
+    exit 1
+  }
+  $patched = Join-Path $env:TEMP "winutil-$PinnedVersion-headless.ps1"
+  [System.IO.File]::WriteAllText($patched, $source.Replace($needle, $guarded), (New-Object System.Text.UTF8Encoding($false)))
+  Write-Host "Applying config.json headless with WinUtil $PinnedVersion (UI-thread call null-guarded)..."
+  & $patched -Config $configPath
+  Write-Host 'WinUtil apply finished. Some tweaks need a reboot to fully take effect.'
   exit 0
 }
 
