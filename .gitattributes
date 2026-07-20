@@ -1,0 +1,5 @@
+# Normalize all text to LF in the repo and check out LF on every platform. This
+# tree is primarily macOS-driven and already stores LF, and every Windows consumer
+# here (PowerShell 5.1/7, nushell, chezmoi, Zed) reads LF fine. text=auto lets git
+# auto-detect content, so binary files are left untouched.
+* text=auto eol=lf

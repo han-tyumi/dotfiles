@@ -3,3 +3,4 @@
 
 # Conductor per-machine config; a shared .conductor/settings.toml stays committable.
 .conductor/settings.local.toml
+.claude/settings.local.json
