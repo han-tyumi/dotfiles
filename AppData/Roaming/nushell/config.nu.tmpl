@@ -68,7 +68,7 @@ def apploi [--upgrade (-u)] {
   }
 
   # Surface a WinUtil update if the pinned build is behind (best-effort, quiet when current).
-  do -i { ^pwsh -NoProfile -File ($nu.home-path | path join '.config' 'winutil' 'manage.ps1') }
+  do -i { ^pwsh -NoProfile -ExecutionPolicy Bypass -File ($nu.home-path | path join '.config' 'winutil' 'manage.ps1') }
 
   print $"(ansi green)apploi(ansi reset): done."
 }

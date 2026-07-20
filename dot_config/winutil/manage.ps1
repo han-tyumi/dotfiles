@@ -2,6 +2,10 @@
 #   manage.ps1            (no args) check whether a newer WinUtil release exists
 #   manage.ps1 -Apply     download the pinned build and apply config.json
 #
+# Run -Apply from an ELEVATED shell. If the execution policy blocks the script
+# (Windows PowerShell 5.1 defaults to Restricted), invoke it as:
+#   pwsh -ExecutionPolicy Bypass -File "$HOME\.config\winutil\manage.ps1" -Apply
+#
 # WinUtil's config format and tweak IDs are version-specific, so the config is
 # pinned to $PinnedVersion; when the checker reports a newer release, review it,
 # re-verify/re-export config.json against it, bump $PinnedVersion, then -Apply.
@@ -31,6 +35,7 @@ if ($Apply) {
   if (-not (Test-Path $winutil)) {
     Write-Host "Downloading WinUtil $PinnedVersion..."
     Invoke-WebRequest "https://github.com/ChrisTitusTech/winutil/releases/download/$PinnedVersion/winutil.ps1" -OutFile $winutil -UseBasicParsing
+    Unblock-File $winutil
   }
   Write-Host "Applying $configPath with WinUtil $PinnedVersion (a WinUtil window opens, applies, and closes)..."
   & $winutil -Config $configPath
