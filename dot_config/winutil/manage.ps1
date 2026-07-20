@@ -37,24 +37,28 @@ if ($Apply) {
     Invoke-WebRequest "https://github.com/ChrisTitusTech/winutil/releases/download/$PinnedVersion/winutil.ps1" -OutFile $winutil -UseBasicParsing
     Unblock-File $winutil
   }
-  # WinUtil's headless -Config crashes because the tweak path calls
-  # Invoke-WPFUIThread, which dereferences $sync.form - a window that -Config never
-  # builds (the unresolved recurrence of issue #4376; WinUtil guards its AppX path
-  # this way but never the tweaks path). That is the only unguarded form reference a
-  # tweaks-only config hits, so null-guard that one line in the downloaded copy and
-  # the tweaks apply headless (the progress UI is simply skipped). Fall back to the
-  # GUI if the line cannot be found (WinUtil changed - re-verify on a version bump).
-  $needle = '$sync.form.Dispatcher.Invoke([action]$ScriptBlock)'
-  $guarded = 'if ($sync.form) { $sync.form.Dispatcher.Invoke([action]$ScriptBlock) }'
+  # WinUtil headless -Config runs the tweak apply before it loads the WPF stack or
+  # builds the window (both happen only in GUI mode, after -Config returns), so the
+  # tweak path crashes on (a) $sync.form dereferences via Invoke-WPFUIThread and
+  # (b) WPF type references like [Windows.Visibility] in the progress helpers - the
+  # unresolved recurrence of issue #4376 (WinUtil guards its AppX path this way but
+  # never the tweaks path). Patch the downloaded copy: null-guard that one UI-thread
+  # call so form derefs are skipped, and load the WPF assemblies inside the -Config
+  # branch so the types resolve. Fall back to the GUI if the anchors are gone.
+  $guardNeedle = '$sync.form.Dispatcher.Invoke([action]$ScriptBlock)'
+  $guardWith   = 'if ($sync.form) { $sync.form.Dispatcher.Invoke([action]$ScriptBlock) }'
+  $wpfNeedle   = 'Invoke-WPFImpex -type "import" -Config $Config'
+  $wpfLoad     = "`n    [void][System.Reflection.Assembly]::LoadWithPartialName('PresentationFramework')`n    [void][System.Reflection.Assembly]::LoadWithPartialName('PresentationCore')`n    [void][System.Reflection.Assembly]::LoadWithPartialName('WindowsBase')"
   $source = [System.IO.File]::ReadAllText($winutil)
-  if (-not $source.Contains($needle)) {
-    Write-Warning "Could not find the UI-thread call to guard in WinUtil $PinnedVersion (it may have changed). Launching the GUI instead - import $configPath, then click Run Tweaks."
+  if (-not ($source.Contains($guardNeedle) -and $source.Contains($wpfNeedle))) {
+    Write-Warning "WinUtil $PinnedVersion internals changed; cannot patch for headless apply. Launching the GUI - import $configPath, then click Run Tweaks."
     & $winutil
     exit 1
   }
+  $source = $source.Replace($guardNeedle, $guardWith).Replace($wpfNeedle, $wpfNeedle + $wpfLoad)
   $patched = Join-Path $env:TEMP "winutil-$PinnedVersion-headless.ps1"
-  [System.IO.File]::WriteAllText($patched, $source.Replace($needle, $guarded), (New-Object System.Text.UTF8Encoding($false)))
-  Write-Host "Applying config.json headless with WinUtil $PinnedVersion (UI-thread call null-guarded)..."
+  [System.IO.File]::WriteAllText($patched, $source, (New-Object System.Text.UTF8Encoding($false)))
+  Write-Host "Applying config.json headless with WinUtil $PinnedVersion (UI-thread guarded, WPF assemblies preloaded)..."
   & $patched -Config $configPath
   Write-Host 'WinUtil apply finished. Some tweaks need a reboot to fully take effect.'
   exit 0
