@@ -15,6 +15,8 @@
         { "PackageIdentifier": "sharkdp.bat" },
         { "PackageIdentifier": "eza-community.eza" },
         { "PackageIdentifier": "BurntSushi.ripgrep.MSVC" },
+        { "PackageIdentifier": "M2Team.NanaZip" },
+        { "PackageIdentifier": "voidtools.Everything" },
         { "PackageIdentifier": "Neovim.Neovim" },
         { "PackageIdentifier": "Microsoft.PowerShell" },
         { "PackageIdentifier": "Microsoft.WindowsTerminal" },
@@ -22,7 +24,8 @@
         { "PackageIdentifier": "Anthropic.Claude" },
         { "PackageIdentifier": "Anthropic.ClaudeCode" },
         { "PackageIdentifier": "Vivaldi.Vivaldi" },
-        { "PackageIdentifier": "Bitwarden.Bitwarden" }
+        { "PackageIdentifier": "Bitwarden.Bitwarden" },
+        { "PackageIdentifier": "kangyu-california.PersistentWindows" }
       ],
       "SourceDetails": {
         "Argument": "https://cdn.winget.microsoft.com/cache",
