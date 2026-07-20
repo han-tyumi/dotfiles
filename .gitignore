@@ -4,3 +4,11 @@
 # Conductor per-machine config; a shared .conductor/settings.toml stays committable.
 .conductor/settings.local.toml
 .claude/settings.local.json
+
+# Reserved DOS device names. A tool running `> NUL` inside this dir under a POSIX
+# shell (Emdash's Claude Code hooks do this on Windows) writes a literal file by
+# that name instead of discarding output. Never track it; chezmoi ignores it too.
+NUL
+CON
+PRN
+AUX
