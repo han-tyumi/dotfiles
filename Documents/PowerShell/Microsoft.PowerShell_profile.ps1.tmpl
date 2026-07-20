@@ -31,8 +31,9 @@ function apploi {
   $source = chezmoi source-path
 
   # Consumer machines stay current through plain apploi; a dirty tree (mid-edit)
-  # skips the pull so local changes aren't disturbed.
-  git -C $source diff --quiet HEAD
+  # skips the pull so local changes aren't disturbed. Ignore a dirty submodule so
+  # the perpetually-dirty nvim submodule doesn't block the pull every run.
+  git -C $source diff --quiet --ignore-submodules=dirty HEAD
   if ($LASTEXITCODE -eq 0) {
     Write-Host 'apploi: pulling dotfiles source...' -ForegroundColor Cyan
     git -C $source pull --ff-only --quiet

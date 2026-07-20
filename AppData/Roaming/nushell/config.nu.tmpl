@@ -19,8 +19,10 @@ source zoxide.nu
 def apploi [--upgrade (-u)] {
   let source = (^chezmoi source-path)
 
-  # Consumer machines stay current through plain apploi; a dirty tree skips the pull.
-  if (do { ^git -C $source diff --quiet HEAD } | complete).exit_code == 0 {
+  # Consumer machines stay current through plain apploi; a dirty tree skips the
+  # pull. Ignore a dirty submodule so a mid-edit of tracked files still guards the
+  # pull, but the perpetually-dirty nvim submodule does not block it every run.
+  if (do { ^git -C $source diff --quiet --ignore-submodules=dirty HEAD } | complete).exit_code == 0 {
     print $"(ansi cyan)apploi(ansi reset): pulling dotfiles source..."
     if (do { ^git -C $source pull --ff-only --quiet } | complete).exit_code != 0 {
       print $"(ansi yellow)apploi(ansi reset): pull skipped — origin diverged; resync with: git fetch && git reset --hard origin/main"
