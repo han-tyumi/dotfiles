@@ -24,6 +24,7 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
 #   apploi -u   also upgrade winget packages and mise plugins + runtimes
 # (On the Mac, -u updates the nix-darwin flake inputs; Windows has no flake, so
 # here it means the package/runtime upgrade a plain Mac apploi does every run.)
+# Each step prints a line so a converged (no-op) run still confirms it ran.
 function apploi {
   param([switch] $Upgrade)
 
@@ -33,17 +34,23 @@ function apploi {
   # skips the pull so local changes aren't disturbed.
   git -C $source diff --quiet HEAD
   if ($LASTEXITCODE -eq 0) {
+    Write-Host 'apploi: pulling dotfiles source...' -ForegroundColor Cyan
     git -C $source pull --ff-only --quiet
     if ($LASTEXITCODE -ne 0) {
-      Write-Host ">> Pull skipped — origin diverged; resync with: git fetch && git reset --hard origin/main"
+      Write-Host 'apploi: pull skipped — origin diverged; resync with: git fetch && git reset --hard origin/main' -ForegroundColor Yellow
     }
+  } else {
+    Write-Host 'apploi: local changes present — skipping pull' -ForegroundColor Cyan
   }
 
   # --keep-going so one failing target doesn't skip every later target.
+  Write-Host 'apploi: applying dotfiles...' -ForegroundColor Cyan
   chezmoi apply --keep-going
 
   if ($Upgrade) {
+    Write-Host 'apploi: upgrading winget packages...' -ForegroundColor Cyan
     winget upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity
+    Write-Host 'apploi: upgrading mise plugins and runtimes...' -ForegroundColor Cyan
     mise plugins upgrade
     mise upgrade
 
@@ -56,4 +63,6 @@ function apploi {
       nu -c '^zoxide init nushell | save -f ($nu.default-config-dir | path join zoxide.nu)'
     }
   }
+
+  Write-Host 'apploi: done.' -ForegroundColor Green
 }
