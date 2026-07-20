@@ -8,19 +8,11 @@
 # apply (no pwsh 7 yet).
 
 # winget updates PATH in the registry but not this session; fold the Machine +
-# User registry PATH in so both installer packages (nu) and winget portable
-# links (starship, zoxide) resolve during this same apply.
+# User registry PATH in so installer packages (nu) and package-root exes
+# (starship, zoxide) resolve during this same apply.
 $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 $env:PATH = "$machinePath;$userPath;$env:PATH"
-
-# mise lives in a bin subdirectory of its winget package that the registry PATH
-# does not reliably surface within an apply (unlike zoxide, whose exe sits at its
-# package root), so resolve the exe directly and prepend its directory. Otherwise
-# mise.nu is written as a not-found stub and nushell never activates mise.
-$miseExe = Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\jdx.mise_*\mise\bin\mise.exe" -ErrorAction SilentlyContinue |
-  Sort-Object FullName | Select-Object -Last 1 -ExpandProperty FullName
-if ($miseExe) { $env:PATH = (Split-Path $miseExe -Parent) + ';' + $env:PATH }
 
 $nushellDir = Join-Path $env:APPDATA 'nushell'
 if (-not (Test-Path $nushellDir)) { New-Item -ItemType Directory -Path $nushellDir | Out-Null }
@@ -29,9 +21,9 @@ if (-not (Test-Path $nushellDir)) { New-Item -ItemType Directory -Path $nushellD
 # (Set-Content -Encoding UTF8 emits one under PowerShell 5.1).
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
-function Write-NuActivation($exe, $activateArgs, $outFile) {
+function Write-NuActivation($exe, $activateArgs, $outFile, $exePath) {
   $target = Join-Path $nushellDir $outFile
-  $cmd = (Get-Command $exe -ErrorAction SilentlyContinue).Source
+  $cmd = if ($exePath -and (Test-Path $exePath)) { $exePath } else { (Get-Command $exe -ErrorAction SilentlyContinue).Source }
   if ($cmd) {
     $content = (& $cmd @activateArgs | Out-String)
     [System.IO.File]::WriteAllText($target, $content, $utf8NoBom)
@@ -42,6 +34,16 @@ function Write-NuActivation($exe, $activateArgs, $outFile) {
   }
 }
 
-Write-NuActivation 'mise' @('activate', 'nu') 'mise.nu'
+# mise installs into a bin subdirectory of its winget package. Even after that dir
+# is folded onto PATH above, Get-Command does not resolve mise during a chezmoi
+# apply (it does interactively), so resolve the exe from its known install location
+# and pass it to Write-NuActivation to invoke by full path instead of a PATH lookup.
+# GetFolderPath is used for the base so it holds even if the LOCALAPPDATA env var
+# is absent.
+$localApp = [Environment]::GetFolderPath('LocalApplicationData')
+$miseExe = Get-ChildItem (Join-Path $localApp 'Microsoft\WinGet\Packages\jdx.mise_*\mise\bin\mise.exe') -ErrorAction SilentlyContinue |
+  Sort-Object FullName | Select-Object -Last 1 -ExpandProperty FullName
+
+Write-NuActivation 'mise' @('activate', 'nu') 'mise.nu' $miseExe
 Write-NuActivation 'starship' @('init', 'nu') 'starship.nu'
 Write-NuActivation 'zoxide' @('init', 'nushell') 'zoxide.nu'
