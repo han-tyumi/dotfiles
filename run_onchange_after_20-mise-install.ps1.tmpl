@@ -10,18 +10,19 @@
 {{- end }}
 #
 # Install the mise-managed runtimes from the shared config (the same config.toml
-# the Mac uses). winget writes the mise install dir to the User registry PATH but
-# not this session, and the jdx.mise package installs under WinGet\Packages\...\
-# mise\bin rather than the WinGet\Links shim dir, so fold the Machine + User
-# registry PATH in before probing for mise (installed by the winget-import script
-# that ran just above). Two passes: backend tools (npm:, pipx:) resolve through
-# runtimes declared in the same file, which do not exist on the first pass. The
-# personal layer's Windows-unbuildable runtimes (crystal, erlang, elixir) are
-# gated out of conf.d/personal.toml on Windows, so a clean install is expected here.
-$machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
-$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-$env:PATH = "$machinePath;$userPath;$env:PATH"
-$mise = (Get-Command mise -ErrorAction SilentlyContinue).Source
+# the Mac uses). The winget package installs the mise binary into a bin
+# subdirectory of its package (...\WinGet\Packages\jdx.mise_*\mise\bin\mise.exe).
+# That dir is on the User registry PATH but not necessarily this apply session,
+# and the winget import that ran just above churns the PATH while it works, so
+# resolve the exe directly from its install location and fall back to PATH only
+# for a mise installed some other way. Two passes: backend tools (npm:, pipx:)
+# resolve through runtimes declared in the same file, which do not exist on the
+# first pass. The personal layer's Windows-unbuildable runtimes (crystal, erlang,
+# elixir) are gated out of conf.d/personal.toml on Windows, so a clean install is
+# expected here.
+$mise = Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\jdx.mise_*\mise\bin\mise.exe" -ErrorAction SilentlyContinue |
+  Sort-Object FullName | Select-Object -Last 1 -ExpandProperty FullName
+if (-not $mise) { $mise = (Get-Command mise -ErrorAction SilentlyContinue).Source }
 if (-not $mise) {
   # Non-zero exit so chezmoi re-fires this on the next apply instead of recording
   # the run_onchange as done with nothing installed.
