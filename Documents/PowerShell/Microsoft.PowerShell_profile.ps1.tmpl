@@ -72,5 +72,9 @@ function apploi {
     }
   }
 
+  # Surface a WinUtil update if the pinned build is behind (best-effort, quiet when current).
+  $winutilMgr = Join-Path $HOME '.config\winutil\manage.ps1'
+  if (Test-Path $winutilMgr) { try { & $winutilMgr } catch { } }
+
   Write-Host 'apploi: done.' -ForegroundColor Green
 }

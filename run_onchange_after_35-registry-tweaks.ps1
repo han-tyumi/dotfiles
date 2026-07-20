@@ -1,11 +1,12 @@
 # Idempotent Windows registry tweaks generic to any Windows machine: a
 # dev-friendly Explorer (show hidden files and extensions, open to This PC,
-# expand the folder tree, show the full path in the title bar), the classic
-# Windows 11 right-click menu, GameDVR off, long-path support, Developer Mode,
-# and a Windows Update policy that stops quality updates from swapping an
-# installed driver for a generic one. The HKCU pass runs unelevated; the HKLM
-# pass self-elevates with a single UAC prompt, and only when an HKLM value is
-# actually out of date so an already-tweaked machine prompts for nothing.
+# expand the folder tree, show the full path in the title bar), GameDVR off,
+# PowerShell 7 telemetry opt-out, long-path support, Developer Mode, and a
+# Windows Update policy that stops quality updates from swapping an installed
+# driver for a generic one. The classic Windows 11 right-click menu is left to
+# WinUtil (which owns the debloat/services layer). The HKCU pass runs unelevated;
+# the HKLM pass self-elevates with a single UAC prompt, and only when an HKLM
+# value is actually out of date so an already-tweaked machine prompts for nothing.
 #
 # Windows PowerShell 5.1-safe (runs on a first apply before pwsh 7 exists). Only
 # writes on drift, and only restarts Explorer when an HKCU shell key changed.
@@ -56,13 +57,9 @@ $shellChanged = (Write-RegDword $advanced 'NavPaneShowAllFolders' 1) -or $shellC
 $shellChanged = (Write-RegDword 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\CabinetState' 'FullPath' 1) -or $shellChanged
 [void](Write-RegDword 'HKCU:\System\GameConfigStore' 'GameDVR_Enabled' 0)
 
-# The classic Windows 11 context menu: an empty InprocServer32 default value
-# disables the command bar and restores the full right-click menu.
-$classicMenu = 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'
-if (-not (Test-Path $classicMenu)) {
-  New-Item -Path $classicMenu -Force | Out-Null
-  Set-ItemProperty -Path $classicMenu -Name '(default)' -Value ''
-  $shellChanged = $true
+# Opt out of PowerShell 7 telemetry (persistent user environment variable).
+if ([Environment]::GetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', 'User') -ne '1') {
+  [Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', '1', 'User')
 }
 
 # HKLM pass: self-elevate only when a system-wide value is actually out of date.

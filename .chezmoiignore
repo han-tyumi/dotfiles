@@ -18,6 +18,7 @@ AUX
 AppData
 Documents
 .config/winget
+.config/winutil
 .gitconfig
 10-winget-packages.ps1
 20-mise-install.ps1

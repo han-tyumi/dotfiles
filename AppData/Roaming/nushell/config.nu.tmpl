@@ -67,5 +67,8 @@ def apploi [--upgrade (-u)] {
     ^zoxide init nushell | save -f ($nu.default-config-dir | path join zoxide.nu)
   }
 
+  # Surface a WinUtil update if the pinned build is behind (best-effort, quiet when current).
+  do -i { ^pwsh -NoProfile -File ($nu.home-path | path join '.config' 'winutil' 'manage.ps1') }
+
   print $"(ansi green)apploi(ansi reset): done."
 }
