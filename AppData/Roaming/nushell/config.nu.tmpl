@@ -10,6 +10,24 @@ source mise.nu
 source starship.nu
 source zoxide.nu
 
+# fzf key bindings: Ctrl+R fuzzy history search, Ctrl+T fuzzy file insert.
+$env.config.keybindings = ($env.config.keybindings | append [
+  {
+    name: fzf_history
+    modifier: control
+    keycode: char_r
+    mode: [emacs vi_normal vi_insert]
+    event: { send: executehostcommand, cmd: "commandline edit --replace (history | get command | uniq | reverse | str join (char newline) | fzf --scheme history --layout reverse --height 40% | str trim)" }
+  }
+  {
+    name: fzf_file
+    modifier: control
+    keycode: char_t
+    mode: [emacs vi_normal vi_insert]
+    event: { send: executehostcommand, cmd: "commandline edit --insert (fzf --walker file,follow,hidden --walker-skip .git,node_modules,target --layout reverse --height 40% | str trim)" }
+  }
+])
+
 # One-command sync, mirroring the Mac `apploi`:
 #   apploi       converge to the declared dotfiles + package state
 #   apploi -u    also upgrade winget packages and mise plugins + runtimes

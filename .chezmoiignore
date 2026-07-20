@@ -25,6 +25,7 @@ Documents
 35-registry-tweaks.ps1
 50-emdash.ps1
 60-nerdfont.ps1
+70-psfzf.ps1
 {{ end -}}
 {{ if ne .chezmoi.os "darwin" -}}
 # macOS-only targets (Nix/Homebrew tree + Mac shell/editor config) — skipped on Windows/Linux.

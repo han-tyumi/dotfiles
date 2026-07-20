@@ -19,6 +19,13 @@ if (Get-Command zoxide -ErrorAction SilentlyContinue) {
   (& zoxide init powershell | Out-String) | Invoke-Expression
 }
 
+# fzf key bindings via PSFzf: Ctrl+T (files), Ctrl+R (fuzzy history). Installed by
+# run_once_after_70-psfzf; imported here only when the module is present.
+if (Get-Module -ListAvailable -Name PSFzf) {
+  Import-Module PSFzf
+  Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+}
+
 # One-command sync, mirroring the Mac `apploi`:
 #   apploi      converge to the declared dotfiles + package state
 #   apploi -u   also upgrade winget packages and mise plugins + runtimes
