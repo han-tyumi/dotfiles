@@ -10,17 +10,19 @@
 {{- end }}
 #
 # Install the mise-managed runtimes from the shared config (the same config.toml
-# the Mac uses). winget updates PATH in the registry but not this session, so add
-# its link dir before probing for mise (installed by the winget-import script that
-# ran just above). Two passes: backend tools (npm:, pipx:) resolve through runtimes
-# declared in the same file, which do not exist on the first pass. The personal
-# layer's Windows-unbuildable runtimes (crystal, erlang, elixir) are gated out of
-# conf.d/personal.toml on Windows, so a clean install is expected here.
-$wingetLinks = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
-if (Test-Path $wingetLinks) { $env:PATH = "$wingetLinks;$env:PATH" }
+# the Mac uses). winget writes the mise install dir to the User registry PATH but
+# not this session, and the jdx.mise package installs under WinGet\Packages\...\
+# mise\bin rather than the WinGet\Links shim dir, so fold the Machine + User
+# registry PATH in before probing for mise (installed by the winget-import script
+# that ran just above). Two passes: backend tools (npm:, pipx:) resolve through
+# runtimes declared in the same file, which do not exist on the first pass. The
+# personal layer's Windows-unbuildable runtimes (crystal, erlang, elixir) are
+# gated out of conf.d/personal.toml on Windows, so a clean install is expected here.
+$machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+$env:PATH = "$machinePath;$userPath;$env:PATH"
 $mise = (Get-Command mise -ErrorAction SilentlyContinue).Source
-if (-not $mise) { $mise = Join-Path $wingetLinks 'mise.exe' }
-if (-not (Test-Path $mise)) {
+if (-not $mise) {
   # Non-zero exit so chezmoi re-fires this on the next apply instead of recording
   # the run_onchange as done with nothing installed.
   Write-Warning "mise not found after the winget install; run 'mise install' in a new shell."
