@@ -1,6 +1,6 @@
 # WinUtil tweak-config manager.
 #   manage.ps1            (no args) check whether a newer WinUtil release exists
-#   manage.ps1 -Apply     download the pinned build and apply config.json
+#   manage.ps1 -Apply     open the pinned WinUtil GUI to import + apply config.json
 #
 # Run -Apply from an ELEVATED shell. If the execution policy blocks the script
 # (Windows PowerShell 5.1 defaults to Restricted), invoke it as:
@@ -37,9 +37,19 @@ if ($Apply) {
     Invoke-WebRequest "https://github.com/ChrisTitusTech/winutil/releases/download/$PinnedVersion/winutil.ps1" -OutFile $winutil -UseBasicParsing
     Unblock-File $winutil
   }
-  Write-Host "Applying $configPath with WinUtil $PinnedVersion (a WinUtil window opens, applies, and closes)..."
-  & $winutil -Config $configPath
-  Write-Host 'WinUtil apply finished. Some tweaks need a reboot to fully take effect.'
+  # WinUtil's headless -Config apply is broken upstream in every current release
+  # (the tweak path dereferences a GUI window that -Config never builds - the
+  # unresolved recurrence of issue #4376), so apply through the GUI, which uses
+  # the working interactive Run Tweaks path.
+  Write-Host ''
+  Write-Host 'WinUtil headless apply is broken upstream; apply via the GUI it opens:' -ForegroundColor Cyan
+  Write-Host '  1. Click the gear icon (top-right) -> Import' -ForegroundColor Cyan
+  Write-Host "  2. Select:  $configPath" -ForegroundColor Cyan
+  Write-Host '  3. Tweaks tab -> click Run Tweaks (bottom)' -ForegroundColor Cyan
+  Write-Host ''
+  Write-Host "Launching WinUtil $PinnedVersion..." -ForegroundColor Cyan
+  & $winutil
+  Write-Host 'WinUtil closed. Some tweaks need a reboot to fully take effect.'
   exit 0
 }
 
