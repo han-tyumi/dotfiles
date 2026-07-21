@@ -57,17 +57,17 @@ if ($sshd) {
 $cfgMgr = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Configuration Manager'
 New-ItemProperty -Path $cfgMgr -Name 'EnablePeriodicBackup' -Type DWord -Value 1 -Force | Out-Null
 New-ItemProperty -Path $cfgMgr -Name 'BackupCount' -Type DWord -Value 2 -Force | Out-Null
-if (-not (Get-ScheduledTask -TaskName 'AutoRegBackup' -ErrorAction SilentlyContinue)) {
-  # Run as SYSTEM via an explicit principal; the -User 'System' shorthand fails
-  # silently on some builds (a non-terminating error the success line would hide).
-  try {
-    $action = New-ScheduledTaskAction -Execute 'schtasks' -Argument '/run /i /tn "\Microsoft\Windows\Registry\RegIdleBackup"'
-    $trigger = New-ScheduledTaskTrigger -Daily -At '00:30'
-    $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
-    Register-ScheduledTask -TaskName 'AutoRegBackup' -Action $action -Trigger $trigger -Principal $principal -Description 'Create System Registry Backups' -ErrorAction Stop | Out-Null
-  } catch {
-    $failed += 'AutoRegBackup task'
-  }
+# Run as SYSTEM via an explicit principal (the -User 'System' shorthand fails
+# silently on some builds). Register with -Force so the task is (re)created to
+# match this definition on every run - idempotent and self-healing, without
+# depending on a prior-state probe.
+try {
+  $action = New-ScheduledTaskAction -Execute 'schtasks' -Argument '/run /i /tn "\Microsoft\Windows\Registry\RegIdleBackup"'
+  $trigger = New-ScheduledTaskTrigger -Daily -At '00:30'
+  $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+  Register-ScheduledTask -TaskName 'AutoRegBackup' -Action $action -Trigger $trigger -Principal $principal -Description 'Create System Registry Backups' -Force -ErrorAction Stop | Out-Null
+} catch {
+  $failed += 'AutoRegBackup task'
 }
 
 if ($failed.Count -gt 0) {
