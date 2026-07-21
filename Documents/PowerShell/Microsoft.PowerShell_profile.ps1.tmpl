@@ -85,3 +85,10 @@ function winutil-apply {
   $mgr = Join-Path $HOME '.config\winutil\manage.ps1'
   pwsh -NoProfile -ExecutionPolicy Bypass -File $mgr -Apply
 }
+
+# Enable the captured Windows optional features (.NET, media, OpenSSH, registry
+# backup); enable-features.ps1 self-elevates with one UAC prompt.
+function windows-features {
+  $script = Join-Path $HOME '.config\windows\enable-features.ps1'
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script
+}

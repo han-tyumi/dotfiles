@@ -233,8 +233,9 @@ provisioned with **winget** and **mise** instead of Nix.
   `--ff-only` pull, `chezmoi apply`, then `winget upgrade --all` + `mise plugins
   upgrade` + `mise upgrade`, and checks for a newer WinUtil release. Flags scope it
   to one step: `-c` config only (pull + apply, no upgrades), `-w` winget-only, `-m`
-  mise-only. `winutil-apply` applies the captured WinUtil tweak config (it
-  self-elevates). See `docs/windows.md` for the full picture.
+  mise-only. Opt-in commands `winutil-apply` (WinUtil tweak config) and
+  `windows-features` (Windows optional features) apply the captured system state;
+  both self-elevate. See `docs/windows.md` for the full picture.
 - Windows config lives under OS-native paths: PowerShell profile in
   `Documents/PowerShell/`, nushell + Zed under `AppData/Roaming/`, Windows Terminal
   settings under `AppData/Local/Packages/.../LocalState/` (Zed on Windows reads

@@ -69,11 +69,13 @@ opt-out), so the two tools don't fight over the same keys.
 
 ## Windows features
 
-`run_once_after_45-windows-features` enables the captured optional features: .NET
-2/3/4, legacy media (WMP + DirectPlay), a daily registry-backup task, and the OpenSSH
-server. Only the OpenSSH server has a runtime footprint (an `sshd` service + inbound
-TCP 22); the rest stay dormant until used. It self-elevates once. To turn SSH off:
-`Stop-Service sshd; Set-Service sshd -StartupType Manual`.
+The captured optional features — .NET 2/3/4, legacy media (WMP + DirectPlay), a daily
+registry-backup task, and the OpenSSH server — are enabled by the **`windows-features`**
+command. It's opt-in (not run by `apploi`, since enabling them is slow and elevated),
+self-elevates (one UAC prompt), and each step is a no-op when already enabled. Only the
+OpenSSH server has a runtime footprint (an `sshd` service + inbound TCP 22); the rest
+stay dormant until used. To turn SSH off: `Stop-Service sshd; Set-Service sshd
+-StartupType Manual`.
 
 ## Deferred
 
