@@ -38,9 +38,11 @@ working tree (mid-edit) skips the pull; a dirty submodule does not.
 | Trigger | Scripts |
 |---|---|
 | `run_onchange` (re-runs when *its content* changes) | `10-winget` (install apps) · `20-mise` (runtimes) · `30-nushell` (shell activations) · `35-registry-tweaks` (dev/privacy registry — self-elevates for the HKLM bits) |
-| `run_once` (once, then recorded) | `45-windows-features` (.NET / media / SSH / reg-backup — self-elevates) · `50-emdash` · `60-nerdfont` · `70-psfzf` |
+| `run_once` (once, then recorded) | `50-emdash` · `60-nerdfont` · `70-psfzf` |
 
-The self-elevating ones (`35`, `45`) pop a single UAC prompt when they fire.
+`35-registry-tweaks` pops a single UAC prompt, but only when its HKLM keys have
+drifted. Windows features are **not** in this table — they're the opt-in
+`windows-features` command (see below), kept out of the auto-apply path.
 
 ## WinUtil tweaks
 
