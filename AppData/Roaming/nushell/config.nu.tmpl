@@ -28,40 +28,43 @@ $env.config.keybindings = ($env.config.keybindings | append [
   }
 ])
 
-# One-command sync, mirroring the Mac `apploi`:
-#   apploi       converge to the declared dotfiles + package state
-#   apploi -u    also upgrade winget packages and mise plugins + runtimes
-# (On the Mac, -u updates the nix-darwin flake inputs; Windows has no flake, so
-# here it means the package/runtime upgrade a plain Mac apploi does every run.)
+# One-command sync, mirroring the Mac `apploi` (plain = do everything). With no
+# flags it pulls, applies, and upgrades; each flag runs only that step:
+#   apploi       pull + apply + upgrade winget packages + upgrade mise plugins/runtimes
+#   apploi -c    config only: pull + apply, skip the upgrades (a quick sync)
+#   apploi -w    upgrade winget packages only
+#   apploi -m    upgrade mise plugins + runtimes (and regenerate the nu activations)
 # Each step prints a line so a converged (no-op) run still confirms it ran.
-def apploi [--upgrade (-u)] {
+def apploi [--chezmoi (-c), --winget (-w), --mise (-m)] {
+  let do_all = (not ($chezmoi or $winget or $mise))
   let source = (^chezmoi source-path)
 
-  # Consumer machines stay current through plain apploi; a dirty tree skips the
-  # pull. Ignore a dirty submodule so a mid-edit of tracked files still guards the
-  # pull, but the perpetually-dirty nvim submodule does not block it every run.
-  if (do { ^git -C $source diff --quiet --ignore-submodules=dirty HEAD } | complete).exit_code == 0 {
-    print $"(ansi cyan)apploi(ansi reset): pulling dotfiles source..."
-    if (do { ^git -C $source pull --ff-only --quiet } | complete).exit_code != 0 {
-      print $"(ansi yellow)apploi(ansi reset): pull skipped — origin diverged; resync with: git fetch && git reset --hard origin/main"
+  if ($do_all or $chezmoi) {
+    # A dirty tree (mid-edit of tracked files) skips the pull; a dirty submodule
+    # does not, so the perpetually-dirty nvim submodule never blocks it.
+    if (do { ^git -C $source diff --quiet --ignore-submodules=dirty HEAD } | complete).exit_code == 0 {
+      print $"(ansi cyan)apploi(ansi reset): pulling dotfiles source..."
+      if (do { ^git -C $source pull --ff-only --quiet } | complete).exit_code != 0 {
+        print $"(ansi yellow)apploi(ansi reset): pull skipped — origin diverged; resync with: git fetch && git reset --hard origin/main"
+      }
+    } else {
+      print $"(ansi cyan)apploi(ansi reset): local changes present — skipping pull"
     }
-  } else {
-    print $"(ansi cyan)apploi(ansi reset): local changes present — skipping pull"
+    # --keep-going so one failing target doesn't skip every later target.
+    print $"(ansi cyan)apploi(ansi reset): applying dotfiles..."
+    ^chezmoi apply --keep-going
   }
 
-  # --keep-going so one failing target doesn't skip every later target.
-  print $"(ansi cyan)apploi(ansi reset): applying dotfiles..."
-  ^chezmoi apply --keep-going
-
-  if $upgrade {
+  if ($do_all or $winget) {
     print $"(ansi cyan)apploi(ansi reset): upgrading winget packages..."
     winget upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity
+  }
+
+  if ($do_all or $mise) {
     print $"(ansi cyan)apploi(ansi reset): upgrading mise plugins and runtimes..."
     mise plugins upgrade
     mise upgrade
-
-    # Regenerate these activation modules against the upgraded tools; the
-    # provisioner that writes them is keyed on packages.json, which -u doesn't touch.
+    # Regenerate these activation modules against the upgraded tools.
     ^mise activate nu | save -f ($nu.default-config-dir | path join mise.nu)
     ^starship init nu | save -f ($nu.default-config-dir | path join starship.nu)
     ^zoxide init nushell | save -f ($nu.default-config-dir | path join zoxide.nu)
@@ -71,4 +74,9 @@ def apploi [--upgrade (-u)] {
   do -i { ^pwsh -NoProfile -ExecutionPolicy Bypass -File ($nu.home-path | path join '.config' 'winutil' 'manage.ps1') }
 
   print $"(ansi green)apploi(ansi reset): done."
+}
+
+# Apply the captured WinUtil tweak config (manage.ps1 self-elevates with one UAC prompt).
+def winutil-apply [] {
+  ^pwsh -NoProfile -ExecutionPolicy Bypass -File ($nu.home-path | path join '.config' 'winutil' 'manage.ps1') -Apply
 }

@@ -3,6 +3,7 @@ README.md
 bootstrap.sh
 bootstrap.ps1
 windows-sandbox.wsb
+docs/**
 # Reserved DOS device names. A tool running `> NUL` (or `2> NUL`, `*> NUL`) inside
 # the source dir under a POSIX shell writes a literal file by that name instead of
 # discarding output — Claude Code hooks injected by Emdash do this on Windows.

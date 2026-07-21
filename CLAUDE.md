@@ -228,12 +228,13 @@ provisioned with **winget** and **mise** instead of Nix.
   modules. `run_once_after_50-emdash.ps1` installs Emdash and `run_once_after_60-nerdfont.ps1`
   installs Iosevka Nerd Font (Mono) per-user; both fail loudly so a transient error
   re-fires on the next apply instead of recording the run_once done with nothing done.
-- One-command sync mirrors the Mac `apploi`: `apploi` (defined in the PowerShell
-  profile and the Windows nushell config) does an `--ff-only` pull, re-adds
-  Claude-written `~/.claude/settings.json`, then `chezmoi apply`; `apploi -u` also
-  runs `winget upgrade --all` + `mise plugins upgrade` + `mise upgrade`. (On the Mac,
-  `-u` updates the flake inputs; Windows has no flake, so it means the package/runtime
-  upgrade a plain Mac apploi does every run.)
+- One-command sync mirrors the Mac `apploi` (plain = do everything): `apploi`
+  (defined in the PowerShell profile and the Windows nushell config) does an
+  `--ff-only` pull, `chezmoi apply`, then `winget upgrade --all` + `mise plugins
+  upgrade` + `mise upgrade`, and checks for a newer WinUtil release. Flags scope it
+  to one step: `-c` config only (pull + apply, no upgrades), `-w` winget-only, `-m`
+  mise-only. `winutil-apply` applies the captured WinUtil tweak config (it
+  self-elevates). See `docs/windows.md` for the full picture.
 - Windows config lives under OS-native paths: PowerShell profile in
   `Documents/PowerShell/`, nushell + Zed under `AppData/Roaming/`, Windows Terminal
   settings under `AppData/Local/Packages/.../LocalState/` (Zed on Windows reads

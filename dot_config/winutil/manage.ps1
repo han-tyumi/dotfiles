@@ -2,15 +2,12 @@
 #   manage.ps1            (no args) check whether a newer WinUtil release exists
 #   manage.ps1 -Apply     null-guard the pinned WinUtil and apply config.json headless
 #
-# Run -Apply from an ELEVATED shell. If the execution policy blocks the script
-# (Windows PowerShell 5.1 defaults to Restricted), invoke it as:
-#   pwsh -ExecutionPolicy Bypass -File "$HOME\.config\winutil\manage.ps1" -Apply
+# The `winutil-apply` shell command runs this with -Apply. -Apply self-elevates
+# (one UAC prompt) because WinUtil edits HKLM.
 #
 # WinUtil's config format and tweak IDs are version-specific, so the config is
-# pinned to $PinnedVersion; when the checker reports a newer release, review it,
-# re-verify/re-export config.json against it, bump $PinnedVersion, then -Apply.
-# Apply needs an elevated shell: WinUtil edits HKLM and, under automation, its
-# self-elevation would trigger an interactive UAC prompt.
+# pinned to $PinnedVersion; when the checker reports a newer release, bump
+# $PinnedVersion, re-verify config.json against it, then run winutil-apply.
 param([switch]$Apply)
 
 $ErrorActionPreference = 'Stop'
@@ -25,8 +22,12 @@ function Get-LatestWinUtilTag {
 if ($Apply) {
   $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
   if (-not $isAdmin) {
-    Write-Warning 'Apply needs an elevated shell (WinUtil edits HKLM). Re-run from an Administrator PowerShell.'
-    exit 1
+    # Relaunch elevated (one UAC prompt); -NoExit keeps the window open so the
+    # tweak log stays readable.
+    $self = if ($PSCommandPath) { $PSCommandPath } else { $MyInvocation.MyCommand.Definition }
+    if (-not $self) { Write-Warning 'Cannot resolve the script path to self-elevate; run from an elevated shell.'; exit 1 }
+    Start-Process -FilePath 'pwsh' -Verb RunAs -ArgumentList @('-NoExit', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $self, '-Apply')
+    exit 0
   }
   if (-not (Test-Path $configPath)) { Write-Warning "config.json not found at $configPath"; exit 1 }
 
@@ -69,7 +70,7 @@ try {
   $latest = Get-LatestWinUtilTag
   if ($latest -and $latest -ne $PinnedVersion) {
     Write-Host "WinUtil $latest is available (pinned: $PinnedVersion)." -ForegroundColor Yellow
-    Write-Host "  Review it, re-verify config.json, bump `$PinnedVersion in manage.ps1, then run it elevated with -Apply." -ForegroundColor Yellow
+    Write-Host "  Review it, bump `$PinnedVersion in manage.ps1, re-verify config.json, then run: winutil-apply" -ForegroundColor Yellow
   }
 } catch {
   # Network/API failure — checking for updates is best-effort, so ignore.
