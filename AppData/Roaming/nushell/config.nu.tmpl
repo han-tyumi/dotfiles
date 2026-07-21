@@ -71,18 +71,18 @@ def apploi [--chezmoi (-c), --winget (-w), --mise (-m)] {
   }
 
   # Surface a WinUtil update if the pinned build is behind (best-effort, quiet when current).
-  do -i { ^pwsh -NoProfile -ExecutionPolicy Bypass -File ($nu.home-path | path join '.config' 'winutil' 'manage.ps1') }
+  do -i { ^pwsh -NoProfile -ExecutionPolicy Bypass -File ($nu.home-dir | path join '.config' 'winutil' 'manage.ps1') }
 
   print $"(ansi green)apploi(ansi reset): done."
 }
 
 # Apply the captured WinUtil tweak config (manage.ps1 self-elevates with one UAC prompt).
 def winutil-apply [] {
-  ^pwsh -NoProfile -ExecutionPolicy Bypass -File ($nu.home-path | path join '.config' 'winutil' 'manage.ps1') -Apply
+  ^pwsh -NoProfile -ExecutionPolicy Bypass -File ($nu.home-dir | path join '.config' 'winutil' 'manage.ps1') -Apply
 }
 
 # Enable the captured Windows optional features (.NET, media, OpenSSH, registry
 # backup); enable-features.ps1 self-elevates with one UAC prompt.
 def windows-features [] {
-  ^powershell.exe -NoProfile -ExecutionPolicy Bypass -File ($nu.home-path | path join '.config' 'windows' 'enable-features.ps1')
+  ^powershell.exe -NoProfile -ExecutionPolicy Bypass -File ($nu.home-dir | path join '.config' 'windows' 'enable-features.ps1')
 }
