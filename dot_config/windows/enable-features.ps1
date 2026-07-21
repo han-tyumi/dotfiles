@@ -58,9 +58,16 @@ $cfgMgr = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Configuration 
 New-ItemProperty -Path $cfgMgr -Name 'EnablePeriodicBackup' -Type DWord -Value 1 -Force | Out-Null
 New-ItemProperty -Path $cfgMgr -Name 'BackupCount' -Type DWord -Value 2 -Force | Out-Null
 if (-not (Get-ScheduledTask -TaskName 'AutoRegBackup' -ErrorAction SilentlyContinue)) {
-  $action = New-ScheduledTaskAction -Execute 'schtasks' -Argument '/run /i /tn "\Microsoft\Windows\Registry\RegIdleBackup"'
-  $trigger = New-ScheduledTaskTrigger -Daily -At '00:30'
-  Register-ScheduledTask -Action $action -Trigger $trigger -TaskName 'AutoRegBackup' -Description 'Create System Registry Backups' -User 'System' | Out-Null
+  # Run as SYSTEM via an explicit principal; the -User 'System' shorthand fails
+  # silently on some builds (a non-terminating error the success line would hide).
+  try {
+    $action = New-ScheduledTaskAction -Execute 'schtasks' -Argument '/run /i /tn "\Microsoft\Windows\Registry\RegIdleBackup"'
+    $trigger = New-ScheduledTaskTrigger -Daily -At '00:30'
+    $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+    Register-ScheduledTask -TaskName 'AutoRegBackup' -Action $action -Trigger $trigger -Principal $principal -Description 'Create System Registry Backups' -ErrorAction Stop | Out-Null
+  } catch {
+    $failed += 'AutoRegBackup task'
+  }
 }
 
 if ($failed.Count -gt 0) {
