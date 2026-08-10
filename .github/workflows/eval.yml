@@ -76,9 +76,12 @@ jobs:
           echo "NU=$nu/bin/nu" >> "$GITHUB_ENV"
 
       # nu-check exits non-zero on a parse error; bare nu-check only prints false.
+      # The lib dir has to be absolute: nu resolves no module from a relative
+      # NU_LIB_DIRS entry, and a runner has no populated default lib dir to fall
+      # back to, so a relative -I turns every import into "module not found".
       - name: Parse every nu source
         run: |
-          scripts="private_Library/private_Application Support/private_nushell/scripts"
+          scripts="$PWD/private_Library/private_Application Support/private_nushell/scripts"
           autoload="private_Library/private_Application Support/private_nushell/autoload"
           files=(dot_config/nix-darwin/nushell/config.nu "$scripts/commands/mod.nu" "$autoload"/*.nu)
           while IFS= read -r cli; do

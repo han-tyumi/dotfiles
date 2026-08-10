@@ -24,11 +24,12 @@
         });
       })
 
-      # intelli-shell's own config::tests::test_default_config asserts against a
-      # default that its packaged version no longer produces, failing the build.
+      # intelli-shell's config::tests::test_default_config compares Config::default()
+      # with its shipped default_config.toml, which cannot hold on darwin: the
+      # default of keyboard_enhancement is false here and the file says true.
       (_: prev: {
         intelli-shell = prev.intelli-shell.overrideAttrs (_: {
-          doCheck = false;
+          checkFlags = [ "--skip=config::tests::test_default_config" ];
         });
       })
     ];

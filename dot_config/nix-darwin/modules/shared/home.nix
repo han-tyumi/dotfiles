@@ -209,9 +209,10 @@ in
       enable = true;
       configFile.source = ../../nushell/config.nu;
 
-      # nu refuses a plugin built against a different protocol version, and
-      # nixpkgs' nu_plugin_highlight trails the nushell it ships, so highlight
-      # stays out until the two line up.
+      # nu rejects a plugin whose nu-plugin crate differs in minor version from its
+      # own, and nixpkgs' nu_plugin_highlight trails the nushell it ships — on
+      # master too. bat and the built-in nu-highlight cover the ground; the upstream
+      # tag matching the packaged nushell is the way back if it is ever wanted.
       plugins = with pkgs.nushellPlugins; [
         query
         skim
