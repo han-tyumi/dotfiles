@@ -1,7 +1,14 @@
 # Place under nu's default scripts dir so `use community/...` resolves via NU_LIB_DIRS.
+#
+# Pinned to a revision: upstream targets the newest nushell release, while
+# nixpkgs holds nu still for a whole release cycle, so floating on main lands
+# syntax the local nu can't parse. Bump the sha deliberately after a nu upgrade.
+# `git clone --revision` needs git 2.49+; naming the same sha in pull.args means
+# neither the daily refresh nor `apploi -R` can fast-forward off the pin, while a
+# bumped sha still lands on a plain apploi within a day.
 ["Library/Application Support/nushell/scripts/community"]
 type = "git-repo"
 url = "https://github.com/nushell/nu_scripts.git"
 refreshPeriod = "24h"
-clone.args = ["--depth", "1"]
-pull.args = ["--ff-only"]
+clone.args = ["--revision", "381eb7577705b00bea437da7c0439c39ff05f06b", "--depth", "1"]
+pull.args = ["--ff-only", "origin", "381eb7577705b00bea437da7c0439c39ff05f06b"]

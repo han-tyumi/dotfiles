@@ -108,7 +108,12 @@ while IFS='=' read -r name url; do
 done <<< "$overlays"
 
 # Applies everything; run_once scripts install Homebrew, Nix, and nix-darwin.
-"$chezmoi" apply
+# Every script here is a run_*_after_* script, so a target that fails first would
+# otherwise skip the installers: --keep-going and a tolerated exit code keep an
+# unreachable external (a nightly archive, an unregistered overlay key) from
+# turning into a machine with no Nix on it.
+"$chezmoi" apply --keep-going ||
+  echo ">> Some targets failed; rerun 'chezmoi apply' once their inputs are reachable"
 
 echo ">> Bootstrap complete. Open a new shell, then use 'apploi' for rebuilds."
 

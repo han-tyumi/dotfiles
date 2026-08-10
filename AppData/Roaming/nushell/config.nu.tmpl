@@ -51,8 +51,10 @@ def apploi [--chezmoi (-c), --winget (-w), --mise (-m)] {
       print $"(ansi cyan)apploi(ansi reset): local changes present — skipping pull"
     }
     # --keep-going so one failing target doesn't skip every later target.
+    # --init re-renders the config file, so a pulled change to .chezmoi.toml.tmpl
+    # takes effect in this same run.
     print $"(ansi cyan)apploi(ansi reset): applying dotfiles..."
-    ^chezmoi apply --keep-going
+    ^chezmoi apply --keep-going --init
   }
 
   if ($do_all or $winget) {

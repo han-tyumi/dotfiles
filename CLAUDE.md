@@ -52,6 +52,14 @@ on disk):
 nix eval ~/.config/nix-darwin#darwinConfigurations.test-all.system.drvPath
 ```
 
+Eval only instantiates. A change that moves package versions — a channel bump above
+all — also needs a build, because a derivation that fails (a package's own test
+suite, a nushell plugin compiled against a different nu) evaluates fine:
+
+```bash
+nix build --no-link ~/.config/nix-darwin#darwinConfigurations.test-all.system
+```
+
 Caveats:
 - Toggling a layer **off** orphans already-applied files (chezmoi never removes
   newly-ignored targets): manually `rm` a disabled layer's leftover targets;
@@ -75,7 +83,10 @@ Caveats:
      concern; plain TOML except the data-driven overlays template
    - `.chezmoilayers/<layer>.ignore`: Targets owned by a layer — regular files and
      external targets alike — ignored (and the externals skipped) when the layer is off
-   - `.chezmoiignore`: Always-ignored paths plus a generic loop over `.chezmoilayers/`
+   - `.chezmoiignore`: Always-ignored paths plus a generic loop over `.chezmoilayers/`.
+     An external is gated by its own target path, so a directory that contains one
+     needs the `dir/**` form — a bare `dir` skips the regular files under it and
+     still fetches the external
 
 2. **Nix Darwin Layer** (`dot_config/nix-darwin/`): System configuration
    - `flake.nix`: Inputs/outputs; assembles modules per `machine.nix`
@@ -333,6 +344,15 @@ Multiple shells are configured:
 - **Nushell**: Primary interactive shell with custom config/env files
 - **Zsh**: Enabled as system shell
 
+Nushell parses `config.nu` as one unit and resolves `use` at parse time, so a
+parse error in any imported module discards the whole file. Module imports
+therefore live in `autoload/` fragments, each its own parse unit and all parsed
+after `config.nu` has fully run: `10-community.nu` (the `nu_scripts` external),
+`20-commands.nu` (the first-party `commands/` dir, second so a first-party name
+shadows an upstream alias), `30-mise.nu` (the activation module `config.nu`
+writes at runtime — a `use` in `config.nu` would resolve before that write).
+`config.nu` itself keeps only settings and that generated module.
+
 Nu-based CLIs (`apploi`, `wt`, `onboard`) live in `~/.local/bin` as `#!/usr/bin/env nu`
 scripts so they run from any shell or automated session. Each is also exposed
 as a completable nu command via a `symlink_<name>.nu.tmpl` in the nushell
@@ -353,7 +373,11 @@ External resources are managed in `.chezmoiexternals/`:
   `~/.config/nix-darwin/overlays/<name>`; `refreshPeriod = "24h"` so a pushed
   overlay change lands on a plain `apploi` within a day (`apploi -R` forces it now)
 - `shared.toml` — **Nushell community scripts** (`nu_scripts`) under the nushell
-  scripts dir
+  scripts dir, pinned to a revision in `clone.args`/`pull.args`: upstream targets
+  the newest nushell release while nixpkgs holds nu still for a whole release
+  cycle, so main eventually carries syntax the local nu can't parse. Bump the sha
+  (both args) after a nu upgrade, then re-check the imports parse:
+  `nu --no-config-file -c 'use community/<path> *'`
 
 ### Neovim Configuration
 

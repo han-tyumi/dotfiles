@@ -52,8 +52,10 @@ function apploi {
       Write-Host 'apploi: local changes present — skipping pull' -ForegroundColor Cyan
     }
     # --keep-going so one failing target doesn't skip every later target.
+    # --init re-renders the config file, so a pulled change to .chezmoi.toml.tmpl
+    # takes effect in this same run.
     Write-Host 'apploi: applying dotfiles...' -ForegroundColor Cyan
-    chezmoi apply --keep-going
+    chezmoi apply --keep-going --init
   }
 
   if ($all -or $Winget) {

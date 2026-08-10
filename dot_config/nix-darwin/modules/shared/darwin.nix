@@ -23,6 +23,14 @@
           doCheck = false;
         });
       })
+
+      # intelli-shell's own config::tests::test_default_config asserts against a
+      # default that its packaged version no longer produces, failing the build.
+      (_: prev: {
+        intelli-shell = prev.intelli-shell.overrideAttrs (_: {
+          doCheck = false;
+        });
+      })
     ];
   };
 
@@ -95,10 +103,13 @@
       autoUpdate = true;
       upgrade = true;
 
-      # The cleanup option emits bundle's deprecated --cleanup switch, so
-      # request zap cleanup directly; --force-cleanup also skips the
-      # confirmation prompt activation can't answer.
+      # --zap also removes a dropped cask's leftover state, and --force-cleanup
+      # skips the confirmation prompt activation can't answer.
       extraFlags = [ "--force-cleanup" "--zap" ];
+
+      # Every activation reprints brew's "hide these hints" advice otherwise.
+      # The sudo/launchctl domain warning stays: it reports real behavior.
+      extraEnv.HOMEBREW_NO_ENV_HINTS = "1";
     };
 
     # An unsigned mas hangs activation waiting on the sign-in dialog, so

@@ -148,7 +148,11 @@ in
         diff.colorMoved = "default";
         diff.mnemonicPrefix = true;
 
-        # delta is the pager (catppuccin include); add file navigation + line numbers.
+        # programs.delta wires delta into pager.{diff,log,show,blame}; core.pager
+        # extends it to every other paginated command (range-diff, reflog -p,
+        # grep). navigate and line-numbers are delta's own knobs, themed by the
+        # catppuccin include.
+        core.pager = lib.getExe config.programs.delta.package;
         delta.navigate = true;
         delta.line-numbers = true;
 
@@ -194,13 +198,21 @@ in
       viAlias = true;
       vimAlias = true;
       vimdiffAlias = true;
+
+      # Keep the ruby and python3 providers; home-manager's own default for both
+      # is off, and the plugin set is free to use either.
+      withRuby = true;
+      withPython3 = true;
     };
     nix-index.enable = true;
     nushell = {
       enable = true;
       configFile.source = ../../nushell/config.nu;
+
+      # nu refuses a plugin built against a different protocol version, and
+      # nixpkgs' nu_plugin_highlight trails the nushell it ships, so highlight
+      # stays out until the two line up.
       plugins = with pkgs.nushellPlugins; [
-        highlight
         query
         skim
       ];

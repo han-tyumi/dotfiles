@@ -52,11 +52,14 @@ export def main [
     # the live file on apply, so no capture step is needed here.
     # --keep-going so one failing target (e.g. a corrupt file a modify_ script
     # can't parse) doesn't skip every later target in the apply.
+    # --init re-renders ~/.config/chezmoi/chezmoi.toml from the template first,
+    # so a pulled change to .chezmoi.toml.tmpl takes effect in this same run
+    # rather than warning on every apply until someone runs `chezmoi init`.
     step $"\nApplying Chezmoi's state\n\n"
     if $refresh {
-      ^chezmoi apply --keep-going --refresh-externals
+      ^chezmoi apply --keep-going --init --refresh-externals
     } else {
-      ^chezmoi apply --keep-going
+      ^chezmoi apply --keep-going --init
     }
     step ""
   }
@@ -73,52 +76,61 @@ export def main [
   step $"Changing to ($SYSTEM_FLAKE_DIR)\n\n"
   cd $SYSTEM_FLAKE_DIR
 
-  try {
-    if $update {
-      step "Updating nix-darwin flake inputs\n\n"
-      ^nix flake update
+  if $update {
+    step "Updating nix-darwin flake inputs\n\n"
+    ^nix flake update
 
-      # nix flake update rewrites the live lock; re-add it so chezmoi's source
-      # tracks the new inputs rather than reverting them on the next apply.
-      ^chezmoi re-add ~/.config/nix-darwin/flake.lock
-
-      # Surface a captured-but-uncommitted lock change so pinned inputs get
-      # committed instead of drifting silently.
-      let source_root = (^chezmoi source-path)
-      if (do { ^git -C $source_root diff --quiet HEAD -- dot_config/nix-darwin/flake.lock } | complete).exit_code != 0 {
-        step $"\nPending flake.lock changes\n\n"
-        ^git -C $source_root --no-pager diff HEAD -- dot_config/nix-darwin/flake.lock
-      }
+    # A nixpkgs release branch stops moving once the release goes EOL, which
+    # makes the update above a silent no-op. Report the age of the pin so a dead
+    # channel reads as stale rather than as already current.
+    let nixpkgs_locked = (open --raw flake.lock | from json | get nodes.nixpkgs.locked.lastModified)
+    let nixpkgs_age = ((date now) - ($nixpkgs_locked * 1_000_000_000 | into datetime))
+    if $nixpkgs_age > 30day {
+      step $"\nnixpkgs is (($nixpkgs_age // 1day)) days old — bump the channel refs in flake.nix\n\n"
     }
 
-    if $switch {
-      step "\nApplying nix-darwin configuration\n\n"
+    # nix flake update rewrites the live lock; re-add it so chezmoi's source
+    # tracks the new inputs rather than reverting them on the next apply.
+    ^chezmoi re-add ~/.config/nix-darwin/flake.lock
 
-      # --no-write-lock-file keeps the root rebuild from re-owning flake.lock,
-      # which would make the next user-level `nix flake update` fail with EPERM.
-      # Issue with `/tmp` symlink; we use `/private/tmp` directly instead.
-      ^sudo TMPDIR=/private/tmp darwin-rebuild switch --no-write-lock-file
-
-      # `brew bundle` only upgrades declared formulae; their dependencies go stale without this.
-      # --no-ask skips Homebrew's confirmation prompt so the unattended run doesn't block.
-      step "\nUpgrading Homebrew dependency formulae\n\n"
-      ^brew upgrade --formula --no-ask
+    # Surface a captured-but-uncommitted lock change so pinned inputs get
+    # committed instead of drifting silently.
+    let source_root = (^chezmoi source-path)
+    if (do { ^git -C $source_root diff --quiet HEAD -- dot_config/nix-darwin/flake.lock } | complete).exit_code != 0 {
+      step $"\nPending flake.lock changes\n\n"
+      ^git -C $source_root --no-pager diff HEAD -- dot_config/nix-darwin/flake.lock
     }
+  }
 
-    if $clean {
-      step "\nCleaning up Nix store\n\n"
-      ^sudo -H nix-collect-garbage --delete-old
-    }
+  if $switch {
+    step "\nApplying nix-darwin configuration\n\n"
 
-    if $mise {
-      step "\nUpgrading mise plugins\n\n"
-      ^mise plugins upgrade
+    # --no-write-lock-file keeps the root rebuild from re-owning flake.lock,
+    # which would make the next user-level `nix flake update` fail with EPERM.
+    # Issue with `/tmp` symlink; we use `/private/tmp` directly instead.
+    ^sudo TMPDIR=/private/tmp darwin-rebuild switch --no-write-lock-file
 
-      step "\n\nUpgrading outdated mise tools\n\n"
-      ^mise upgrade
-    }
-  } catch {|err|
-    step $"\nError: ($err)\n"
+    # `brew bundle` only upgrades declared formulae; their dependencies go stale without this.
+    # --no-ask skips Homebrew's confirmation prompt so the unattended run doesn't block.
+    step "\nUpgrading Homebrew dependency formulae\n\n"
+    ^brew upgrade --formula --no-ask
+  }
+
+  if $clean {
+    step "\nCleaning up Nix store\n\n"
+
+    # --delete-older-than matches the retention the scheduled nix.gc declares, so
+    # a manual run leaves the same month of generations to roll back to instead of
+    # collapsing to one.
+    ^sudo -H nix-collect-garbage --delete-older-than 30d
+  }
+
+  if $mise {
+    step "\nUpgrading mise plugins\n\n"
+    ^mise plugins upgrade
+
+    step "\n\nUpgrading outdated mise tools\n\n"
+    ^mise upgrade
   }
 
   step $"\n\nChanging back to ($original_dir)"

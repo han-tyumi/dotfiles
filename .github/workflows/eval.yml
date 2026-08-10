@@ -41,6 +41,65 @@ jobs:
       - name: Evaluate ${{ matrix.fixture }}
         run: nix eval --no-write-lock-file ".#darwinConfigurations.${{ matrix.fixture }}.system.drvPath"
 
+  # Nushell resolves `use` at parse time and home-manager copies config.nu into
+  # the store unparsed, so a parse error — in a first-party script or in the
+  # pinned nu_scripts external — only surfaces at shell start. Parse every nu
+  # source with the nushell of the flake's own nixpkgs, against the external at
+  # the revision .chezmoiexternals pins, so both classes fail here instead.
+  nushell:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: experimental-features = nix-command flakes
+
+      # Reproduce the runtime layout the imports resolve against: community/ is
+      # the external, and commands/*.nu are symlinks to the ~/.local/bin CLIs.
+      - name: Assemble the nushell lib dir
+        run: |
+          scripts="private_Library/private_Application Support/private_nushell/scripts"
+          sha=$(sed -n 's/.*"--revision", "\([0-9a-f]\{40\}\)".*/\1/p' .chezmoiexternals/shared.toml)
+          git init -q "$scripts/community"
+          git -C "$scripts/community" fetch -q --depth 1 https://github.com/nushell/nu_scripts.git "$sha"
+          git -C "$scripts/community" checkout -q FETCH_HEAD
+          for cli in "$scripts"/commands/symlink_*.nu.tmpl; do
+            name=$(basename "$cli" .nu.tmpl)
+            name=${name#symlink_}
+            ln -s "$PWD/private_dot_local/bin/executable_$name" "$scripts/commands/$name.nu"
+          done
+
+      - name: Resolve the pinned nushell
+        run: |
+          nu=$(nix build --no-link --print-out-paths --inputs-from ./dot_config/nix-darwin nixpkgs#nushell)
+          echo "NU=$nu/bin/nu" >> "$GITHUB_ENV"
+
+      # nu-check exits non-zero on a parse error; bare nu-check only prints false.
+      - name: Parse every nu source
+        run: |
+          scripts="private_Library/private_Application Support/private_nushell/scripts"
+          autoload="private_Library/private_Application Support/private_nushell/autoload"
+          files=(dot_config/nix-darwin/nushell/config.nu "$scripts/commands/mod.nu" "$autoload"/*.nu)
+          while IFS= read -r cli; do
+            files+=("$cli")
+          done < <(grep -l '^#!/usr/bin/env nu' private_dot_local/bin/executable_*)
+          failed=0
+          for file in "${files[@]}"; do
+            # 30-mise.nu imports the module config.nu generates at runtime, which
+            # no checkout has.
+            if [[ $file == */30-mise.nu ]]; then
+              continue
+            fi
+            if "$NU" --no-config-file -I "$scripts" -c "nu-check --debug \"$file\"" > /dev/null; then
+              echo "ok   $file"
+            else
+              echo "FAIL $file"
+              failed=1
+            fi
+          done
+          exit $failed
+
   # The Windows profile has no Nix fixture to eval; validate its templates,
   # manifests, and provisioner scripts instead — including a Windows PowerShell
   # 5.1 parse to guard the documented first-apply-safety invariant (pwsh 7 is

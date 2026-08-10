@@ -31,8 +31,11 @@ Documents
 70-psfzf.ps1
 {{ end -}}
 {{ if ne .chezmoi.os "darwin" -}}
-# macOS-only targets (Nix/Homebrew tree + Mac shell/editor config) — skipped on Windows/Linux.
-.config/nix-darwin
+# macOS-only targets (Nix/Homebrew tree + Mac shell/editor config) — skipped on
+# Windows/Linux. An external is gated by its own target path, so a directory
+# holding one needs the `/**` form: a bare directory name skips the regular
+# files under it but still fetches the external.
+.config/nix-darwin/**
 .config/nvim
 .config/ghostty
 .config/zed
@@ -44,7 +47,7 @@ Documents
 .claude/skills/git-spice
 .claude/skills/git-worktree
 .local
-Library
+Library/**
 v
 roc
 .chezmoiscripts/**
