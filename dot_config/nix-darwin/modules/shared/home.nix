@@ -187,7 +187,6 @@ in
         "mise.local.toml"
       ];
     };
-    intelli-shell.enable = true;
     java = {
       enable = true;
       package = pkgs.temurin-bin-25;

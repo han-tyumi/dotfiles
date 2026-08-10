@@ -23,15 +23,6 @@
           doCheck = false;
         });
       })
-
-      # intelli-shell's config::tests::test_default_config compares Config::default()
-      # with its shipped default_config.toml, which cannot hold on darwin: the
-      # default of keyboard_enhancement is false here and the file says true.
-      (_: prev: {
-        intelli-shell = prev.intelli-shell.overrideAttrs (_: {
-          checkFlags = [ "--skip=config::tests::test_default_config" ];
-        });
-      })
     ];
   };
 
