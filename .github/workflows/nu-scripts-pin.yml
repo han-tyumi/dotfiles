@@ -1,0 +1,116 @@
+name: nu_scripts pin
+
+# .chezmoiexternals pins nu_scripts to a revision because upstream targets the
+# newest nushell release while nixpkgs holds nu still for a release cycle. This
+# proposes the bump instead of leaving it to be remembered: weekly, and only when
+# a path the autoload fragments import has actually moved, it runs the same parse
+# gate the branch checks use against upstream main and opens the one-line PR if
+# that passes.
+
+on:
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve the candidate revision
+        id: revisions
+        run: |
+          pinned=$(sed -n 's/.*"--revision", "\([0-9a-f]\{40\}\)".*/\1/p' .chezmoiexternals/shared.toml)
+          candidate=$(git ls-remote https://github.com/nushell/nu_scripts.git refs/heads/main | cut -f1)
+          echo "pinned    $pinned"
+          echo "candidate $candidate"
+          echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
+          echo "candidate=$candidate" >> "$GITHUB_OUTPUT"
+
+      # Churn outside the import closure is not a reason to move the pin, and the
+      # paths come from the fragments themselves so this can't fall out of step
+      # with what they import.
+      - name: Check whether an imported path moved
+        id: imported
+        if: steps.revisions.outputs.candidate != steps.revisions.outputs.pinned
+        run: |
+          autoload="private_Library/private_Application Support/private_nushell/autoload"
+          # Not named `path`: that is a special array in zsh, so the same snippet
+          # run by hand would overwrite PATH.
+          imported=()
+          while IFS= read -r line; do
+            imported+=("$line")
+          done < <(grep -ohE "community/[^ \"')]+" "$autoload"/*.nu | sed 's|^community/||' | sort -u)
+          printf 'imported: %s\n' "${imported[@]}"
+
+          git clone -q --filter=blob:none --no-checkout --single-branch \
+            --branch main https://github.com/nushell/nu_scripts.git upstream
+          if ! git -C upstream cat-file -e "${{ steps.revisions.outputs.pinned }}^{commit}" 2>/dev/null; then
+            echo "::warning::the pinned revision is not reachable from upstream main; review the pin by hand"
+            exit 0
+          fi
+          changed=$(git -C upstream diff --name-only \
+            "${{ steps.revisions.outputs.pinned }}" "${{ steps.revisions.outputs.candidate }}" \
+            -- "${imported[@]}")
+          if [ -z "$changed" ]; then
+            echo "no imported path moved; leaving the pin alone"
+          else
+            echo "$changed"
+            echo "changed=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: cachix/install-nix-action@v31
+        if: steps.imported.outputs.changed == 'yes'
+        with:
+          extra_nix_config: experimental-features = nix-command flakes
+
+      # A candidate the local nu cannot parse is upstream moving ahead of the
+      # nushell nixpkgs pins, not a broken workflow: warn and keep the pin rather
+      # than failing every week until the next channel catches up.
+      - name: Parse every nu source against the candidate
+        id: gate
+        if: steps.imported.outputs.changed == 'yes'
+        run: |
+          nu=$(nix build --no-link --print-out-paths --inputs-from ./dot_config/nix-darwin nixpkgs#nushell)
+          if bash .github/scripts/nu-parse.sh "$nu/bin/nu" "${{ steps.revisions.outputs.candidate }}"; then
+            echo "passed=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::nu_scripts ${{ steps.revisions.outputs.candidate }} does not parse under the pinned nushell; keeping the current pin"
+          fi
+
+      - name: Open the bump PR
+        if: steps.gate.outputs.passed == 'yes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PINNED: ${{ steps.revisions.outputs.pinned }}
+          CANDIDATE: ${{ steps.revisions.outputs.candidate }}
+        run: |
+          # The parse gate rewrote the working tree; only the pin should be in the
+          # commit.
+          git checkout -- .
+          sed -i '' "s/$PINNED/$CANDIDATE/g" .chezmoiexternals/shared.toml
+          git diff --stat
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B nu-scripts-pin
+          git commit -qam "nu_scripts: bump the pin to ${CANDIDATE:0:12}"
+          git push -q --force origin nu-scripts-pin
+
+          if [ -n "$(gh pr list --head nu-scripts-pin --state open --json number --jq '.[].number')" ]; then
+            echo "an open PR already tracks this branch; it now points at $CANDIDATE"
+            exit 0
+          fi
+          gh pr create --base main --head nu-scripts-pin \
+            --title "nu_scripts: bump the pin to ${CANDIDATE:0:12}" \
+            --body "$(printf '%s\n' \
+              "Upstream main moved and a path the autoload fragments import changed." \
+              "" \
+              "\`.github/scripts/nu-parse.sh\` passed against \`$CANDIDATE\` with the nushell of the flake's own nixpkgs — the same gate the branch checks run." \
+              "" \
+              "A branch pushed by Actions does not trigger this PR's own checks; the gate ran in the bump job." )"
