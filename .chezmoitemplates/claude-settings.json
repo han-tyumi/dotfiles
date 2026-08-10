@@ -293,6 +293,7 @@
   "ultracode": true,
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
+  "cleanupPeriodDays": 180,
   "theme": "dark-ansi",
   "preferredNotifChannel": "terminal_bell",
   "agentPushNotifEnabled": true
