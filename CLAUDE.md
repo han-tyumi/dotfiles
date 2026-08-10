@@ -376,9 +376,12 @@ External resources are managed in `.chezmoiexternals/`:
 - `shared.toml` — **Nushell community scripts** (`nu_scripts`) under the nushell
   scripts dir, pinned to a revision in `clone.args`/`pull.args`: upstream targets
   the newest nushell release while nixpkgs holds nu still for a whole release
-  cycle, so main eventually carries syntax the local nu can't parse. Bump the sha
-  (both args) after a nu upgrade, then re-check the imports parse:
-  `nu --no-config-file -c 'use community/<path> *'`
+  cycle, so main eventually carries syntax the local nu can't parse.
+  `.github/scripts/nu-parse.sh` is the gate — it parses every first-party nu source
+  against a revision and asserts each path the fragments reference exists — and the
+  `nu-scripts-pin` workflow runs it weekly against upstream main, opening a PR that
+  moves both args when it passes. Run it by hand the same way:
+  `bash .github/scripts/nu-parse.sh "$(which nu)" [sha]`
 
 ### Neovim Configuration
 

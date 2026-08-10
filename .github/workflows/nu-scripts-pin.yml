@@ -3,18 +3,25 @@ name: nu_scripts pin
 # .chezmoiexternals pins nu_scripts to a revision because upstream targets the
 # newest nushell release while nixpkgs holds nu still for a release cycle. This
 # proposes the bump instead of leaving it to be remembered: weekly, and only when
-# a path the autoload fragments import has actually moved, it runs the same parse
-# gate the branch checks use against upstream main and opens the one-line PR if
-# that passes.
+# a path the autoload fragments import has actually moved, it runs the same gate
+# the branch checks use against upstream main and opens the one-line PR if that
+# passes.
+#
+# Opening the PR needs Settings > Actions > General > "Allow GitHub Actions to
+# create and approve pull requests"; without it gh pr create is rejected.
 
 on:
   schedule:
-    - cron: "0 12 * * 1"
+    - cron: "17 12 * * 1"
   workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
+
+# One run at a time: they share the nu-scripts-pin branch and the open PR.
+concurrency:
+  group: nu-scripts-pin
 
 jobs:
   bump:
@@ -29,6 +36,12 @@ jobs:
           candidate=$(git ls-remote https://github.com/nushell/nu_scripts.git refs/heads/main | cut -f1)
           echo "pinned    $pinned"
           echo "candidate $candidate"
+          for revision in "$pinned" "$candidate"; do
+            if ! printf '%s' "$revision" | grep -qE '^[0-9a-f]{40}$'; then
+              echo "expected two 40-hex revisions; a reformatted external or a failed ls-remote gives a pathspec that matches everything" >&2
+              exit 1
+            fi
+          done
           echo "pinned=$pinned" >> "$GITHUB_OUTPUT"
           echo "candidate=$candidate" >> "$GITHUB_OUTPUT"
 
@@ -47,6 +60,10 @@ jobs:
             imported+=("$line")
           done < <(grep -ohE "community/[^ \"')]+" "$autoload"/*.nu | sed 's|^community/||' | sort -u)
           printf 'imported: %s\n' "${imported[@]}"
+          if [ ${#imported[@]} -eq 0 ]; then
+            echo "no community import found under $autoload; an empty pathspec would compare the whole upstream tree" >&2
+            exit 1
+          fi
 
           git clone -q --filter=blob:none --no-checkout --single-branch \
             --branch main https://github.com/nushell/nu_scripts.git upstream
@@ -71,17 +88,20 @@ jobs:
 
       # A candidate the local nu cannot parse is upstream moving ahead of the
       # nushell nixpkgs pins, not a broken workflow: warn and keep the pin rather
-      # than failing every week until the next channel catches up.
+      # than failing every week until the next channel catches up. A gate that
+      # could not run at all (exit 2) is a red job.
       - name: Parse every nu source against the candidate
         id: gate
         if: steps.imported.outputs.changed == 'yes'
         run: |
           nu=$(nix build --no-link --print-out-paths --inputs-from ./dot_config/nix-darwin nixpkgs#nushell)
-          if bash .github/scripts/nu-parse.sh "$nu/bin/nu" "${{ steps.revisions.outputs.candidate }}"; then
-            echo "passed=yes" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::nu_scripts ${{ steps.revisions.outputs.candidate }} does not parse under the pinned nushell; keeping the current pin"
-          fi
+          status=0
+          bash .github/scripts/nu-parse.sh "$nu/bin/nu" "${{ steps.revisions.outputs.candidate }}" || status=$?
+          case $status in
+            0) echo "passed=yes" >> "$GITHUB_OUTPUT" ;;
+            1) echo "::warning::nu_scripts ${{ steps.revisions.outputs.candidate }} does not parse under the pinned nushell; keeping the current pin" ;;
+            *) echo "the parse gate could not run (exit $status)" >&2; exit "$status" ;;
+          esac
 
       - name: Open the bump PR
         if: steps.gate.outputs.passed == 'yes'
@@ -90,14 +110,21 @@ jobs:
           PINNED: ${{ steps.revisions.outputs.pinned }}
           CANDIDATE: ${{ steps.revisions.outputs.candidate }}
         run: |
-          # The parse gate rewrote the working tree; only the pin should be in the
-          # commit.
-          git checkout -- .
-          sed -i '' "s/$PINNED/$CANDIDATE/g" .chezmoiexternals/shared.toml
+          bot="41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "$bot"
+
+          # The branch is rebuilt from main and force-pushed every run, so leave it
+          # alone once it carries a commit this job did not make.
+          if git fetch -q origin nu-scripts-pin 2> /dev/null &&
+            [ "$(git log -1 --format='%ae %ce' FETCH_HEAD)" != "$bot $bot" ]; then
+            echo "::warning::nu-scripts-pin carries commits this job did not make; move the pin to $CANDIDATE by hand"
+            exit 0
+          fi
+
+          perl -pi -e 's/\Q$ENV{PINNED}\E/$ENV{CANDIDATE}/g' .chezmoiexternals/shared.toml
           git diff --stat
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B nu-scripts-pin
           git commit -qam "nu_scripts: bump the pin to ${CANDIDATE:0:12}"
           git push -q --force origin nu-scripts-pin
@@ -109,8 +136,11 @@ jobs:
           gh pr create --base main --head nu-scripts-pin \
             --title "nu_scripts: bump the pin to ${CANDIDATE:0:12}" \
             --body "$(printf '%s\n' \
-              "Upstream main moved and a path the autoload fragments import changed." \
+              "Upstream main moved and a path the autoload fragments import changed:" \
               "" \
-              "\`.github/scripts/nu-parse.sh\` passed against \`$CANDIDATE\` with the nushell of the flake's own nixpkgs — the same gate the branch checks run." \
+              "https://github.com/nushell/nu_scripts/compare/$PINNED...$CANDIDATE" \
               "" \
-              "A branch pushed by Actions does not trigger this PR's own checks; the gate ran in the bump job." )"
+              "\`.github/scripts/nu-parse.sh\` passed against \`$CANDIDATE\` with the nushell of the flake's own nixpkgs — the same gate the branch checks run. It proves the revision parses under that nushell and that every path the fragments reference exists; it evaluates nothing, so an imported module's \`export-env\` body only runs once this is merged." \
+              "" \
+              "A branch pushed by Actions does not trigger this PR's own checks; the gate ran in the bump job." )" ||
+            { git push -q -d origin nu-scripts-pin; exit 1; }
