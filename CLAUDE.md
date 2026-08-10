@@ -132,7 +132,6 @@ entries sort before repo-root scripts; the installers therefore live in
   - `run_once_after_3-claude-code.sh`: Installs Claude Code
 - `run_onchange_after_*`: Scripts that run when tracked files change
   - `1-mise-config.toml.tmpl`: Upgrades and installs mise tools
-  - `2-rtk.sh.tmpl`: Configures the RTK CLI proxy (`rtk init`), if installed
   - `3-claude-mcp.sh`: Registers Claude Code MCP servers (e.g. github)
 - `.chezmoiscripts/<layer>/`: Layer-owned scripts; they derive their layer name from
   their own path (`.chezmoi.sourceFile`) rather than hardcoding it
@@ -145,8 +144,10 @@ activation runs after the Homebrew bundle within the same `darwin-rebuild
 switch`, so the freshly installed tool is on hand; a `run_onchange` script runs
 earlier during `chezmoi apply`, before `apploi`'s switch installs the tool, so on
 an already-provisioned machine it skips on the first apply and only fires on the
-next one. See `agentBrowserChrome` in `modules/shared/home.nix`, which fetches
-agent-browser's Chrome for Testing build right after the brew lands. Keep a step
+next one. `modules/shared/home.nix` has two: `agentBrowserChrome` fetches
+agent-browser's Chrome for Testing build right after the brew lands, and `rtkInit`
+re-runs `rtk init` after the bundle has upgraded rtk, so the `~/.claude/RTK.md`
+rtk generates always comes from the rtk that is installed. Keep a step
 as a `run_onchange` script when it instead needs chezmoi templating over layer
 files (as `1-mise-config` does).
 

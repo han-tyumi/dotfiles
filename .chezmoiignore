@@ -52,7 +52,6 @@ v
 roc
 .chezmoiscripts/**
 1-mise-config.toml
-2-rtk.sh
 3-claude-mcp.sh
 {{ end -}}
 {{ range glob (joinPath .chezmoi.sourceDir ".chezmoilayers/*.ignore") -}}

@@ -54,7 +54,47 @@ in
       fi
     '';
 
+    # rtk generates its own instruction file (~/.claude/RTK.md), so the copy on
+    # disk has to come from the rtk that is installed. Homebrew upgrades rtk
+    # earlier in this same activation, so re-running init here keeps the two in
+    # step on every switch. --no-patch keeps rtk out of ~/.claude/settings.json:
+    # the hook entry there comes from .chezmoitemplates/claude-settings.json,
+    # which chezmoi merges into the live file before the rebuild.
+    activation.rtkInit = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      export PATH="/opt/homebrew/bin:$PATH"
+      if command -v rtk > /dev/null; then
+        # A machine with no recorded telemetry consent gets an interactive prompt,
+        # and activation has no one to answer it: rtk skips the prompt when stdin
+        # is not a terminal.
+        run rtk init --global --no-patch < /dev/null \
+          || echo "rtk init failed; re-run 'rtk init --global --no-patch' by hand" >&2
+
+        # Buffer rtk's output first so `grep -q`'s early exit can't SIGPIPE rtk
+        # under pipefail. Drift warns rather than fails: a stale hook is a source
+        # edit to make, not a reason to abort activation, and a failed assignment
+        # under errexit would abort it.
+        rtk_status=$(rtk init --show < /dev/null 2>&1 || true)
+        if ! printf '%s\n' "$rtk_status" | grep -q '^\[ok\] settings.json:'; then
+          echo "⚠ RTK hook missing or outdated in ~/.claude/settings.json" >&2
+          echo "  Run 'rtk init --show' to see the expected format." >&2
+          echo "  Then update .chezmoitemplates/claude-settings.json in the chezmoi source and re-apply." >&2
+        fi
+      fi
+    '';
+
     enableNixpkgsReleaseCheck = false;
+
+    # home-manager renders shellAliases into config.nu, which nushell parses before
+    # the autoload fragments — so without this a same-named alias from the
+    # community set 10-community.nu imports would win. Re-declaring them from the
+    # same attrset in a late-sorting fragment keeps one source of truth (and zsh's
+    # copy) while making these the last definition nushell sees.
+    file."${config.programs.nushell.configDir}/autoload/90-shell-aliases.nu".text = lib.concatLines (
+      lib.mapAttrsToList (
+        name: command: ''alias "${name}" = ${command}''
+      ) config.programs.nushell.shellAliases
+    );
+
     sessionPath = [
       "/opt"
       "$HOME/.local/bin"
@@ -198,10 +238,14 @@ in
       vimAlias = true;
       vimdiffAlias = true;
 
-      # Keep the ruby and python3 providers; home-manager's own default for both
-      # is off, and the plugin set is free to use either.
-      withRuby = true;
-      withPython3 = true;
+      # The kickstart config asks for neither host: no *_host_prog, no rplugin, and
+      # its plugins are Lua apart from C (treesitter, telescope-fzf-native) and Rust
+      # (blink.cmp). false is also the 26.05 default, so raising home.stateVersion
+      # stays a no-op here. withPython3 is inert either way — home-manager wraps
+      # neovim with wrapRc = false, so the generated python3_host_prog is never
+      # sourced — but saying so silences the warning.
+      withRuby = false;
+      withPython3 = false;
     };
     nix-index.enable = true;
     nushell = {
