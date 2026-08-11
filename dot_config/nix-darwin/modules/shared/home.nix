@@ -111,6 +111,13 @@ in
       ) config.programs.nushell.shellAliases
     );
 
+    # `broot --print-shell-function nushell` emits a module whose entry point is
+    # `main`, so the command it defines is named after the file it lives in. It goes
+    # on NU_LIB_DIRS under the stem `br`, and autoload/40-broot.nu imports it.
+    file."${config.programs.nushell.configDir}/scripts/br.nu".source = pkgs.runCommand "br.nu" {
+      nativeBuildInputs = [ config.programs.broot.package ];
+    } "broot --print-shell-function nushell > $out";
+
     sessionPath = [
       "/opt"
       "$HOME/.local/bin"
@@ -145,7 +152,13 @@ in
   programs = {
     atuin.enable = true;
     bat.enable = true;
-    broot.enable = true;
+    broot = {
+      enable = true;
+
+      # home-manager `source`s broot's nushell integration, which defines the stray
+      # command `main` and no `br`, so the import is wired by hand instead.
+      enableNushellIntegration = false;
+    };
     carapace.enable = true;
     delta = {
       enable = true;
@@ -263,7 +276,14 @@ in
       withRuby = false;
       withPython3 = false;
     };
-    nix-index.enable = true;
+    nix-index = {
+      enable = true;
+
+      # The nushell integration installs a command_not_found hook that shells out to
+      # nix-locate. Nothing builds the index, so every typo printed a database I/O
+      # error ahead of nushell's own message; `nix-locate` stays available by hand.
+      enableNushellIntegration = false;
+    };
     nushell = {
       enable = true;
       configFile.source = ../../nushell/config.nu;
@@ -278,10 +298,7 @@ in
       ];
     };
     ripgrep.enable = true;
-    starship = {
-      enable = true;
-      enableTransience = true;
-    };
+    starship.enable = true;
     tealdeer.enable = true;
     zoxide.enable = true;
     zsh = {

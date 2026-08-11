@@ -357,11 +357,14 @@ Multiple shells are configured:
 Nushell parses `config.nu` as one unit and resolves `use` at parse time, so a
 parse error in any imported module discards the whole file. Module imports
 therefore live in `autoload/` fragments, each its own parse unit and all parsed
-after `config.nu` has fully run: `10-community.nu` (the `nu_scripts` external),
-`20-commands.nu` (the first-party `commands/` dir, second so a first-party name
-shadows an upstream alias), `30-mise.nu` (the activation module `config.nu`
-writes at runtime — a `use` in `config.nu` would resolve before that write).
-`config.nu` itself keeps only settings and that generated module.
+after `config.nu` has fully run, in filename order: `10-community.nu` (the
+`nu_scripts` external), `20-commands.nu` (the first-party `commands/` dir, second so
+a first-party name shadows an upstream alias), `30-mise.nu` and `40-broot.nu` (both
+import modules generated on the machine — mise's by `config.nu` at runtime, broot's
+by Home Manager — so a `use` in `config.nu` would resolve before they exist), and
+`menus.nu` (the zoxide menu and its keybindings). Home Manager adds
+`90-shell-aliases.nu`, which sorts last so `home.shellAliases` beats a same-named
+upstream alias. `config.nu` itself keeps only settings and that mise write.
 
 Nu-based CLIs (`apploi`, `wt`, `onboard`) live in `~/.local/bin` as `#!/usr/bin/env nu`
 scripts so they run from any shell or automated session. Each is also exposed

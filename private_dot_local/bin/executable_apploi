@@ -36,14 +36,23 @@ export def main [
     cd $source_path
 
     # Machines that only receive dotfiles changes stay current through plain
-    # apploi; a dirty tree (mid-edit on the authoring machine) skips the pull.
-    if (do { ^git diff --quiet HEAD } | complete).exit_code == 0 {
+    # apploi. Two states skip the pull rather than fail it: a dirty tree (mid-edit
+    # on the authoring machine), and a branch with no upstream, which has nothing to
+    # fast-forward from — each says which, since the diverged-origin advice below
+    # would discard the work on a local topic branch.
+    let branch = (^git rev-parse --abbrev-ref HEAD | str trim)
+    let tracked = (do { ^git rev-parse --abbrev-ref --symbolic-full-name '@{u}' } | complete).exit_code == 0
+    if (do { ^git diff --quiet HEAD } | complete).exit_code != 0 {
+      step $"Local changes present — skipping pull\n\n"
+    } else if not $tracked {
+      step $"($branch) has no upstream — skipping pull\n\n"
+    } else {
       step $"Pulling the latest dotfiles\n\n"
       # --quiet keeps a no-op pull silent; a non-fast-forward means origin's
       # history was rewritten (an amend + force-push from the authoring
       # machine), so report the one-line fix instead of git's raw output.
       if (do { ^git pull --ff-only --quiet } | complete).exit_code != 0 {
-        step $"Pull skipped — origin diverged; resync with: git fetch && git reset --hard origin/main\n\n"
+        step $"Pull skipped — origin diverged; resync with: git fetch && git reset --hard origin/($branch)\n\n"
       }
     }
 

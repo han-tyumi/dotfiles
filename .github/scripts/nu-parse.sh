@@ -66,9 +66,10 @@ echo "$("$nu" --version) vs nu_scripts $sha"
 # entry, and a runner has no populated default lib dir to fall back to.
 failed=0
 for file in "${files[@]}"; do
-  # 30-mise.nu imports the module config.nu generates at runtime, which no
-  # checkout has.
-  if [[ $file == */30-mise.nu ]]; then
+  # These import modules generated on the machine — mise's activation module, which
+  # config.nu writes at runtime, and broot's launcher, which home-manager builds —
+  # so no checkout can resolve them.
+  if [[ $file == */30-mise.nu || $file == */40-broot.nu ]]; then
     continue
   fi
   if "$nu" --no-config-file -I "$scripts" -c "nu-check --debug \"$file\"" > /dev/null; then
