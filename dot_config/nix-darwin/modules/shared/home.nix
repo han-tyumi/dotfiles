@@ -82,6 +82,22 @@ in
       fi
     '';
 
+    # `pkgs.gh-stack` is 0.0.4 on the 26.05 channel against 0.1.0 upstream, and
+    # 0.0.4 predates `gh stack merge` and the public Stacks REST API, so the
+    # extension comes from its own releases until the channel carries 0.1.0 and
+    # this can become `programs.gh.extensions = [ pkgs.gh-stack ]`.
+    #
+    # `install --force` rather than a list-then-upgrade branch: install is the one
+    # subcommand exempt from gh's auth check, and with the extension already at the
+    # newest release it is a no-op. Non-fatal, since a flaky network or an
+    # unauthenticated gh must not abort activation.
+    activation.ghStackExtension = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      run ${config.programs.gh.package}/bin/gh extension install --force github/gh-stack || {
+        echo "gh extension install --force github/gh-stack failed; re-run it by hand." >&2
+        echo "On a name collision or a missing latest version, another extension owns the 'stack' command: 'gh extension remove stack' first." >&2
+      }
+    '';
+
     enableNixpkgsReleaseCheck = false;
 
     # home-manager renders shellAliases into config.nu, which nushell parses before
@@ -102,7 +118,7 @@ in
     shellAliases = {
       cat = "bat";
       g = "git";
-      gs = "git-spice";
+      gs = "gh stack";
       p = "pnpm";
       y = "yarn";
       znu = "zsh -lc nu";

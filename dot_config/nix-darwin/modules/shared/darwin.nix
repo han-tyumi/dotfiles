@@ -63,7 +63,6 @@
     enable = true;
     brews = [
       "agent-browser"
-      "git-spice"
       "mas"
       "mise"
       "poppler"

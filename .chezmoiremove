@@ -1,0 +1,4 @@
+# Destination paths chezmoi deletes on every apply. Dropping an entry from the
+# source state does not remove the target it already applied, so a target that
+# must not survive on a machine is listed here.
+.claude/skills/git-spice

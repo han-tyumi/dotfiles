@@ -87,6 +87,9 @@ Caveats:
      An external is gated by its own target path, so a directory that contains one
      needs the `dir/**` form — a bare `dir` skips the regular files under it and
      still fetches the external
+   - `.chezmoiremove`: Destination paths deleted on every apply — the only way to
+     converge a target that is no longer in the source state, since chezmoi leaves
+     already-applied files in place
 
 2. **Nix Darwin Layer** (`dot_config/nix-darwin/`): System configuration
    - `flake.nix`: Inputs/outputs; assembles modules per `machine.nix`
@@ -150,6 +153,11 @@ re-runs `rtk init` after the bundle has upgraded rtk, so the `~/.claude/RTK.md`
 rtk generates always comes from the rtk that is installed. Keep a step
 as a `run_onchange` script when it instead needs chezmoi templating over layer
 files (as `1-mise-config` does).
+
+`ghStackExtension` is a third activation entry for a different reason: it depends
+on no Homebrew tool, but `gh stack` is a gh extension whose nixpkgs package trails
+the channel, so installing it from activation re-runs the upgrade on every switch
+instead of pinning the machine to the packaged build.
 
 ### Adding a new layer or overlay
 
@@ -257,8 +265,9 @@ provisioned with **winget** and **mise** instead of Nix.
   key). `.claude`
   applies on Windows too — settings.json (with the rtk hook, unix statusline, and
   `/tmp` gated to macOS), the global CLAUDE.md, and the portable `create-skill` skill;
-  the bash statusline, the agent-browser symlink, and the `gs`/`wt`-dependent skills
-  stay Mac-only via `.chezmoiignore`.
+  the bash statusline, the agent-browser symlink, and the skills whose CLI only the
+  Mac profile provides (the `gh stack` extension, `wt`) stay Mac-only via
+  `.chezmoiignore`.
 - CI (`.github/workflows/eval.yml`, `windows` job) validates the Windows path the way
   the `nix eval` matrix covers the Mac: it renders every template as `os = windows`,
   Test-Jsons the manifests, runs PSScriptAnalyzer, and parses the provisioners under
@@ -381,7 +390,11 @@ External resources are managed in `.chezmoiexternals/`:
   against a revision and asserts each path the fragments reference exists — and the
   `nu-scripts-pin` workflow runs it weekly against upstream main, opening a PR that
   moves both args when it passes. Run it by hand the same way:
-  `bash .github/scripts/nu-parse.sh "$(which nu)" [sha]`
+  `bash .github/scripts/nu-parse.sh "$(which nu)" [sha]`. Also the **`gh-stack`
+  skill** (`.claude/skills/gh-stack`), an archive external of GitHub's own skill
+  for the `gh stack` CLI: it tracks the default branch on a weekly refresh, since
+  the `ghStackExtension` activation keeps the CLI on the newest release and a
+  pinned skill would document a CLI the machine has moved past
 
 ### Neovim Configuration
 
