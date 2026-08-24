@@ -57,6 +57,17 @@ $shellChanged = (Write-RegDword $advanced 'NavPaneShowAllFolders' 1) -or $shellC
 $shellChanged = (Write-RegDword 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\CabinetState' 'FullPath' 1) -or $shellChanged
 [void](Write-RegDword 'HKCU:\System\GameConfigStore' 'GameDVR_Enabled' 0)
 
+# Windows PowerShell 5.1 execution policy: RemoteSigned so the 5.1 profile (the
+# interactive hop to pwsh in Documents/WindowsPowerShell) can load. 5.1 and pwsh
+# keep separate policies; this registry value is 5.1's CurrentUser scope, written
+# directly because Set-ExecutionPolicy targets whichever edition runs this script.
+$ps51PolicyKey = 'HKCU:\Software\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell'
+$ps51Policy = (Get-ItemProperty -Path $ps51PolicyKey -Name ExecutionPolicy -ErrorAction SilentlyContinue).ExecutionPolicy
+if ($ps51Policy -ne 'RemoteSigned') {
+  if (-not (Test-Path $ps51PolicyKey)) { New-Item -Path $ps51PolicyKey -Force | Out-Null }
+  New-ItemProperty -Path $ps51PolicyKey -Name ExecutionPolicy -PropertyType String -Value 'RemoteSigned' -Force | Out-Null
+}
+
 # Opt out of PowerShell 7 telemetry (persistent user environment variable).
 if ([Environment]::GetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', 'User') -ne '1') {
   [Environment]::SetEnvironmentVariable('POWERSHELL_TELEMETRY_OPTOUT', '1', 'User')
