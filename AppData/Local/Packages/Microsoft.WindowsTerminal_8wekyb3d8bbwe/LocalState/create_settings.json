@@ -3,10 +3,11 @@
 // tweaks, so a fully-managed file would fight it into a conflict loop on every
 // apply; write-once seeds the defaults and lets WT take over. Targets the stable
 // Store/winget build (package family Microsoft.WindowsTerminal_8wekyb3d8bbwe); the
-// Preview build uses a different package dir. Nushell is the default profile; its guid
-// matches the profile the nushell installer's WT fragment contributes, so the two
-// merge into one entry instead of showing a duplicate (and this stands alone with
-// its own commandline if that fragment is absent). Font: the no-ligature
+// Preview build uses a different package dir. PowerShell 7 is the default profile
+// (guid is WT's canonical dynamic-profile id for the MSI pwsh, so the entries merge);
+// the Nushell profile's guid matches the profile the nushell installer's WT fragment
+// contributes, so those two merge into one entry instead of showing a duplicate (and
+// it stands alone with its own commandline if that fragment is absent). Font: the no-ligature
 // PragmataPro VF Mono (byte fidelity for logs/diffs), falling back per-glyph to
 // Iosevka Nerd Font Mono (installed by run_once_after_60-nerdfont.ps1) for text +
 // icons on a machine without PragmataPro. Set weight via font.weight only, never
@@ -14,7 +15,7 @@
 {
   "$help": "https://aka.ms/terminal-documentation",
   "$schema": "https://aka.ms/terminal-profiles-schema",
-  "defaultProfile": "{47302f9c-1ac4-566c-aa3e-8cf29889d6ab}",
+  "defaultProfile": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
   "copyOnSelect": true,
   "copyFormatting": "none",
   "profiles": {
@@ -28,6 +29,12 @@
       }
     },
     "list": [
+      {
+        "guid": "{574e775e-4f2a-5b96-ac1e-a2962a402336}",
+        "name": "PowerShell 7",
+        "commandline": "pwsh.exe",
+        "startingDirectory": "%USERPROFILE%"
+      },
       {
         "guid": "{47302f9c-1ac4-566c-aa3e-8cf29889d6ab}",
         "name": "Nushell",
