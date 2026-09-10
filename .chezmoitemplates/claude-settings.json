@@ -286,6 +286,14 @@
   "enabledPlugins": {},
   "extraKnownMarketplaces": {},
   "alwaysThinkingEnabled": true,
+{{- /* Compact at 200k rather than letting a 1M-context model fill its window:
+       a turn's cost scales with the context resent on every request, so the
+       larger window is only worth paying for when a task genuinely needs it.
+       Claude Code resolves the window from /autocompact, then env
+       (CLAUDE_AUTOCOMPACT_PCT_OVERRIDE, DISABLE_AUTO_COMPACT), then this
+       setting, so a session can still opt out without editing the file. */}}
+  "autoCompactEnabled": true,
+  "autoCompactWindow": 200000,
   "effortLevel": "xhigh",
   "ultracode": true,
   "tui": "fullscreen",
