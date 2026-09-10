@@ -47,7 +47,6 @@
       "Edit(**/.claude/**)",
       "Read(**/.claude/**)",
       "Read({{ $.chezmoi.homeDir }}/.claude/**)",
-      "Write(**/.claude/**)",
       "Bash(cat *)",
       "Bash(chezmoi data *)",
       "Bash(chezmoi diff *)",
@@ -266,6 +265,10 @@
       {
         "matcher": "Bash",
         "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/deny-destructive.py"
+          },
           {
             "type": "command",
             "command": "rtk hook claude"

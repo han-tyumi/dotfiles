@@ -40,10 +40,12 @@ Documents
 .config/ghostty
 .config/zed
 # .claude applies on Windows too (settings + CLAUDE.md + portable skills); only
-# these Mac-only pieces are skipped: the bash statusline, the agent-browser
-# symlink into /opt/homebrew, and skills whose CLI only the Mac profile provides
-# (the gh stack extension, wt).
+# these Mac-only pieces are skipped: the bash statusline, the PreToolUse hooks
+# (wired into settings.json only on darwin), the agent-browser symlink into
+# /opt/homebrew, and skills whose CLI only the Mac profile provides (the gh
+# stack extension, wt).
 .claude/statusline.sh
+.claude/hooks
 .claude/skills/agent-browser
 .claude/skills/gh-stack
 .claude/skills/git-worktree
