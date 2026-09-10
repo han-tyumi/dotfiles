@@ -16,9 +16,58 @@ let
     rev = "011516f5d14f66b771b3e716f29c77231e008c74";
     hash = "sha256-lztkxX9O41YossvRzpR7tqxMhDNT1Efy2JvkCwtsiXQ=";
   };
+
+  snapshotRetentionDays = 7;
+
+  # Take an APFS snapshot and drop the ones past the retention window. Neither
+  # tmutil call needs privileges, and no Time Machine destination has to be
+  # configured — snapshots taken this way are marked purgeable, so macOS reclaims
+  # them under space pressure instead of filling the disk.
+  #
+  # Absolute paths throughout: launchd does not run this with the interactive
+  # PATH, and `date` there would resolve to GNU coreutils, which has no -v.
+  #
+  # The timestamps are fixed-width, so a lexicographic comparison against the
+  # cutoff orders them correctly without parsing.
+  apfsSnapshot = pkgs.writeShellScript "apfs-snapshot" ''
+    set -u
+
+    /usr/bin/tmutil localsnapshot >/dev/null || exit 0
+
+    cutoff="$(/bin/date -v-${toString snapshotRetentionDays}d +%Y-%m-%d-%H%M%S)"
+    /usr/bin/tmutil listlocalsnapshots / 2>/dev/null | while read -r snapshot; do
+      case "$snapshot" in
+        com.apple.TimeMachine.*.local) ;;
+        *) continue ;;
+      esac
+      stamp="''${snapshot#com.apple.TimeMachine.}"
+      stamp="''${stamp%.local}"
+      if [[ "$stamp" < "$cutoff" ]]; then
+        /usr/bin/tmutil deletelocalsnapshots "$stamp" >/dev/null
+      fi
+    done
+  '';
 in
 
 {
+  # A rolling hour-granular undo for the whole volume. Same-disk and purgeable, so
+  # this is not a backup — it does not survive drive failure and macOS may reclaim
+  # it — but it covers the case a backup is slowest at: something deleting files
+  # that were never committed or pushed.
+  launchd.agents.apfs-snapshot = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${apfsSnapshot}" ];
+      RunAtLoad = true;
+      StartInterval = 3600;
+      # Snapshots are metadata work, but thinning can touch a lot of blocks.
+      LowPriorityIO = true;
+      Nice = 5;
+      # Nothing is written on success, so this only ever holds failures.
+      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/apfs-snapshot.log";
+    };
+  };
+
   home = {
     # darwin.nix points screencapture at this directory; macOS won't create it.
     activation.screenshotsDir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

@@ -410,4 +410,19 @@ Neovim config is managed as an external git submodule (`dot_config/external_nvim
   no explicit attribute
 - Node.js is pinned to version 24 via nixpkgs overlay
 - Homebrew auto-updates and upgrades on activation
+- `modules/shared/home.nix` runs an hourly APFS snapshot as a Home Manager launchd
+  agent (`org.nix-community.home.apfs-snapshot`), keeping a 7-day window. It needs
+  no Time Machine destination and no privileges. Snapshots are same-disk and marked
+  purgeable, so this is a volume-wide undo for accidental deletion, not a backup:
+  macOS reclaims them under space pressure and they don't survive drive failure.
+  Failures land in `~/Library/Logs/apfs-snapshot.log`; nothing is written on
+  success. To recover from one, mount it read-only and copy out (needs sudo):
+
+  ```bash
+  tmutil listlocalsnapshots /
+  mkdir -p /tmp/snap
+  sudo mount_apfs -o ro -s com.apple.TimeMachine.<date>.local /System/Volumes/Data /tmp/snap
+  # files are under /tmp/snap/Users/<user>/...
+  sudo umount /tmp/snap
+  ```
 - Git ignores `.claude/*.local.*`, `.env.local`, `.mcp.local.json`, `CLAUDE.local.md`, and `mise.local.toml` globally
