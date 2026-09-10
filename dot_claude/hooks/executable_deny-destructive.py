@@ -60,15 +60,18 @@ def strip_heredocs(command):
 
 
 def tokenize(command):
-    """Split a command line into per-command argv lists, or None if unparseable.
+    """Lex a command into per-command argv lists plus the lines that would not lex.
 
     Newlines separate commands in shell just as `;` does, so each line is lexed
     on its own -- otherwise a command following a heredoc terminator gets folded
-    into the argv of the command that opened the heredoc.
+    into the argv of the command that opened the heredoc. Lexing per line also
+    contains the damage when one line has quoting this hook cannot follow: the
+    rest of the command is still checked properly, and only the unreadable line
+    falls back to a textual scan.
     """
     text = LINE_CONTINUATION.sub(" ", strip_heredocs(command))
 
-    commands = []
+    commands, unparsed = [], []
     for line in text.split("\n"):
         if not line.strip():
             continue
@@ -77,7 +80,8 @@ def tokenize(command):
         try:
             tokens = list(lexer)
         except ValueError:
-            return None
+            unparsed.append(line)
+            continue
 
         current = []
         for token in tokens:
@@ -89,7 +93,7 @@ def tokenize(command):
                 current.append(token)
         if current:
             commands.append(current)
-    return commands
+    return commands, unparsed
 
 
 def canonical(path):
@@ -230,17 +234,17 @@ def main():
     cwd = payload.get("cwd") or os.getcwd()
     project_dir = canonical(os.environ.get("CLAUDE_PROJECT_DIR") or cwd)
 
-    commands = tokenize(command)
-    if commands is None:
-        # Quoting this hook cannot follow. Only worth refusing if the command
-        # actually mentions a recursive delete; otherwise a parse failure says
-        # nothing about safety.
-        if not DESTRUCTIVE_HINT.search(strip_heredocs(command)):
-            return 0
-        print("Blocked: this command contains a recursive delete but could not be "
-              "parsed safely (unbalanced quotes), so its targets cannot be "
-              "checked. Split it into simpler commands.", file=sys.stderr)
-        return 2
+    commands, unparsed = tokenize(command)
+
+    # A line whose quoting cannot be followed is only a problem if that line is
+    # itself a recursive delete; otherwise its unreadability says nothing about
+    # safety, and the parseable lines are still checked below.
+    for line in unparsed:
+        if DESTRUCTIVE_HINT.search(line):
+            print("Blocked: this line contains a recursive delete but could not be "
+                  f"parsed safely, so its targets cannot be checked:\n  {line.strip()}\n"
+                  "Run the delete as its own simpler command.", file=sys.stderr)
+            return 2
 
     for argv in commands:
         reason = verdict(argv, cwd, project_dir, home)

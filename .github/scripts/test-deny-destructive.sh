@@ -79,6 +79,13 @@ msg
 EOF
 rm -rf ~/.claude")"
 check "unparseable with delete"  2 "$(payload "rm -rf ~/Developer 'unbalanced")"
+check "unparseable line, delete elsewhere" 2 "$(payload "echo 'unbalanced
+rm -rf ~/.claude")"
+
+# An unreadable line next to an in-project delete must not block the delete:
+# quoting the hook cannot follow says nothing about the other line's targets.
+check "unparseable line, safe delete" 0 "$(payload "python3 -c 'print(\"it'\"'\"'s\")
+rm -rf /tmp/scratch.abc")"
 
 printf '\n%s passed, %s failed\n' "$passes" "$failures"
 [ "$failures" -eq 0 ]
