@@ -245,9 +245,9 @@ provisioned with **winget** and **mise** instead of Nix.
   `20-mise-install` runs `mise install` against the shared `dot_config/mise/config.toml`
   (the personal layer's crystal/erlang/elixir are OS-gated out of `conf.d/personal.toml`
   on Windows); `30-nushell-activations` generates nushell's mise/starship/zoxide
-  modules. `run_once_after_50-emdash.ps1` installs Emdash and `run_once_after_60-nerdfont.ps1`
-  installs Iosevka Nerd Font (Mono) per-user; both fail loudly so a transient error
-  re-fires on the next apply instead of recording the run_once done with nothing done.
+  modules. `run_once_after_60-nerdfont.ps1` installs Iosevka Nerd Font (Mono)
+  per-user; it fails loudly so a transient error re-fires on the next apply instead
+  of recording the run_once done with nothing done.
 - One-command sync mirrors the Mac `apploi` (plain = do everything): `apploi`
   (defined in the PowerShell profile and the Windows nushell config) does an
   `--ff-only` pull, `chezmoi apply`, then `winget upgrade --all` + `mise plugins

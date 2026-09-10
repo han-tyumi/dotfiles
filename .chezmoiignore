@@ -6,7 +6,7 @@ windows-sandbox.wsb
 docs/**
 # Reserved DOS device names. A tool running `> NUL` (or `2> NUL`, `*> NUL`) inside
 # the source dir under a POSIX shell writes a literal file by that name instead of
-# discarding output — Claude Code hooks injected by Emdash do this on Windows.
+# discarding output, which Windows tooling that assumes cmd.exe semantics does.
 # chezmoi would then try to manage a target of the same name, whose bare path
 # resolves to the character device, aborting the whole apply. These are never real
 # managed targets, so ignore them on every OS.
@@ -26,7 +26,6 @@ Documents
 20-mise-install.ps1
 30-nushell-activations.ps1
 35-registry-tweaks.ps1
-50-emdash.ps1
 60-nerdfont.ps1
 70-psfzf.ps1
 {{ end -}}

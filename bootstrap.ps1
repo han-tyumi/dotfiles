@@ -7,7 +7,7 @@
 #
 # Installs Git + chezmoi via winget, then runs `chezmoi init` + `chezmoi apply`,
 # which fires the run_once/run_onchange PowerShell scripts (winget import, mise
-# install, Emdash). The macOS-only Nix/Homebrew tree is skipped on Windows via
+# install, fonts). The macOS-only Nix/Homebrew tree is skipped on Windows via
 # .chezmoiignore, so only the shell/editor/Claude config applies here.
 #
 # Extra args pass through to `chezmoi init`, e.g. layer selection:

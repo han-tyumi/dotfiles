@@ -22,7 +22,7 @@ irm https://raw.githubusercontent.com/han-tyumi/dotfiles/main/bootstrap.ps1 | ie
 ```
 
 Installs Git + chezmoi via winget, then `chezmoi init --apply` — which imports the winget
-package set, installs mise runtimes, and drops in Emdash. The Nix/Homebrew tree is skipped on
+package set and installs mise runtimes. The Nix/Homebrew tree is skipped on
 Windows; `apploi` (or `apploi -u`) syncs afterward. See [CLAUDE.md](CLAUDE.md#bootstrap-on-windows).
 
 ## How it's organized
