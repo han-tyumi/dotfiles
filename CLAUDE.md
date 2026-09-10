@@ -422,7 +422,9 @@ Neovim config is managed as an external git submodule (`dot_config/external_nvim
   tmutil listlocalsnapshots /
   mkdir -p /tmp/snap
   sudo mount_apfs -o ro -s com.apple.TimeMachine.<date>.local /System/Volumes/Data /tmp/snap
-  # files are under /tmp/snap/Users/<user>/...
+  ls /tmp/snap/Users/<user>
   sudo umount /tmp/snap
   ```
+
+  Leaving it mounted is harmless but pins that snapshot against thinning.
 - Git ignores `.claude/*.local.*`, `.env.local`, `.mcp.local.json`, `CLAUDE.local.md`, and `mise.local.toml` globally
