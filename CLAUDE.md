@@ -190,7 +190,11 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/han-tyumi/dotfiles/main/
 
 Per-machine setup:
 - **GitHub token**: run `gh auth login` after bootstrap — it stores an OAuth token
-  in the macOS keychain. No token lives in the repo or a standing env var
+  in `~/.config/gh/hosts.yml` (0600). No token lives in the repo or a standing env
+  var, and nothing copies it into a second file: `~/.local/bin/github-mcp-server`
+  wraps the real binary to read the token from `gh` at launch, so the MCP
+  registration in `~/.claude.json` stays credential-free and a re-login is picked
+  up without re-registering
 - **private overlays**: a fresh SSH key per machine — `bootstrap.sh` offers to
   generate them and prints the public keys to register with the matching GitHub
   account; keys are referenced by name, so per-machine material works without
