@@ -79,6 +79,21 @@ OpenSSH server has a runtime footprint (an `sshd` service + inbound TCP 22); the
 stay dormant until used. To turn SSH off: `Stop-Service sshd; Set-Service sshd
 -StartupType Manual`.
 
+## Drivers
+
+winget does not service hardware drivers, and neither does anything here. Only the
+policy half is automated: `35-registry-tweaks` sets `ExcludeWUDriversInQualityUpdate`
+so Windows Update stops swapping a tuned GPU/OEM driver for a generic one (feature
+updates reset it, which is why it's re-asserted rather than set once).
+
+The rest is deliberate and manual. Non-GPU drivers (WiFi, Bluetooth, chipset) can go
+through `PSWindowsUpdate` from an elevated shell — `Get-WindowsUpdate -UpdateType
+Driver` to see what's on offer, then `Install-WindowsUpdate -UpdateType Driver
+-AcceptAll -IgnoreReboot`. Never on a schedule and never with `-AutoReboot`: a
+handheld can be mid-game. GPU (AMD Adrenalin / Intel Graphics), the OEM driver pack,
+and BIOS/EC firmware are hand-installed; freeze a known-good GPU driver and move off
+it on purpose.
+
 ## Deferred
 
 - **O&O ShutUp10** — granular per-app privacy (camera/mic/location defaults,
