@@ -1,16 +1,35 @@
 #!/usr/bin/env python3
-"""Deny recursive deletes that reach outside the project an agent is working in.
+"""Gate recursive deletes that reach outside the project an agent is working in.
 
 Claude Code feeds a PreToolUse hook the pending tool call as JSON on stdin.
-Exit 0 allows it; exit 2 denies it and hands stderr back to the model so it can
-choose a narrower command.
+There are three answers: exit 0 to allow silently, a `permissionDecision` of
+`ask` on stdout to route the command through the normal approval prompt, and
+exit 2 to refuse outright with a reason on stderr the model can act on.
+
+Reaching outside the project is a question, not a verdict — deleting a stale
+clone or a cache under `~` is ordinary work, and only the person at the keyboard
+knows whether this particular one was meant. So the default answer is `ask`.
+
+Exit 2 is reserved for targets no confirmation should be able to authorise: the
+whole account, the OS, a system directory.
+
+An `ask` decision only reaches a human if something is willing to prompt, and
+`permission_mode: bypassPermissions` is not — it turns every question into a
+silent yes. So the question is only asked where it will actually be surfaced;
+where the payload says nothing will ask, the delete is refused instead. A
+refusal a person can override by running the command themselves beats an
+approval nobody was offered.
 
 Python rather than shell because the decision hinges on tokenising a command
 line correctly — `shlex` respects quoting and shell operators, where bash word
 splitting would mis-read `rm -rf "$dir/a b"` and anything chained with `&&`.
 
-Unresolvable targets are denied rather than allowed: a path built from a
-variable this hook cannot expand is exactly the case that goes wrong.
+Unresolvable targets are asked about rather than passed silently: a path built
+from a variable this hook cannot expand is exactly the case that goes wrong.
+
+`--no-prompt` says the caller has no way to render an `ask` decision, so refuse
+those instead — the OpenCode plugin reuses this hook through its exit status
+alone.
 """
 
 import json
@@ -177,6 +196,14 @@ def is_deleting_rsync(argv):
     return any(flag.startswith("--delete") for flag in flags_of(argv))
 
 
+# Directories whose deletion takes the machine, the account or the OS with it.
+# No agent task legitimately needs one, so these are refused rather than asked
+# about. Paths that merely live under one of them are still only asked about.
+UNCONDITIONAL_ROOTS = ["/", "/Applications", "/Library", "/System", "/Users",
+                       "/bin", "/cores", "/dev", "/etc", "/nix", "/opt",
+                       "/private", "/sbin", "/tmp", "/usr", "/var", "/Volumes"]
+
+
 def scratch_roots():
     """Temp directories a recursive delete may target: nothing durable lives there."""
     roots = ["/tmp", "/private/tmp", "/var/folders", "/private/var/folders"]
@@ -187,38 +214,91 @@ def scratch_roots():
     return [canonical(root) for root in roots]
 
 
+def unconditional_reason(operand, target, home):
+    """Why this target may not be deleted at all, or None if it is merely a question.
+
+    A glob is measured by the directory it sits in: `rm -rf ~/*` names nothing
+    catastrophic on its own, and empties the account.
+    """
+    protected = [canonical(root) for root in UNCONDITIONAL_ROOTS] + [canonical(home)]
+
+    if target in protected:
+        return f"target {operand!r} is {target}"
+    if any(char in operand for char in GLOB_CHARS) and target.parent in protected:
+        return f"glob {operand!r} would empty {target.parent}"
+    return None
+
+
 def verdict(argv, cwd, project_dir, home):
-    """Return a refusal reason, or None to allow."""
+    """Return (decision, reason) — 'deny' or 'ask' — or None to allow."""
     if not argv:
         return None
     if not (is_recursive_rm(argv) or is_deleting_find(argv) or is_deleting_rsync(argv)):
         return None
 
     scratch = scratch_roots()
+    question = None
 
     for operand in operands_of(argv):
         expanded = expand(operand, home)
         if expanded is None:
-            return (f"target {operand!r} depends on an expansion this hook cannot "
-                    f"evaluate, so it cannot be shown to stay inside {project_dir}")
+            question = question or (
+                "ask", f"target {operand!r} depends on an expansion this hook cannot "
+                       f"evaluate, so it cannot be shown to stay inside {project_dir}")
+            continue
 
         target = canonical(Path(expanded) if os.path.isabs(expanded)
                            else Path(cwd) / expanded)
 
-        if target == project_dir:
-            return f"target {operand!r} is the project root {project_dir} itself"
-        if project_dir in target.parents:
-            continue
-        if any(root in target.parents for root in scratch):
-            continue
-        if any(char in operand for char in GLOB_CHARS):
-            return f"glob {operand!r} expands outside {project_dir}"
-        return f"target {operand!r} resolves to {target}, outside {project_dir}"
+        refusal = unconditional_reason(operand, target, home)
+        if refusal:
+            return "deny", refusal
 
-    return None
+        if question:
+            continue
+        if target == project_dir:
+            question = ("ask", f"target {operand!r} is the project root "
+                               f"{project_dir} itself")
+        elif project_dir in target.parents:
+            continue
+        elif any(root in target.parents for root in scratch):
+            continue
+        elif any(char in operand for char in GLOB_CHARS):
+            question = ("ask", f"glob {operand!r} expands outside {project_dir}")
+        else:
+            question = ("ask", f"target {operand!r} resolves to {target}, "
+                               f"outside {project_dir}")
+
+    return question
+
+
+UNCONDITIONAL_ADVICE = ("This target is off limits regardless of approval. Narrow "
+                        "the command to the paths that actually need deleting.")
+UNASKABLE_ADVICE = ("This session runs with permission prompts disabled, so there "
+                    "is no way to ask about it. Narrow the command to the project, "
+                    "or say what you need deleted and let the user run it.")
+
+
+def refuse(reason, advice):
+    print(f"Blocked a recursive delete: {reason}.\n{advice}", file=sys.stderr)
+    return 2
+
+
+def ask(reason):
+    """Hand the command to the harness's own approval prompt."""
+    print(json.dumps({"hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "ask",
+        "permissionDecisionReason":
+            f"Recursive delete outside the project: {reason}. Approve only if "
+            f"that is the path you meant.",
+    }}))
+    return 0
 
 
 def main():
+    caller_can_ask = "--no-prompt" not in sys.argv[1:]
+
     try:
         payload = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
@@ -236,29 +316,37 @@ def main():
 
     commands, unparsed = tokenize(command)
 
+    questions = []
+
     # A line whose quoting cannot be followed is only a problem if that line is
     # itself a recursive delete; otherwise its unreadability says nothing about
     # safety, and the parseable lines are still checked below.
     for line in unparsed:
         if DESTRUCTIVE_HINT.search(line):
-            print("Blocked: this line contains a recursive delete but could not be "
-                  f"parsed safely, so its targets cannot be checked:\n  {line.strip()}\n"
-                  "Run the delete as its own simpler command.", file=sys.stderr)
-            return 2
+            questions.append(f"this line contains a recursive delete but could not "
+                             f"be parsed, so its targets are unknown: {line.strip()}")
 
+    # Every command is checked before answering, so one catastrophic target in a
+    # chain outweighs an earlier one that would only have prompted.
     for argv in commands:
-        reason = verdict(argv, cwd, project_dir, home)
-        if reason:
-            print(
-                f"Blocked a recursive delete: {reason}.\n"
-                f"Recursive deletes are restricted to paths under the project "
-                f"directory. If this is genuinely intended, run it yourself "
-                f"outside the agent.",
-                file=sys.stderr,
-            )
-            return 2
+        answer = verdict(argv, cwd, project_dir, home)
+        if not answer:
+            continue
+        decision, reason = answer
+        if decision == "deny":
+            return refuse(reason, UNCONDITIONAL_ADVICE)
+        questions.append(reason)
 
-    return 0
+    if not questions:
+        return 0
+
+    reason = "; ".join(questions)
+
+    # Every mode but bypassPermissions puts an `ask` in front of a human. A
+    # missing mode means an older harness, which prompted.
+    if caller_can_ask and payload.get("permission_mode") != "bypassPermissions":
+        return ask(reason)
+    return refuse(reason, UNASKABLE_ADVICE)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,11 @@
  * stdin, exit 2 to refuse with a reason on stderr — so this plugin's job is to
  * translate OpenCode's bash call into that shape and turn a refusal into the
  * thrown error OpenCode expects.
+ *
+ * The hook's usual answer for a delete outside the project is `ask`, routing it
+ * to an approval prompt. A `tool.execute.before` plugin has no prompt to route
+ * to — it can only allow or throw — so it asks the hook for `--no-prompt`, which
+ * refuses those instead of waving them through.
  */
 
 import { homedir } from "node:os";
@@ -32,7 +37,7 @@ export const DenyDestructive = async ({ directory, worktree }) => {
       const command = output.args?.command;
       if (!command) return;
 
-      const hook = Bun.spawn([hookPath], {
+      const hook = Bun.spawn([hookPath, "--no-prompt"], {
         stdin: new TextEncoder().encode(
           JSON.stringify({
             tool_name: "Bash",

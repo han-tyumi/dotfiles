@@ -58,6 +58,17 @@ jobs:
           nu=$(nix build --no-link --print-out-paths --inputs-from ./dot_config/nix-darwin nixpkgs#nushell)
           bash .github/scripts/nu-parse.sh "$nu/bin/nu"
 
+  # The delete guard decides whether an agent's `rm -rf` runs, so its answers are
+  # worth a gate: allow inside the project, ask where a harness will surface the
+  # question, refuse where nothing will.
+  delete-guard:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Exercise the deny-destructive hook
+        run: bash .github/scripts/test-deny-destructive.sh
+
   # The Windows profile has no Nix fixture to eval; validate its templates,
   # manifests, and provisioner scripts instead — including a Windows PowerShell
   # 5.1 parse to guard the documented first-apply-safety invariant (pwsh 7 is
