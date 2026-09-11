@@ -54,6 +54,13 @@ SEPARATORS = {";", "&&", "||", "|", "&"}
 # A redirection operator and the filename after it are not delete targets.
 REDIRECTIONS = {"<", "<<", "<<<", ">", ">>", ">|", "&>", "&>>", "2>", "2>>"}
 HEREDOC_PATTERN = re.compile(r"<<-?\s*['\"]?(?P<delimiter>[A-Za-z_][A-Za-z0-9_]*)['\"]?")
+# `find [global options] path... [expression]`: the paths end at the first
+# primary, and only they are operands. `{}` stands for whatever find matched.
+FIND_GLOBAL_OPTIONS = {"-E", "-H", "-L", "-P", "-X", "-d", "-s", "-x"}
+FIND_EXPRESSION_START = {"!", "(", ")", ","}
+FIND_EXEC_PRIMARIES = {"-exec", "-execdir", "-ok", "-okdir"}
+FIND_EXEC_TERMINATORS = {";", "+"}
+FIND_PLACEHOLDER = "{}"
 LINE_CONTINUATION = re.compile(r"\\\n")
 # Used only when the command cannot be tokenised: does it even mention a
 # recursive delete? If not, a parse failure is harmless.
@@ -177,6 +184,64 @@ def flags_of(argv):
     return [token for token in argv[1:] if token.startswith("-") and token != "-"]
 
 
+def find_starting_paths(argv):
+    """The paths find searches — every token before its expression begins.
+
+    Reading the whole argv as operands is what makes `-type f` look like a path
+    named `f`, and `-exec /bin/ls` like one named `/bin/ls`: neither is a path
+    find touches.
+    """
+    tokens = argv[1:]
+    index = 0
+    while index < len(tokens) and tokens[index] in FIND_GLOBAL_OPTIONS:
+        index += 1
+
+    paths = []
+    while index < len(tokens):
+        token = tokens[index]
+        if token.startswith("-") or token in FIND_EXPRESSION_START:
+            break
+        paths.append(token)
+        index += 1
+    return paths
+
+
+def find_exec_commands(argv):
+    """The commands a find expression would run, one argv each.
+
+    A `\\;` terminator lexes to `;`, which has already ended this argv, so only
+    a `+` terminator survives into it. The placeholder is dropped rather than
+    read as a path, since what it stands for is decided by find's own paths.
+    """
+    commands, index = [], 1
+    while index < len(argv):
+        if argv[index] not in FIND_EXEC_PRIMARIES:
+            index += 1
+            continue
+        index += 1
+        nested = []
+        while index < len(argv) and argv[index] not in FIND_EXEC_TERMINATORS:
+            if argv[index] != FIND_PLACEHOLDER:
+                nested.append(argv[index])
+            index += 1
+        if nested:
+            commands.append(nested)
+    return commands
+
+
+def nested_commands_of(argv):
+    """Commands this command would run in turn, to be judged on their own terms."""
+    if os.path.basename(argv[0]) == "find":
+        return find_exec_commands(argv)
+    return []
+
+
+def delete_targets(argv):
+    if os.path.basename(argv[0]) == "find":
+        return find_starting_paths(argv)
+    return operands_of(argv)
+
+
 def is_recursive_rm(argv):
     if os.path.basename(argv[0]) != "rm":
         return False
@@ -189,15 +254,30 @@ def is_recursive_rm(argv):
 
 
 def is_deleting_find(argv):
+    """Whether find's own search paths are deletion targets.
+
+    `-delete` says so directly. An `-exec` that deletes says so indirectly: it
+    acts on whatever find matched, so the search paths bound the damage even
+    though the delete is spelled inside the expression. An `-exec` that does
+    anything else -- listing, grepping, copying -- makes find a reader.
+    """
     if os.path.basename(argv[0]) != "find":
         return False
-    return "-delete" in argv or "-exec" in argv or "-execdir" in argv
+    if "-delete" in argv:
+        return True
+    return any(is_recursive_rm(nested) or is_deleting_rsync(nested)
+               for nested in find_exec_commands(argv))
 
 
 def is_deleting_rsync(argv):
     if os.path.basename(argv[0]) != "rsync":
         return False
     return any(flag.startswith("--delete") for flag in flags_of(argv))
+
+
+def is_modeled_delete(argv):
+    """Whether this hook can read a delete's targets out of the argv itself."""
+    return is_recursive_rm(argv) or is_deleting_find(argv) or is_deleting_rsync(argv)
 
 
 # Directories whose deletion takes the machine, the account or the OS with it.
@@ -237,13 +317,42 @@ def verdict(argv, cwd, project_dir, home):
     """Return (decision, reason) — 'deny' or 'ask' — or None to allow."""
     if not argv:
         return None
-    if not (is_recursive_rm(argv) or is_deleting_find(argv) or is_deleting_rsync(argv)):
-        return None
 
+    question = None
+
+    if is_modeled_delete(argv):
+        question = targets_verdict(argv, cwd, project_dir, home)
+        if question and question[0] == "deny":
+            return question
+
+    # A command run by another one is judged as the command it is. Without this,
+    # `find X -exec /bin/rm -rf Y \;` reports the utility name /bin/rm as its
+    # target and never mentions Y, the path actually at risk. Its own paths are
+    # the better reason when there is one, so it only fills in for their silence.
+    for nested in nested_commands_of(argv):
+        answer = verdict(nested, cwd, project_dir, home)
+        # A delete reached through a wrapper -- `sh -c 'rm -rf ...'` -- has no
+        # argv this hook can read targets out of, so its mere presence is the
+        # question. A delete this hook does model has already been judged above
+        # on its actual targets, and re-asking on the text would undo that.
+        if (answer is None and not is_modeled_delete(nested)
+                and DESTRUCTIVE_HINT.search(" ".join(nested))):
+            answer = ("ask", f"-exec runs {' '.join(nested)!r}, which deletes "
+                             f"recursively by a route this hook cannot resolve "
+                             f"to a path")
+        if answer and answer[0] == "deny":
+            return answer
+        question = question or answer
+
+    return question
+
+
+def targets_verdict(argv, cwd, project_dir, home):
+    """Judge one delete command by the operands it would act on."""
     scratch = scratch_roots()
     question = None
 
-    for operand in operands_of(argv):
+    for operand in delete_targets(argv):
         expanded = expand(operand, home)
         if expanded is None:
             question = question or (

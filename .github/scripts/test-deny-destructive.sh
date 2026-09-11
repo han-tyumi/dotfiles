@@ -76,6 +76,16 @@ check "non-recursive rm"         allow "$(payload 'rm ~/notes.txt')"
 check "redirect to outside file" allow "$(payload 'rm -rf build > ~/log.txt')"
 check "other tool"               allow '{"tool_name":"Read","tool_input":{"file_path":"/etc/hosts"}}'
 check "malformed payload"        allow 'not json at all'
+
+# A find expression is not a path list. Every token after the first primary
+# belongs to the expression, so `-newer ~/.zshrc` names a reference file and
+# `-exec /bin/ls` names a utility -- reading either as a delete target is what
+# made ordinary read-only sweeps prompt.
+check "find primary argument"    allow "$(payload 'find /tmp/scratch.abc -newer ~/.zshrc -delete')"
+check "find -exec reader"        allow "$(payload 'find /tmp/scratch.abc -type f -exec /bin/ls -la {} \;')"
+check "find -exec reader outside" allow "$(payload 'find ~/Library/Caches -maxdepth 1 -exec du -sh {} \;')"
+check "find -exec delete in temp" allow "$(payload 'find /tmp/scratch.abc -exec rm -rf {} +')"
+
 check "apostrophe in heredoc"    allow "$(payload "git commit -F - <<'EOF'
 Conductor's application support dir
 EOF")"
@@ -93,6 +103,14 @@ check "parent escape"            ask "$(payload 'rm -rf ../..')"
 check "project root itself"      ask "$(payload 'rm -rf .')"
 check "find -delete outside"     ask "$(payload 'find ~/Developer -name node_modules -delete')"
 check "rsync --delete outside"   ask "$(payload 'rsync -a --delete src/ ~/Developer/dst/')"
+
+# A delete spelled inside a find expression still has to be judged. It acts on
+# whatever find matched, so find's own search paths bound it; when the -exec
+# names a path of its own, that path is what gets reported.
+check "find -exec delete outside" ask "$(payload 'find ~/Developer -exec rm -rf {} \;')"
+check "find -exec names a path"  ask "$(payload 'find /tmp/scratch.abc -exec /bin/rm -rf ~/Developer {} \;')"
+check "find -exec delete via shell" ask "$(payload 'find /tmp/scratch.abc -exec sh -c "rm -rf ~/Developer" {} \;')"
+check "find global option first" ask "$(payload 'find -L ~/Developer -name "*.o" -delete')"
 check "delete after heredoc"     ask "$(payload "git commit -F - <<'EOF'
 msg
 EOF
@@ -116,6 +134,7 @@ check "system directory"         deny "$(payload 'rm -rf /usr')"
 check "users directory"          deny "$(payload 'rm -rf /Users')"
 check "temp root itself"         deny "$(payload 'rm -rf /tmp')"
 check "find -delete on home"     deny "$(payload 'find ~ -name .DS_Store -delete')"
+check "find -exec delete on home" deny "$(payload 'find ~ -exec rm -rf {} +')"
 
 # A refusal outranks a question anywhere in the same command.
 check "safe delete then home"    deny "$(payload 'rm -rf dist && rm -rf ~')"
