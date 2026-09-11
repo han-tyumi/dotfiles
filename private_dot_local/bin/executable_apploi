@@ -2,6 +2,7 @@
 
 const LOCAL_FLAKE_DIR = '~/.config/nix-darwin'
 const SYSTEM_FLAKE_DIR = '/etc/nix-darwin'
+const SOURCE_FLAKE_LOCK = 'dot_config/nix-darwin/flake.lock'
 
 # Apply Chezmoi state, Nix Darwin config, and tooling updates.
 @search-terms "rebuild" "switch" "darwin" "chezmoi" "home-manager" "mise"
@@ -40,9 +41,14 @@ export def main [
     # on the authoring machine), and a branch with no upstream, which has nothing to
     # fast-forward from — each says which, since the diverged-origin advice below
     # would discard the work on a local topic branch.
+    #
+    # The lock is exempt from that dirty check because this run's own update step
+    # rewrites it and re-adds it to the source. Counting it would let one flake
+    # update stop every later pull until someone committed the bump.
     let branch = (^git rev-parse --abbrev-ref HEAD | str trim)
     let tracked = (do { ^git rev-parse --abbrev-ref --symbolic-full-name '@{u}' } | complete).exit_code == 0
-    if (do { ^git diff --quiet HEAD } | complete).exit_code != 0 {
+    let lock_excluded = ':(exclude)' + $SOURCE_FLAKE_LOCK
+    if (do { ^git diff --quiet HEAD -- . $lock_excluded } | complete).exit_code != 0 {
       step $"Local changes present — skipping pull\n\n"
     } else if not $tracked {
       step $"($branch) has no upstream — skipping pull\n\n"
@@ -105,9 +111,9 @@ export def main [
     # Surface a captured-but-uncommitted lock change so pinned inputs get
     # committed instead of drifting silently.
     let source_root = (^chezmoi source-path)
-    if (do { ^git -C $source_root diff --quiet HEAD -- dot_config/nix-darwin/flake.lock } | complete).exit_code != 0 {
+    if (do { ^git -C $source_root diff --quiet HEAD -- $SOURCE_FLAKE_LOCK } | complete).exit_code != 0 {
       step $"\nPending flake.lock changes\n\n"
-      ^git -C $source_root --no-pager diff HEAD -- dot_config/nix-darwin/flake.lock
+      ^git -C $source_root --no-pager diff HEAD -- $SOURCE_FLAKE_LOCK
     }
   }
 
