@@ -60,7 +60,7 @@ jobs:
 
   # The delete guard decides whether an agent's `rm -rf` runs, so its answers are
   # worth a gate: allow inside the project, ask where a harness will surface the
-  # question, refuse where nothing will.
+  # question, refuse where nothing can be asked at all.
   delete-guard:
     runs-on: macos-latest
     steps:

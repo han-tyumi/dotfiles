@@ -16,7 +16,8 @@
  * The hook's usual answer for a delete outside the project is `ask`, routing it
  * to an approval prompt. A `tool.execute.before` plugin has no prompt to route
  * to — it can only allow or throw — so it asks the hook for `--no-prompt`, which
- * refuses those instead of waving them through.
+ * puts the question in a confirmation dialog and refuses anything but an
+ * explicit approval, rather than waving it through.
  */
 
 import { homedir } from "node:os";

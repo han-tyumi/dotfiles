@@ -121,14 +121,19 @@ check "find -delete on home"     deny "$(payload 'find ~ -name .DS_Store -delete
 check "safe delete then home"    deny "$(payload 'rm -rf dist && rm -rf ~')"
 check "question then refusal"    deny "$(payload 'rm -rf ~/.cache/x && rm -rf /usr')"
 
-# --- when nothing will prompt, the question becomes a refusal ----------------
-check "bypassPermissions refuses" deny "$(payload 'rm -rf ~/.claude' bypassPermissions)"
+# --- when nothing will prompt, the dialog decides, and its absence refuses ----
+# --no-dialog stands in for a machine with no one to draw a dialog on, which is
+# also what keeps this suite from opening windows on a developer's screen.
+check "bypassPermissions refuses" deny \
+  "$(payload 'rm -rf ~/.claude' bypassPermissions)" --no-dialog
 check "bypassPermissions still allows in-project" allow \
-  "$(payload 'rm -rf dist' bypassPermissions)"
+  "$(payload 'rm -rf dist' bypassPermissions)" --no-dialog
 check "prompting mode asks"       ask "$(payload 'rm -rf ~/.claude' default)"
 check "acceptEdits mode asks"     ask "$(payload 'rm -rf ~/.claude' acceptEdits)"
-check "no-prompt caller refuses"  deny "$(payload 'rm -rf ~/.claude')" --no-prompt
-check "no-prompt caller, in-project" allow "$(payload 'rm -rf dist')" --no-prompt
+check "no-prompt caller refuses"  deny "$(payload 'rm -rf ~/.claude')" \
+  --no-prompt --no-dialog
+check "no-prompt caller, in-project" allow "$(payload 'rm -rf dist')" \
+  --no-prompt --no-dialog
 
 printf '\n%s passed, %s failed\n' "$passes" "$failures"
 [ "$failures" -eq 0 ]

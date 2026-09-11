@@ -15,10 +15,10 @@ whole account, the OS, a system directory.
 
 An `ask` decision only reaches a human if something is willing to prompt, and
 `permission_mode: bypassPermissions` is not — it turns every question into a
-silent yes. So the question is only asked where it will actually be surfaced;
-where the payload says nothing will ask, the delete is refused instead. A
-refusal a person can override by running the command themselves beats an
-approval nobody was offered.
+silent yes. Where the payload says nothing will ask, the question is put in a
+macOS confirmation dialog instead, and anything but an explicit approval
+(declined, timed out, no GUI to draw on) is a refusal. The harness's own prompt
+is always preferred: it renders the command better and needs no window.
 
 Python rather than shell because the decision hinges on tokenising a command
 line correctly — `shlex` respects quoting and shell operators, where bash word
@@ -27,15 +27,19 @@ splitting would mis-read `rm -rf "$dir/a b"` and anything chained with `&&`.
 Unresolvable targets are asked about rather than passed silently: a path built
 from a variable this hook cannot expand is exactly the case that goes wrong.
 
-`--no-prompt` says the caller has no way to render an `ask` decision, so refuse
-those instead — the OpenCode plugin reuses this hook through its exit status
-alone.
+Two flags, both of which can only make the answer stricter:
+  --no-prompt  the caller cannot render an `ask` decision, so fall back to the
+               dialog (the OpenCode plugin reuses this hook through its exit
+               status alone).
+  --no-dialog  never open a dialog; refuse instead. What the test suite uses to
+               exercise the unanswerable case without opening windows.
 """
 
 import json
 import os
 import re
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -274,9 +278,14 @@ def verdict(argv, cwd, project_dir, home):
 
 UNCONDITIONAL_ADVICE = ("This target is off limits regardless of approval. Narrow "
                         "the command to the paths that actually need deleting.")
-UNASKABLE_ADVICE = ("This session runs with permission prompts disabled, so there "
-                    "is no way to ask about it. Narrow the command to the project, "
-                    "or say what you need deleted and let the user run it.")
+UNAPPROVED_ADVICE = ("Not approved — declined, timed out, or there was nothing "
+                     "able to ask. Narrow the command to the project, or say what "
+                     "needs deleting and let the user run it.")
+
+# The dialog has to answer inside the harness's own hook timeout (60s), or the
+# command escapes the guard by the guard never having replied.
+DIALOG_TIMEOUT_SECONDS = 40
+OSASCRIPT = "/usr/bin/osascript"
 
 
 def refuse(reason, advice):
@@ -296,8 +305,38 @@ def ask(reason):
     return 0
 
 
+def applescript_literal(text):
+    escaped = text.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def approved_by_dialog(reason, command):
+    """Ask the person at the keyboard directly. True only on explicit approval.
+
+    `giving up after` closes the dialog on its own if nobody is there, which
+    reports `gave up:true` alongside the default button -- silence must not read
+    as consent.
+    """
+    message = ("An agent wants to run a recursive delete outside its project.\n\n"
+               f"{reason}\n\n{command.strip()[:600]}")
+    script = (f"display dialog {applescript_literal(message)} "
+              f'with title "Recursive delete" '
+              f'buttons {{"Cancel", "Delete"}} default button "Cancel" '
+              f"with icon caution giving up after {DIALOG_TIMEOUT_SECONDS}")
+    try:
+        answer = subprocess.run([OSASCRIPT, "-e", script], capture_output=True,
+                                text=True, timeout=DIALOG_TIMEOUT_SECONDS + 5)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if answer.returncode != 0:
+        return False
+    return ("button returned:Delete" in answer.stdout
+            and "gave up:true" not in answer.stdout)
+
+
 def main():
     caller_can_ask = "--no-prompt" not in sys.argv[1:]
+    dialog_allowed = "--no-dialog" not in sys.argv[1:]
 
     try:
         payload = json.load(sys.stdin)
@@ -346,7 +385,9 @@ def main():
     # missing mode means an older harness, which prompted.
     if caller_can_ask and payload.get("permission_mode") != "bypassPermissions":
         return ask(reason)
-    return refuse(reason, UNASKABLE_ADVICE)
+    if dialog_allowed and approved_by_dialog(reason, command):
+        return 0
+    return refuse(reason, UNAPPROVED_ADVICE)
 
 
 if __name__ == "__main__":
