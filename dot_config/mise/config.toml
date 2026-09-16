@@ -8,6 +8,7 @@ usage = "latest"
 uv = "latest"
 
 "npm:@biomejs/biome" = "latest"
+"npm:codeburn" = "latest"
 
 [settings]
 pin = true
