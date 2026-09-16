@@ -135,7 +135,8 @@ entries sort before repo-root scripts; the installers therefore live in
   - `run_once_after_3-claude-code.sh`: Installs Claude Code
 - `run_onchange_after_*`: Scripts that run when tracked files change
   - `1-mise-config.toml.tmpl`: Upgrades and installs mise tools
-  - `3-claude-mcp.sh`: Registers Claude Code MCP servers (e.g. github)
+  - `3-claude-mcp.sh`: Removes the retired github MCP registration (kept until
+    every machine has converged)
 - `.chezmoiscripts/<layer>/`: Layer-owned scripts; they derive their layer name from
   their own path (`.chezmoi.sourceFile`) rather than hardcoding it
   - `personal/run_onchange_after_v.sh.tmpl`: Updates V; renders empty (skipped)
@@ -191,10 +192,9 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/han-tyumi/dotfiles/main/
 Per-machine setup:
 - **GitHub token**: run `gh auth login` after bootstrap — it stores an OAuth token
   in `~/.config/gh/hosts.yml` (0600). No token lives in the repo or a standing env
-  var, and nothing copies it into a second file: `~/.local/bin/github-mcp-server`
-  wraps the real binary to read the token from `gh` at launch, so the MCP
-  registration in `~/.claude.json` stays credential-free and a re-login is picked
-  up without re-registering
+  var. Repo work goes through the `gh` CLI (the github MCP server was retired:
+  every tool it had has a `gh` equivalent, and `gh` calls are visible to the
+  shell-inspecting guard hooks)
 - **private overlays**: a fresh SSH key per machine — `bootstrap.sh` offers to
   generate them and prints the public keys to register with the matching GitHub
   account; keys are referenced by name, so per-machine material works without
@@ -278,9 +278,7 @@ provisioned with **winget** and **mise** instead of Nix.
   Windows PowerShell 5.1 to guard the first-apply-safety invariant. `windows-sandbox.wsb`
   is the throwaway-VM smoke test (counterpart to the Mac tart recipe).
 
-Remaining parity gaps (on-device follow-ups): the github MCP server is intentionally
-not registered on Windows — `gh` (winget) covers the CLI flows instead, and
-`github-mcp-server` has no clean winget package. Zed's primary buffer/UI font is
+Remaining parity gaps (on-device follow-ups): Zed's primary buffer/UI font is
 PragmataPro (paid); machines without it fall back to the bundled Iosevka Nerd Font
 Mono, a close condensed coding face. Zed default-app / file associations are manual
 (prefer the MIT/no-WMIC PS-SFTA over SetUserFTA); neither shell wires fzf key bindings

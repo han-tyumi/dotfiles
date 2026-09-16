@@ -130,7 +130,6 @@
       pkg-config
       shellcheck
       shfmt
-      github-mcp-server
       wget
       yubikey-manager
     ];
