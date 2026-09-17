@@ -25,7 +25,8 @@
         { "PackageIdentifier": "Anthropic.ClaudeCode" },
         { "PackageIdentifier": "Vivaldi.Vivaldi" },
         { "PackageIdentifier": "Bitwarden.Bitwarden" },
-        { "PackageIdentifier": "kangyu-california.PersistentWindows" }
+        { "PackageIdentifier": "kangyu-california.PersistentWindows" },
+        { "PackageIdentifier": "Blizzard.BattleNet" }
       ],
       "SourceDetails": {
         "Argument": "https://cdn.winget.microsoft.com/cache",
