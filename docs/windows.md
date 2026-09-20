@@ -94,6 +94,122 @@ handheld can be mid-game. GPU (AMD Adrenalin / Intel Graphics), the OEM driver p
 and BIOS/EC firmware are hand-installed; freeze a known-good GPU driver and move off
 it on purpose.
 
+## Games in Steam
+
+Launchers hand a game off to a process Steam never started, so a plain non-Steam
+shortcut reports "Playing" for a few seconds and then stops. `game-launch.ps1` stands
+in for it: start the game, find its process, block until it exits. Steam reports the
+shortcut as running for exactly as long as that script lives, which is what makes the
+game show on the friends list.
+
+Three files in `~/.config/windows/`, all owned by the `personal` layer:
+
+| File | Role |
+|---|---|
+| `games.json` | registry — launchers, and the games that use them |
+| `game-launch.ps1` | the runner (needs PowerShell 7) |
+| `game-launch.vbs` | wscript front so no console flashes; takes the game key |
+
+Steam shortcut fields, where `<key>` is a `games` key from the registry:
+
+| Field | Value |
+|---|---|
+| Target | `C:\Windows\System32\wscript.exe` |
+| Start In | `C:\Users\<you>\.config\windows` |
+| Launch Options | `"C:\Users\<you>\.config\windows\game-launch.vbs" <key>` |
+
+Every game reuses that one script pair and differs only in the trailing key. Progress
+goes to `%LOCALAPPDATA%\game-launch.log`, which is the first place to look when a
+launch does nothing.
+
+### Strategies
+
+A launcher declares how to get past its Play button:
+
+- **`uri`** — the launcher handles a launch URI itself; nothing else needed.
+- **`cdp`** — drive the launcher's embedded browser, for clients whose URI only
+  navigates. Battle.net needs this.
+- **`direct`** — run the game executable, for launcher-less installs.
+
+Only `cdp` has been exercised. `uri` and `direct` are written but unproven.
+
+### Why Battle.net needs `cdp`
+
+`battlenet://<uid>` only opens the client on that game, and `--exec="launch_uid <uid>"`
+selects the product without pressing Play. Nor can the launcher's credentials be
+reused: Battle.net mints a single-use token per Play press and writes it to
+`HKCU\Software\Blizzard Entertainment\Battle.net\Launch Options\WoW`, and replaying a
+spent one gets an external-auth challenge the client cannot answer. Pressing Play is
+the only way in.
+
+The client is a CEF app that leaves remote debugging unset, so starting it with
+`--remote-debugging-port` exposes a DevTools endpoint on the game list page. The
+runner clicks `button.play-btn.play-action` over that protocol. Selecting by class
+rather than screen coordinates keeps it independent of DPI scaling, window position
+and layout: a promo takeover painted over the button does not block a dispatched
+click, and the page is never marked inert.
+
+Two guards before it clicks — the button label must read exactly `Play`, so a pending
+patch showing `Update` is never triggered, and where `productMatch` is set the product
+selector must contain it.
+
+While the client runs under this, its DOM is reachable by any local process on
+127.0.0.1:9222. Loopback-only and only while the client is open, but it is a real
+widening of that surface.
+
+### Adding a Battle.net game
+
+Read the uid off the machine rather than trusting a list: the `Product` column of
+`.build.info` in the install folder, or the `Games` keys in
+`%APPDATA%\Battle.net\Battle.net.config`.
+
+```json
+"overwatch": { "launcher": "battlenet", "id": "pro", "process": "Overwatch" }
+```
+
+`process` is the name without `.exe`. `productMatch` is optional and belongs only on
+games whose client shows a version dropdown — set it where there is no selector and
+the guard can never pass.
+
+| Game | uid | Process | Selector |
+|---|---|---|---|
+| WoW retail | `wow` | `Wow` | version |
+| WoW Classic Era | `wow_classic_era` | `WowClassic` | version |
+| WoW Forever beta | `wow_classic_beta` | `WowB` | version |
+| Overwatch 2 | `pro` | `Overwatch` | none |
+| Diablo IV | `fenris` | `Diablo IV` | none |
+| Diablo II: Resurrected | `osi` | `D2R` | none |
+| Hearthstone | `hsb` | `Hearthstone` | none |
+| Heroes of the Storm | `hero` | `HeroesOfTheStorm_x64` | none |
+| StarCraft II | `s2` | `SC2_x64` | region — unsupported |
+
+StarCraft II and Heroes of the Storm start a switcher that exits once the real binary
+is up. Because the runner polls by name instead of waiting on what it started, that
+handoff is invisible — point `process` at the final binary.
+
+### Known limits
+
+- **Region pickers cannot be automated.** StarCraft II, Diablo III and Warcraft III
+  put a region dropdown over Play with no way past it unattended.
+- **The selectors are remote-served.** `play-btn` and friends come from
+  `content-ui.battle.net` and appear in no installed file, so they can change with no
+  client update. That is why they sit in `games.json` — a break is a config edit, not
+  a code change.
+- **Executable names are shared.** `WowClassic.exe` covers four WoW products and
+  `WowB.exe` two, so the process name alone cannot tell flavors apart when several are
+  installed.
+- **Call of Duty is a poor fit**: `cod.exe` is a shared shell across several titles.
+- **A uid can expire.** `wow_classic_beta` belongs to the Forever beta, which ends
+  2026-10-21; re-read the uid after the 2026-11-04 release.
+
+### Shortcuts do not travel
+
+Steam Cloud syncs neither `shortcuts.vdf` nor the `config/grid/` artwork beside it;
+both are per-machine. `chezmoi apply` brings the scripts, but each machine needs its
+Steam shortcut added by hand. Non-Steam games appearing on another device is Remote
+Play advertising from a running host rather than sync — they vanish when that host's
+Steam closes.
+
 ## Deferred
 
 - **O&O ShutUp10** — granular per-app privacy (camera/mic/location defaults,
