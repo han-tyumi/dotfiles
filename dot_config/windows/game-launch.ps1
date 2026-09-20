@@ -126,32 +126,17 @@ function Build-ClickExpression {
 
     $template = @'
 (() => {
-  const isVisible = (node) => {
-    const style = getComputedStyle(node);
-    return node.offsetParent !== null && style.visibility !== "hidden" && style.opacity !== "0";
-  };
-  const dialogs = Array.from(document.querySelectorAll("[role=dialog], [role=alertdialog], dialog[open]")).filter(isVisible);
-  let dismissed = 0;
-  for (const dialog of dialogs) {
-    const closeButton = dialog.querySelector('button[aria-label*="close" i], button[class*="close" i], [role=button][class*="close" i]');
-    if (closeButton) {
-      closeButton.click();
-      dismissed += 1;
-    }
-  }
-  if (dialogs.length > dismissed) {
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", keyCode: 27, which: 27, bubbles: true }));
-  }
-
+  // A dispatched click lands on the button even while a promo takeover paints
+  // over it, so the launcher's modals need no handling of their own.
   const selector = document.querySelector("__PRODUCT_SELECTOR__");
   const playButton = document.querySelector("__PLAY_SELECTOR__");
-  if (!playButton) return JSON.stringify({ ok: false, reason: "not-ready", dialogs: dialogs.length });
+  if (!playButton) return JSON.stringify({ ok: false, reason: "not-ready" });
   const label = (playButton.innerText || "").trim();
   const product = selector ? (selector.innerText || "").trim() : "";
   if (!/__PLAY_LABEL__/i.test(label)) return JSON.stringify({ ok: false, reason: "not-playable", label, product });
   if ("__PRODUCT_MATCH__".length && !product.includes("__PRODUCT_MATCH__")) return JSON.stringify({ ok: false, reason: "wrong-product", label, product });
   playButton.click();
-  return JSON.stringify({ ok: true, label, product, dialogs: dialogs.length });
+  return JSON.stringify({ ok: true, label, product });
 })()
 '@
 
