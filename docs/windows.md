@@ -131,7 +131,34 @@ A launcher declares how to get past its Play button:
   navigates. Battle.net needs this.
 - **`direct`** — run the game executable, for launcher-less installs.
 
-Only `cdp` has been exercised. `uri` and `direct` are written but unproven.
+Only `cdp` has been exercised. `uri` and `direct` are written but unproven — nothing
+on this machine uses them.
+
+Finding the game once it starts is shared by all three, and is the part that has to
+be right: the runner records the time, issues the launch, then polls for a process
+whose image sits under the game's `installDir` and that started after the stamp. That
+beats matching on the executable name, which is ambiguous (`WowClassic.exe` is four
+products) and wrong whenever a launcher hands off through a stub that exits — a
+switcher for StarCraft II and Heroes of the Storm, an anti-cheat shim for many Epic
+titles, `PlayGTAV.exe` for Rockstar. Point `installDir` at the game folder and the
+hops stop mattering. The name remains a cheap prefilter and both fields are optional,
+but a game with neither cannot be found.
+
+Notes for the launchers not yet configured here, none of them verified on a machine:
+
+| Launcher | Approach |
+|---|---|
+| GOG | `direct` — DRM-free; going through Galaxy is discouraged |
+| Ubisoft | `direct` is better than `uri`; games start `upc.exe` themselves, and the Steam overlay is reported to break when launched through the client |
+| Epic | `uri`, but the short `apps/<AppName>` form was removed — current is `com.epicgames.launcher://apps/<Namespace>%3A<CatalogId>%3A<AppName>?action=launch&silent=true`, with the ids read from the `.item` manifests in `%PROGRAMDATA%\Epic\EpicGamesLauncher\Data\Manifests` |
+| Riot | `RiotClientServices.exe --launch-product=<x> --launch-patchline=live`; note a League *match* is a different process from the client, so track the game directory |
+| Rockstar | No documented URI or CLI for launching a specific title; the worst fit |
+
+Every one of these clients is CEF, so `cdp` is in principle available for all of them,
+but the flag only takes effect at a cold start — reaching it means killing a client
+that is already open. Treat it as the last resort it is for Battle.net. Riot shipped
+such a port and then removed it in a patch, which is the standing risk: a vendor can
+withdraw that surface, and the selectors are remote-served anyway.
 
 ### Why Battle.net needs `cdp`
 
@@ -164,12 +191,18 @@ Read the uid off the machine rather than trusting a list: the `Product` column o
 `%APPDATA%\Battle.net\Battle.net.config`.
 
 ```json
-"overwatch": { "launcher": "battlenet", "id": "pro", "process": "Overwatch" }
+"overwatch": {
+  "launcher": "battlenet",
+  "id": "pro",
+  "process": "Overwatch",
+  "installDir": "D:\\Overwatch"
+}
 ```
 
-`process` is the name without `.exe`. `productMatch` is optional and belongs only on
-games whose client shows a version dropdown — set it where there is no selector and
-the guard can never pass.
+`process` is the name without `.exe`. `installDir` is what makes the match reliable —
+give it whenever you know the folder. `productMatch` is optional and belongs only on
+games whose client shows a version dropdown; setting it where there is no selector
+leaves a guard that can never pass.
 
 | Game | uid | Process | Selector |
 |---|---|---|---|
