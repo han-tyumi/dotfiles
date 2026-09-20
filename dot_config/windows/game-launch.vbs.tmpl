@@ -1,0 +1,19 @@
+' Fronts the runner so no console window appears, and blocks until it returns so
+' Steam keeps reporting the game as running. Takes the games.json key as its one
+' argument, which is what a Steam shortcut passes in Launch Options.
+'
+' PowerShell 7 is required: the .NET Framework client pools a keep-alive
+' connection to a launcher's debug port, and a DevTools server cannot upgrade a
+' reused connection to a websocket.
+Option Explicit
+
+Dim shell, game
+
+If WScript.Arguments.Count < 1 Then
+    WScript.Echo "usage: game-launch.vbs <game-key>"
+    WScript.Quit 1
+End If
+
+game = WScript.Arguments(0)
+Set shell = CreateObject("WScript.Shell")
+shell.Run "pwsh.exe -NoProfile -File ""{{ .chezmoi.homeDir | replace "/" "\\" }}\.config\windows\game-launch.ps1"" -Game """ & game & """", 0, True

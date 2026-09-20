@@ -1,0 +1,27 @@
+{
+  "launchers": {
+    "battlenet": {
+      "strategy": "cdp",
+      "path": "C:\\Program Files\\Battle.net\\Battle.net.exe",
+      "processPattern": "Battle.net*",
+      "alsoStop": ["Agent"],
+      "debuggingPort": 9222,
+      "startArgs": ["--remote-debugging-port={port}", "--exec=\"launch_uid {id}\""],
+      "targetUrlPattern": "resources://home*",
+      "playSelector": "button.play-btn.play-action",
+      "productSelector": ".play-selector-button",
+      "playLabelPattern": "^play$"
+    },
+    "standalone": {
+      "strategy": "direct"
+    }
+  },
+  "games": {
+    "wow-forever": {
+      "launcher": "battlenet",
+      "id": "wow_classic_beta",
+      "productMatch": "Forever",
+      "process": "WowB"
+    }
+  }
+}
