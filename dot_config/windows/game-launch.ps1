@@ -47,10 +47,39 @@ function Expand-Placeholder {
     return $Text
 }
 
-function Get-GameProcess {
-    param([string]$Name)
+function Find-GameProcess {
+    param(
+        [string]$Name,
+        [string]$InstallDir,
+        [datetime]$StartedAfter = [datetime]::MinValue
+    )
 
-    Get-Process -Name $Name -ErrorAction SilentlyContinue | Select-Object -First 1
+    # Matching on the install directory rather than the executable name survives
+    # the stubs that launchers hand off through, and tells apart products that
+    # ship the same binary name. The start time rules out an instance that was
+    # already running before this launch.
+    $candidates = if ($Name) {
+        Get-Process -Name $Name -ErrorAction SilentlyContinue
+    } else {
+        Get-Process -ErrorAction SilentlyContinue
+    }
+
+    foreach ($candidate in $candidates) {
+        try {
+            if ($candidate.StartTime -lt $StartedAfter) { continue }
+            if ($InstallDir) {
+                $imagePath = $candidate.Path
+                if (-not $imagePath) { continue }
+                if (-not $imagePath.StartsWith($InstallDir, [System.StringComparison]::OrdinalIgnoreCase)) { continue }
+            }
+            return $candidate
+        } catch {
+
+            # A protected process denies access to its path and start time.
+            continue
+        }
+    }
+    return $null
 }
 
 function Get-CdpTarget {
@@ -172,9 +201,10 @@ Write-Log "--- start (launcher $($entry.launcher), strategy $($launcher.strategy
 
 # Steam reports the shortcut as running for exactly as long as this script lives,
 # so everything below exists to keep it alive until the game itself exits.
-$gameProcess = Get-GameProcess -Name $entry.process
+$gameProcess = Find-GameProcess -Name $entry.process -InstallDir $entry.installDir
 
 if (-not $gameProcess) {
+    $launchStamp = Get-Date
     switch ($launcher.strategy) {
 
         'uri' {
@@ -242,7 +272,7 @@ if (-not $gameProcess) {
     $deadline = (Get-Date).Add($gameStartTimeout)
     while (-not $gameProcess -and (Get-Date) -lt $deadline) {
         Start-Sleep -Seconds 2
-        $gameProcess = Get-GameProcess -Name $entry.process
+        $gameProcess = Find-GameProcess -Name $entry.process -InstallDir $entry.installDir -StartedAfter $launchStamp
     }
 }
 

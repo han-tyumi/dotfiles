@@ -21,7 +21,8 @@
       "launcher": "battlenet",
       "id": "wow_classic_beta",
       "productMatch": "Forever",
-      "process": "WowB"
+      "process": "WowB",
+      "installDir": "D:\\World of Warcraft\\_classic_beta_"
     }
   }
 }
