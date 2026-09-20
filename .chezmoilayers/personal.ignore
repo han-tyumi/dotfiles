@@ -2,3 +2,5 @@
 roc
 v
 .chezmoiscripts/personal/**
+.config/windows/wow-forever.ps1
+.config/windows/wow-forever.vbs
