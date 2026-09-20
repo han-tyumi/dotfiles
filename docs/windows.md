@@ -136,13 +136,21 @@ on this machine uses them.
 
 Finding the game once it starts is shared by all three, and is the part that has to
 be right: the runner records the time, issues the launch, then polls for a process
-whose image sits under the game's `installDir` and that started after the stamp. That
-beats matching on the executable name, which is ambiguous (`WowClassic.exe` is four
-products) and wrong whenever a launcher hands off through a stub that exits — a
+whose image sits under the game's install directory and that started after the stamp.
+That beats matching on the executable name, which is ambiguous (`WowClassic.exe` is
+four products) and wrong whenever a launcher hands off through a stub that exits — a
 switcher for StarCraft II and Heroes of the Storm, an anti-cheat shim for many Epic
-titles, `PlayGTAV.exe` for Rockstar. Point `installDir` at the game folder and the
-hops stop mattering. The name remains a cheap prefilter and both fields are optional,
-but a game with neither cannot be found.
+titles, `PlayGTAV.exe` for Rockstar.
+
+The install directory is **discovered, not configured**. A launcher entry points
+`installDb` at the launcher's own database — `product.db` for Battle.net — and the
+runner reads the path back out of it for the uid in question. That keeps the registry
+free of per-machine paths, and means a drive letter that differs on another machine,
+or a folder that moves at a release, needs no edit. A game entry may still set
+`installDir` to override, and if neither resolves the runner falls back to matching on
+the name alone. The log line records which happened, and it is worth checking: a
+failed lookup is invisible from the outside, because the fallback still launches the
+game.
 
 Notes for the launchers not yet configured here, none of them verified on a machine:
 
@@ -191,18 +199,14 @@ Read the uid off the machine rather than trusting a list: the `Product` column o
 `%APPDATA%\Battle.net\Battle.net.config`.
 
 ```json
-"overwatch": {
-  "launcher": "battlenet",
-  "id": "pro",
-  "process": "Overwatch",
-  "installDir": "D:\\Overwatch"
-}
+"overwatch": { "launcher": "battlenet", "id": "pro", "process": "Overwatch" }
 ```
 
-`process` is the name without `.exe`. `installDir` is what makes the match reliable —
-give it whenever you know the folder. `productMatch` is optional and belongs only on
-games whose client shows a version dropdown; setting it where there is no selector
-leaves a guard that can never pass.
+`process` is the name without `.exe`. The install directory is looked up from the uid,
+so it does not belong here — set `installDir` only to override a lookup that comes back
+wrong. `productMatch` is optional and belongs only on games whose client shows a
+version dropdown; setting it where there is no selector leaves a guard that can never
+pass.
 
 | Game | uid | Process | Selector |
 |---|---|---|---|

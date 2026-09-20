@@ -82,6 +82,38 @@ function Find-GameProcess {
     return $null
 }
 
+function Resolve-InstallDir {
+    param([object]$Launcher, [object]$Entry)
+
+    if ($Entry.installDir) { return $Entry.installDir }
+    if (-not $Launcher.installDb -or -not (Test-Path $Launcher.installDb)) { return $null }
+
+    # The product database stores each uid beside the root it was unpacked into,
+    # followed by a flavor subfolder for products that have one. Reading it keeps
+    # the path off the machine-independent registry entry, and keeps it correct
+    # when a product moves.
+    $text = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($Launcher.installDb))
+    $uidMatch = [regex]::Match($text, [regex]::Escape($Entry.id))
+    if (-not $uidMatch.Success) { return $null }
+
+    $window = $text.Substring($uidMatch.Index, [Math]::Min(400, $text.Length - $uidMatch.Index))
+    # Fields are separated by control bytes rather than terminated by nulls, so
+    # the path runs to the first unprintable character.
+    $rootMatch = [regex]::Match($window, '[A-Za-z]:[\\/][\x20-\x7E]{1,200}')
+    if (-not $rootMatch.Success) { return $null }
+
+    $root = ($rootMatch.Value -replace '/', '\').TrimEnd('\')
+    $tail = $window.Substring($rootMatch.Index + $rootMatch.Length)
+    $flavorMatch = [regex]::Match($tail, '_[a-z0-9]+[a-z0-9_]*_')
+
+    if ($flavorMatch.Success) {
+        $withFlavor = Join-Path $root $flavorMatch.Value
+        if (Test-Path $withFlavor) { return $withFlavor }
+    }
+    if (Test-Path $root) { return $root }
+    return $null
+}
+
 function Get-CdpTarget {
     param([int]$Port, [string]$UrlPattern)
 
@@ -199,9 +231,12 @@ $placeholders = @{ id = $entry.id; port = $launcher.debuggingPort }
 
 Write-Log "--- start (launcher $($entry.launcher), strategy $($launcher.strategy)) ---"
 
+$installDir = Resolve-InstallDir -Launcher $launcher -Entry $entry
+Write-Log "install dir: $(if ($installDir) { $installDir } else { 'unresolved, matching on name alone' })"
+
 # Steam reports the shortcut as running for exactly as long as this script lives,
 # so everything below exists to keep it alive until the game itself exits.
-$gameProcess = Find-GameProcess -Name $entry.process -InstallDir $entry.installDir
+$gameProcess = Find-GameProcess -Name $entry.process -InstallDir $installDir
 
 if (-not $gameProcess) {
     $launchStamp = Get-Date
@@ -272,7 +307,7 @@ if (-not $gameProcess) {
     $deadline = (Get-Date).Add($gameStartTimeout)
     while (-not $gameProcess -and (Get-Date) -lt $deadline) {
         Start-Sleep -Seconds 2
-        $gameProcess = Find-GameProcess -Name $entry.process -InstallDir $entry.installDir -StartedAfter $launchStamp
+        $gameProcess = Find-GameProcess -Name $entry.process -InstallDir $installDir -StartedAfter $launchStamp
     }
 }
 

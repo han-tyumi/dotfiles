@@ -6,6 +6,7 @@
       "processPattern": "Battle.net*",
       "alsoStop": ["Agent"],
       "debuggingPort": 9222,
+      "installDb": "C:\\ProgramData\\Battle.net\\Agent\\product.db",
       "startArgs": ["--remote-debugging-port={port}", "--exec=\"launch_uid {id}\""],
       "targetUrlPattern": "resources://home*",
       "playSelector": "button.play-btn.play-action",
@@ -21,8 +22,7 @@
       "launcher": "battlenet",
       "id": "wow_classic_beta",
       "productMatch": "Forever",
-      "process": "WowB",
-      "installDir": "D:\\World of Warcraft\\_classic_beta_"
+      "process": "WowB"
     }
   }
 }
