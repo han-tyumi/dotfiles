@@ -1,7 +1,0 @@
-' Fronts the wrapper so no console window appears, and blocks until it returns so
-' Steam keeps reporting the game as running. PowerShell 7 is required: the .NET
-' Framework client pools a keep-alive connection to the debug port, and the
-' DevTools server cannot upgrade a reused connection to a websocket.
-Dim shell
-Set shell = CreateObject("WScript.Shell")
-shell.Run "pwsh.exe -NoProfile -File ""{{ .chezmoi.homeDir | replace "/" "\\" }}\.config\windows\wow-forever.ps1""", 0, True

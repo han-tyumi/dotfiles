@@ -2,8 +2,6 @@
 roc
 v
 .chezmoiscripts/personal/**
-.config/windows/wow-forever.ps1
-.config/windows/wow-forever.vbs
 .config/windows/game-launch.ps1
 .config/windows/game-launch.vbs
 .config/windows/games.json
