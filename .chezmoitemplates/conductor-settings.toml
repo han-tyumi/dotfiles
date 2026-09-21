@@ -1,0 +1,19 @@
+"$schema" = "https://conductor.build/schemas/settings.schema.json"
+claude_provider = "custom"
+opencode_executable_path = "{{ .chezmoi.homeDir }}/.local/share/mise/shims/opencode"
+
+[git]
+branch_prefix_type = "github_username"
+
+[models]
+default = "sonnet-5-1m"
+review = "sonnet-5-1m"
+
+[models.claude_code]
+default_effort_level = "high"
+personality = "concise"
+review_effort_level = "high"
+
+[models.codex]
+default_thinking_level = "high"
+review_thinking_level = "high"

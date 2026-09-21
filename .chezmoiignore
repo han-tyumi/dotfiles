@@ -41,6 +41,8 @@ Documents
 # The OpenCode plugin shells out to the PreToolUse hook below, which is itself
 # darwin-only.
 .config/opencode
+# Conductor.app itself is Mac-only.
+.conductor
 # .claude applies on Windows too (settings + CLAUDE.md + portable skills); only
 # these Mac-only pieces are skipped: the bash statusline, the PreToolUse hooks
 # (wired into settings.json only on darwin), the agent-browser symlink into

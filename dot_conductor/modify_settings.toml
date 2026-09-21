@@ -1,0 +1,17 @@
+# chezmoi:modify-template
+{{- /* Merge the managed Conductor settings over the live file so Conductor's own
+       writes (model loadout selections, discovery caches, anything else it
+       persists into this file) survive, while the managed config wins for the
+       keys it defines. This runs in-process (Go template), so it works without
+       an external interpreter. The managed config lives in
+       .chezmoitemplates/conductor-settings.toml.
+
+       If the live file is ever corrupt (hand-edit, partial write), fromToml
+       errors and apply stops on this target; recover with:
+         rm ~/.conductor/settings.toml && chezmoi apply
+   */ -}}
+{{- $live := dict -}}
+{{- $in := trimPrefix "﻿" .chezmoi.stdin -}}
+{{- if trim $in -}}{{- $live = $in | fromToml -}}{{- end -}}
+{{- $managed := includeTemplate "conductor-settings.toml" . | fromToml -}}
+{{- mergeOverwrite $live $managed | toToml -}}

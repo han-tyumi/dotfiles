@@ -2,6 +2,7 @@
 bitwarden = "latest"
 ghq = "latest"
 node = "latest"
+opencode = "latest"
 usage = "latest"
 
 # Runs pipx: backend tools via uvx, so no pipx install is needed.
