@@ -5,6 +5,7 @@
       "path": "C:\\Program Files\\Battle.net\\Battle.net.exe",
       "processPattern": "Battle.net*",
       "alsoStop": ["Agent"],
+      "stopAfterExit": true,
       "debuggingPort": 9222,
       "installDb": "C:\\ProgramData\\Battle.net\\Agent\\product.db",
       "startArgs": ["--remote-debugging-port={port}", "--exec=\"launch_uid {id}\""],

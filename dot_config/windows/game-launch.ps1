@@ -82,6 +82,15 @@ function Find-GameProcess {
     return $null
 }
 
+function Start-DetachedProcess {
+    param([string]$Path)
+
+    # Win32_Process.Create starts the process under the WMI provider host rather
+    # than under this script, so it lands outside the process tree Steam is
+    # watching and cannot keep the shortcut reading as running after we exit.
+    Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = "`"$Path`"" } | Out-Null
+}
+
 function Resolve-InstallDir {
     param([object]$Launcher, [object]$Entry)
 
@@ -237,6 +246,8 @@ Write-Log "install dir: $(if ($installDir) { $installDir } else { 'unresolved, m
 # Steam reports the shortcut as running for exactly as long as this script lives,
 # so everything below exists to keep it alive until the game itself exits.
 $gameProcess = Find-GameProcess -Name $entry.process -InstallDir $installDir
+$startedLauncher = $false
+$launcherWasRunning = $false
 
 if (-not $gameProcess) {
     $launchStamp = Get-Date
@@ -261,6 +272,7 @@ if (-not $gameProcess) {
             # The launcher only exposes its DevTools endpoint when started with
             # the port flag, so an instance started any other way is replaced.
             $running = Get-Process -Name $launcher.processPattern -ErrorAction SilentlyContinue
+            $launcherWasRunning = [bool]$running
             if ($running -and -not (Get-CdpTarget -Port $port -UrlPattern $pattern)) {
                 Write-Log 'launcher running without the debug port; restarting it'
                 $running | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -274,6 +286,7 @@ if (-not $gameProcess) {
                 $arguments = @($launcher.startArgs | ForEach-Object { Expand-Placeholder -Text $_ -Values $placeholders })
                 Write-Log "starting launcher: $($arguments -join ' ')"
                 Start-Process $launcher.path -ArgumentList $arguments
+                $startedLauncher = $true
             }
 
             $clickExpression = Build-ClickExpression -Launcher $launcher -ProductMatch $entry.productMatch
@@ -317,4 +330,24 @@ Write-Log "game process: $(if ($gameProcess) { 'pid ' + $gameProcess.Id } else {
 # script, so there is no child process to wait on.
 if ($gameProcess) {
     $gameProcess.WaitForExit()
+}
+
+# The launcher started here has its debug port open and sits in the process tree
+# Steam watches, so left running it both widens that port's exposure past the
+# session and keeps the shortcut reading as running after the game has closed.
+# It is always closed. If a launcher was already open when the run began, one is
+# reopened as it was found — without the port, and outside Steam's tree. A
+# launcher that has to stay resident opts out entirely.
+if ($startedLauncher -and $launcher.stopAfterExit) {
+    Write-Log 'closing the launcher this run started'
+    Get-Process -Name $launcher.processPattern -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    foreach ($companion in $launcher.alsoStop) {
+        Get-Process -Name $companion -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    }
+
+    if ($launcherWasRunning) {
+        Start-Sleep -Seconds 3
+        Write-Log 'reopening the launcher as it was found, without the debug port'
+        Start-DetachedProcess -Path $launcher.path
+    }
 }

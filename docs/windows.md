@@ -188,9 +188,25 @@ Two guards before it clicks — the button label must read exactly `Play`, so a 
 patch showing `Update` is never triggered, and where `productMatch` is set the product
 selector must contain it.
 
-While the client runs under this, its DOM is reachable by any local process on
-127.0.0.1:9222. Loopback-only and only while the client is open, but it is a real
-widening of that surface.
+While the game runs, the client's DOM is reachable by any local process on
+127.0.0.1:9222. Loopback-only and bounded to the session, but it is a real widening of
+that surface.
+
+The port can only be attached at a cold start, which shapes what happens to the
+client around a launch:
+
+| Before the shortcut | During | After the game exits |
+|---|---|---|
+| Battle.net closed | started with the port | closed |
+| Battle.net open | **force-restarted** with the port | reopened as it was, without the port |
+
+The instance carrying the port is always closed at exit, for two reasons: the port
+should not outlive the session, and any process this script starts lands in the tree
+Steam watches — left running, it keeps the shortcut reading as "running" after the game
+has closed. The reopened client is started through WMI's `Win32_Process.Create`, which
+parents it under the WMI host rather than under the script, so it sits outside Steam's
+tree. The restart on the way in is the one visible cost: a download in progress is
+interrupted, though Battle.net resumes it on relaunch.
 
 ### Adding a Battle.net game
 
