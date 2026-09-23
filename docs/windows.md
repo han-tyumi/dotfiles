@@ -37,7 +37,7 @@ working tree (mid-edit) skips the pull; a dirty submodule does not.
 
 | Trigger | Scripts |
 |---|---|
-| `run_onchange` (re-runs when *its content* changes) | `10-winget` (install apps) · `20-mise` (runtimes) · `30-nushell` (shell activations) · `35-registry-tweaks` (dev/privacy registry — self-elevates for the HKLM bits) |
+| `run_onchange` (re-runs when *its content* changes) | `10-winget` (install apps) · `20-mise` (runtimes, and mise's shims on the User PATH) · `30-nushell` (shell activations) · `35-registry-tweaks` (dev/privacy registry — self-elevates for the HKLM bits) |
 | `run_once` (once, then recorded) | `60-nerdfont` · `70-psfzf` |
 
 `35-registry-tweaks` pops a single UAC prompt, but only when its HKLM keys have

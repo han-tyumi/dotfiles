@@ -34,4 +34,27 @@ if (-not $mise) {
 if ($LASTEXITCODE -ne 0) {
   Write-Warning "mise install reported errors - a declared runtime may lack a Windows build. Check the output above."
 }
+
+# Put mise's shims on the User PATH for the processes that never run a shell
+# profile's `mise activate`: apps started from the Start menu, and the hooks and
+# MCP servers they spawn (the Claude desktop app's run a bare `bun`). Written
+# through the registry so the value stays REG_EXPAND_SZ with its %VAR% entries
+# unexpanded, which [Environment]::SetEnvironmentVariable would flatten.
+# Appended, so an activated shell's own ordering still wins.
+$shims = '%LOCALAPPDATA%\mise\shims'
+$environmentKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true)
+$userPath = [string]$environmentKey.GetValue('Path', '', 'DoNotExpandEnvironmentNames')
+$entries = @($userPath -split ';' | Where-Object { $_ -ne '' })
+$expandedShims = [Environment]::ExpandEnvironmentVariables($shims)
+$present = $entries | Where-Object { [Environment]::ExpandEnvironmentVariables($_).TrimEnd('\') -ieq $expandedShims }
+if (-not $present) {
+  $environmentKey.SetValue('Path', (($entries + $shims) -join ';'), [Microsoft.Win32.RegistryValueKind]::ExpandString)
+
+  # Tell Explorer the environment changed, so an app it starts next sees the new
+  # PATH without a sign-out.
+  Add-Type -Namespace Win32 -Name EnvironmentBroadcast -MemberDefinition '[DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint msg, UIntPtr wParam, string lParam, uint flags, uint timeout, out UIntPtr result);'
+  $broadcastResult = [UIntPtr]::Zero
+  [void][Win32.EnvironmentBroadcast]::SendMessageTimeout([IntPtr]0xffff, 0x1A, [UIntPtr]::Zero, 'Environment', 2, 5000, [ref]$broadcastResult)
+}
+$environmentKey.Close()
 exit 0

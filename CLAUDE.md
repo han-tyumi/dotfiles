@@ -248,7 +248,8 @@ provisioned with **winget** and **mise** instead of Nix.
   `dot_config/winget/packages.json` (and verifies each declared package installed);
   `20-mise-install` runs `mise install` against the shared `dot_config/mise/config.toml`
   (the personal layer's crystal/erlang/elixir are OS-gated out of `conf.d/personal.toml`
-  on Windows); `30-nushell-activations` generates nushell's mise/starship/zoxide
+  on Windows) and appends `%LOCALAPPDATA%\mise\shims` to the User PATH, for apps that
+  never run `mise activate` (the Claude desktop app's hooks and MCP servers); `30-nushell-activations` generates nushell's mise/starship/zoxide
   modules. `run_once_after_60-nerdfont.ps1` installs Iosevka Nerd Font (Mono)
   per-user; it fails loudly so a transient error re-fires on the next apply instead
   of recording the run_once done with nothing done.
