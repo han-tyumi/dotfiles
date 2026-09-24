@@ -147,6 +147,30 @@ in
       }
     '';
 
+    # Pi's default theme, shared because darwin.nix installs Pi on every machine.
+    # Pi rewrites settings.json itself, so a symlink would be dropped on its first
+    # write — jq-merge instead (only `theme` is set here; Pi's own keys and a layer's
+    # provider/model all survive). It must win a work machine's settings-merge, so
+    # the work overlay sequences its workPiSettings before this one (entryBefore);
+    # a work-only rebuild thus can't clobber the theme. On machines without the work
+    # overlay this is the only settings.json writer, and the absent dependency is a
+    # no-op.
+    activation.sharedPiTheme = lib.hm.dag.entryBefore [ "workPiSettings" ] ''
+      themeJson="${./pi-theme-mocha.json}"
+      liveSettings="${config.home.homeDirectory}/.pi/agent/settings.json"
+      if [ -f "$themeJson" ]; then
+        mkdir -p "$(dirname "$liveSettings")"
+        [ -s "$liveSettings" ] || printf '{}' > "$liveSettings"
+        if ${pkgs.jq}/bin/jq -s --arg t catppuccin-mocha '.[0] * .[1] | .theme = $t' \
+            "$liveSettings" "$themeJson" > "$liveSettings.new"; then
+          mv "$liveSettings.new" "$liveSettings"
+        else
+          rm -f "$liveSettings.new"
+          echo "sharedPiTheme: $liveSettings is not valid JSON, left unchanged" >&2
+        fi
+      fi
+    '';
+
     enableNixpkgsReleaseCheck = false;
 
     # home-manager renders shellAliases into config.nu, which nushell parses before
@@ -171,6 +195,12 @@ in
       "/opt"
       "$HOME/.local/bin"
     ];
+
+    # Catppuccin Mocha palette. Pi ships only dark/light themes but auto-discovers
+    # user themes from <agent-dir>/themes/*.json, so this one file makes it selectable
+    # (sharedPiTheme names it in settings.json). Read-only for Pi — it writes
+    # settings.json, never a theme file — so a plain store symlink.
+    file.".pi/agent/themes/catppuccin-mocha.json".source = ./pi-theme-mocha.json;
 
     # mise's shims and ~/.local/bin (the nu CLIs — apploi, wt, onboard) have to
     # reach shells that read no rc file: a GUI orchestrator (Orca, Conductor) is a
