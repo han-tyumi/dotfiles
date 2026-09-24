@@ -150,12 +150,11 @@ in
     # Pi's default theme, shared because darwin.nix installs Pi on every machine.
     # Pi rewrites settings.json itself, so a symlink would be dropped on its first
     # write — jq-merge instead (only `theme` is set here; Pi's own keys and a layer's
-    # provider/model all survive). It must win a work machine's settings-merge, so
-    # the work overlay sequences its workPiSettings before this one (entryBefore);
-    # a work-only rebuild thus can't clobber the theme. On machines without the work
-    # overlay this is the only settings.json writer, and the absent dependency is a
-    # no-op.
-    activation.sharedPiTheme = lib.hm.dag.entryBefore [ "workPiSettings" ] ''
+    # provider/model all survive). It runs after the work overlay's workPiSettings,
+    # so the shared (personal) theme wins that one's keys on every switch — a work
+    # overlay rebuild can't clobber it. On machines without the work overlay this is
+    # the only settings.json writer, and the unresolvable name is a no-op edge.
+    activation.sharedPiTheme = lib.hm.dag.entryAfter [ "workPiSettings" ] ''
       themeJson="${./pi-theme-mocha.json}"
       liveSettings="${config.home.homeDirectory}/.pi/agent/settings.json"
       if [ -f "$themeJson" ]; then
