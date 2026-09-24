@@ -66,10 +66,18 @@
       "mas"
       "mise"
       "poppler"
+
+      # Coding-agent harnesses with a formula: the `pi` formula is Raspberry Pi's
+      # C compiler and the npm names (`@earendil-works/pi-coding-agent`,
+      # `@qwen-code/qwen-code`) differ from the CLIs. opencode is the exception —
+      # also a formula, but mise owns it (see dot_config/mise/config.toml).
+      "pi-coding-agent"
+      "qwen-code"
       "rtk"
       "zlib"
       "zstd"
     ];
+    taps = [ "stablyai/orca" ];
     casks = [
       "bitwarden"
       "docker-desktop"
@@ -82,9 +90,11 @@
       "postgres-app"
       "raycast"
 
-      # GUIs for orchestrating parallel Claude Code sessions in per-worktree
-      # workspaces with per-session diff review.
+      # GUIs for orchestrating parallel agent sessions in per-worktree
+      # workspaces with per-session diff review. Conductor drives Claude Code;
+      # Orca is vendor-neutral (any CLI agent) and comes from the tap above.
       "conductor"
+      "stablyai/orca/orca"
       "the-unarchiver"
       "vivaldi"
       "zed"
@@ -257,6 +267,23 @@
 
     extraInit = ''
       eval "$(/opt/homebrew/bin/brew shellenv)"
+    '' + ''
+      # bash/fish equivalent of home.nix's ~/.zshenv PATH entry (they have no
+      # zshenv): it lands in setEnvironment, sourced for every shell. The marker
+      # ~/.zshenv exports keeps a zsh that already ran it from doubling PATH.
+      # mise shims prepend so its node wins over nixpkgs'; ~/.local/bin too, since
+      # only zsh takes it last here. Inert where a directory is absent.
+      if [ -z "''${HM_ZSHENV_PATH_DONE:-}" ]; then
+        export HM_ZSHENV_PATH_DONE=1
+        case ":$PATH:" in
+          *":$HOME/.local/share/mise/shims:"*) ;;
+          *) export PATH="$HOME/.local/share/mise/shims:$PATH" ;;
+        esac
+        case ":$PATH:" in
+          *":$HOME/.local/bin:"*) ;;
+          *) export PATH="$HOME/.local/bin:$PATH" ;;
+        esac
+      fi
     '';
 
     shells = [

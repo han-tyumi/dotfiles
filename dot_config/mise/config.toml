@@ -2,7 +2,14 @@
 bitwarden = "latest"
 ghq = "latest"
 node = "latest"
+
+# Coding-agent harnesses. Homebrew owns the ones with a formula (pi-coding-agent,
+# qwen-code — see modules/shared/darwin.nix); mise owns the npm-only ones plus
+# opencode (Conductor points its editor at the mise shim, so mise must own it).
+# Orca discovers harnesses on PATH, so the shims go on a GUI launch's PATH too —
+# see the .zshenv entry in modules/shared/home.nix.
 opencode = "latest"
+
 usage = "latest"
 
 # Runs pipx: backend tools via uvx, so no pipx install is needed.
@@ -10,6 +17,15 @@ uv = "latest"
 
 "npm:@biomejs/biome" = "latest"
 "npm:codeburn" = "latest"
+
+# npm-only harnesses, so mise is their installer. Codex CLI is here rather than on
+# the `codex` cask because that cask isn't marked auto_updates, so brew's upgrade
+# would fight the CLI's own `codex update`.
+#
+# GitHub Copilot CLI (the cask of that name is the GUI app) reaches its model
+# through the `gh auth login` account — no gateway config, a known-good baseline.
+"npm:@openai/codex" = "latest"
+"npm:@github/copilot" = "latest"
 
 [settings]
 pin = true
