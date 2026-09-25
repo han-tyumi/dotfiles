@@ -8,6 +8,6 @@ for cmd in "$@"; do
     printf '%s\t\tnot installed\n' "$cmd"
     continue
   fi
-  ver=$("$cmd" --version 2>&1 </dev/null | sed -E 's/^([0-9][^ ]*).*$/\1/' | grep -m1 -E '^[0-9]' || true)
+  ver=$("$cmd" --version 2>&1 </dev/null | grep -m1 -oE '[0-9]+(\.[0-9]+)+[^ ]*' || true)
   printf '%s\t%s\n' "$cmd" "${ver:-unknown} ($path)"
 done
