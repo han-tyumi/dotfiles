@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Print tool names and versions from the commands passed as arguments.
+# Usage: exec-versions pi claude
+set -u
+for cmd in "$@"; do
+  path=$(command -v "$cmd" 2>/dev/null)
+  if [[ -z $path ]]; then
+    printf '%s\t\tnot installed\n' "$cmd"
+    continue
+  fi
+  ver=$("$cmd" --version 2>&1 </dev/null | sed -E 's/^([0-9][^ ]*).*$/\1/' | grep -m1 -E '^[0-9]' || true)
+  printf '%s\t%s\n' "$cmd" "${ver:-unknown} ($path)"
+done
