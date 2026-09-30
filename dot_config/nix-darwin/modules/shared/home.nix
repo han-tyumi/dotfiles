@@ -147,6 +147,25 @@ in
       }
     '';
 
+    # Orca's global skill copies stay off chezmoi's ledger on purpose: `npx skills
+    # add` places them under ~/.agents/skills with a symlink per agent and records
+    # provenance in ~/.agents/.skill-lock.json, which is what Orca's in-app updater
+    # (a headless `npx --yes skills update <names> --global -y`) rewrites. A
+    # chezmoi-tracked copy would read as "Needs attention" to that updater and
+    # churn `chezmoi diff` on every background refresh. Activation therefore only
+    # guarantees the first install: the existence guard never rewrites a copy the
+    # app has since updated, and a fresh machine where mise has not installed node
+    # yet just retries next switch (npx resolves from mise shims, else brew).
+    # Non-fatal for the same flaky-network reason as the entries above.
+    activation.orcaSkills = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      export PATH="$HOME/.local/share/mise/shims:/opt/homebrew/bin:$PATH"
+      if command -v npx > /dev/null && [ ! -e "${config.home.homeDirectory}/.claude/skills/orchestration" ]; then
+        run npx --yes skills add https://github.com/stablyai/orca \
+          --skill orca-cli --skill computer-use --skill orchestration --global -y < /dev/null \
+          || echo "Orca skills install failed; re-run it by hand or install from Orca's Skills page." >&2
+      fi
+    '';
+
     # Pi's default theme, shared because darwin.nix installs Pi on every machine.
     # Pi rewrites settings.json itself, so a symlink would be dropped on its first
     # write — jq-merge instead (only `theme` is set here; Pi's own keys and a layer's

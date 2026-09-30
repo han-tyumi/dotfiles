@@ -160,6 +160,25 @@ on no Homebrew tool, but `gh stack` is a gh extension whose nixpkgs package trai
 the channel, so installing it from activation re-runs the upgrade on every switch
 instead of pinning the machine to the packaged build.
 
+`orcaSkills` is a fourth, and deliberately only a first-install: Orca's global
+skills (`orca-cli`, `computer-use`, `orchestration`) are installed by
+`npx skills add`, which records provenance in `~/.agents/.skill-lock.json` so the
+Orca app's own updater can rewrite the copies under `~/.agents/skills` (symlinked
+into `~/.claude/skills`). Chezmoi never tracks those files — a tracked copy would
+read as "Needs attention" to the app updater and churn diffs; the activation entry
+just guarantees the install on a fresh machine, guarded by the placement's absence.
+Orca's user settings split three ways. `~/.orca/keybindings.json` is shared and
+checked in; `~/.orca/jira-sites.json` and `jira-tokens/` are work account data
+(and secret) and stay out of shared. The global app settings themselves live in a
+SQLite store (`profiles/local-default/profile-state.db`) — the only ordinary
+writable backend — so `modules/shared/orca-settings.json` is a **reference file**,
+not an activation merge: SQLite authority makes startup ignore edits to the
+compatibility JSON `orca-data.json`, and the one adoption path (`orca profile
+state rollback --current-json`) requires a quit app and replaces the whole state
+rather than merging. On a fresh Mac, seed the file as the profile's
+`orca-data.json` under `~/Library/Application Support/Orca` before Orca's first
+launch so the legacy import picks it up; Jira task-source prefs stay out (work).
+
 ### Adding a new layer or overlay
 
 To add a layer named `<name>` — in-repo, overlay, or both:

@@ -1,0 +1,26 @@
+{
+  "branchPrefix": "none",
+  "refreshLocalBaseRefOnWorktreeCreate": true,
+  "terminalThemeDark": "Catppuccin Mocha",
+  "appFontFamily": "PragmataPro",
+  "terminalFontFamily": "PragmataPro Mono",
+  "tabAutoGenerateTitle": true,
+  "keepComputerAwakeWhileAgentsRun": true,
+  "mobileEmulatorEnabled": false,
+  "openInApplications": [
+    {
+      "id": "zed",
+      "label": "Zed",
+      "command": "zed"
+    }
+  ],
+  "notifications": {
+    "enabled": true,
+    "agentTaskComplete": true,
+    "terminalBell": true,
+    "suppressWhenFocused": true,
+    "customSoundId": "blip",
+    "customSoundPath": null,
+    "customSoundVolume": 100
+  }
+}
