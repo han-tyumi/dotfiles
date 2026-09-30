@@ -38,18 +38,16 @@ Documents
 .config/nvim
 .config/ghostty
 .config/zed
-# The OpenCode plugin shells out to the PreToolUse hook below, which is itself
-# darwin-only.
+# OpenCode's whole config dir is Mac-profile only (the work layer symlinks its
+# opencode.jsonc out of store here; Orca writes its plugin status into it).
 .config/opencode
 # Conductor.app itself is Mac-only.
 .conductor
 # .claude applies on Windows too (settings + CLAUDE.md + portable skills); only
-# these Mac-only pieces are skipped: the bash statusline, the PreToolUse hooks
-# (wired into settings.json only on darwin), the agent-browser symlink into
-# /opt/homebrew, and skills whose CLI only the Mac profile provides (the gh
-# stack extension, wt).
+# these Mac-only pieces are skipped: the bash statusline, the agent-browser
+# symlink into /opt/homebrew, and skills whose CLI only the Mac profile provides
+# (the gh stack extension, wt).
 .claude/statusline.sh
-.claude/hooks
 .claude/skills/agent-browser
 .claude/skills/gh-stack
 .claude/skills/git-worktree

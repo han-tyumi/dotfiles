@@ -3,3 +3,7 @@
 # must not survive on a machine is listed here.
 .claude/skills/git-spice
 .local/bin/github-mcp-server
+# The deny-destructive guard (hook + OpenCode plugin) was retired 2026-09-30;
+# drop the applied copies everywhere.
+.claude/hooks/deny-destructive.py
+.config/opencode/plugins/deny-destructive.js

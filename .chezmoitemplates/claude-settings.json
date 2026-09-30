@@ -251,10 +251,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/deny-destructive.py --no-dialog"
-          },
-          {
-            "type": "command",
             "command": "rtk hook claude"
           }
         ]
