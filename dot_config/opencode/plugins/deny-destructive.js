@@ -15,9 +15,11 @@
  *
  * The hook's usual answer for a delete outside the project is `ask`, routing it
  * to an approval prompt. A `tool.execute.before` plugin has no prompt to route
- * to — it can only allow or throw — so it asks the hook for `--no-prompt`, which
- * puts the question in a confirmation dialog and refuses anything but an
- * explicit approval, rather than waving it through.
+ * to — it can only allow or throw — so it asks the hook for `--no-prompt`;
+ * `--no-dialog` keeps the fallback out of the desktop too, so an unapproved
+ * delete is refused outright (the model sees the advice and can route the
+ * delete through the user) instead of raising a macOS alert. The work config's
+ * `external_directory: ask` remains the place an agent gets a real prompt.
  */
 
 import { homedir } from "node:os";
@@ -38,7 +40,7 @@ export const DenyDestructive = async ({ directory, worktree }) => {
       const command = output.args?.command;
       if (!command) return;
 
-      const hook = Bun.spawn([hookPath, "--no-prompt"], {
+      const hook = Bun.spawn([hookPath, "--no-prompt", "--no-dialog"], {
         stdin: new TextEncoder().encode(
           JSON.stringify({
             tool_name: "Bash",
