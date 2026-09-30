@@ -259,6 +259,12 @@
     # category; a forcible LC_ALL would stomp individually-set ones.
     variables.LANG = "en_US.UTF-8";
 
+    # OpenCode's built-in LSP servers may otherwise npm-install or curl a
+    # language server (jdtls, yaml-ls, ...) into ~/.cache/opencode on first
+    # touch. mise owns the toolchain here, so servers must come from it:
+    # one without a local binary stays off instead of self-installing.
+    variables.OPENCODE_DISABLE_LSP_DOWNLOAD = "true";
+
     etc = {
       "sudoers.d/nix-darwin".text = ''
         Defaults timestamp_timeout=360

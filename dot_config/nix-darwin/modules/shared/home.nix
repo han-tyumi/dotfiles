@@ -233,6 +233,12 @@ in
       p = "pnpm";
       y = "yarn";
       znu = "zsh -lc nu";
+
+      # `opencode --auto` auto-approves every permission not explicitly denied —
+      # the work config's denies (sudo, diskutil, ...) still gate it, but every
+      # ask in between passes unattended. Meant for sandboxed/benchmark folders
+      # under git, never for a tree holding uncommitted work.
+      oca = "opencode --auto";
     };
     stateVersion = "25.11";
   };
