@@ -265,6 +265,11 @@
     # one without a local binary stays off instead of self-installing.
     variables.OPENCODE_DISABLE_LSP_DOWNLOAD = "true";
 
+    # models.dev cannot know the pod's real limits (the in-repo per-model
+    # limits are measured), and its fetch costs startup latency. The only
+    # 1.18 knob is this env var — there is no config key for it.
+    variables.OPENCODE_DISABLE_MODELS_FETCH = "1";
+
     etc = {
       "sudoers.d/nix-darwin".text = ''
         Defaults timestamp_timeout=360

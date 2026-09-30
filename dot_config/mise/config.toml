@@ -8,12 +8,12 @@ node = "latest"
 # opencode (Conductor points its editor at the mise shim, so mise must own it).
 # Orca discovers harnesses on PATH, so the shims go on a GUI launch's PATH too —
 # see the .zshenv entry in modules/shared/home.nix.
-# Pinned, not latest: the config's keys are verified against one 1.x version
-# (compaction, TUI settings, and the permission engine all moved in 2.x), and
-# a plain `mise upgrade` must not silently move the harness past that review.
-# Bump deliberately: run `mise install opencode@<ver>`, restart opencode,
-# re-check `opencode debug config` against the new schema.
-opencode = "1.18.33"
+# Major-version range, not "latest": 2.x moved compaction, TUI settings, and
+# the permission engine, and the configs' keys are verified against 1.x only.
+# Within 1.x, mise's minimum_release_age and provenance checks are the gate,
+# and opencode's own autoupdate stays off (work config), so mise manages the
+# version alone. On a jump into a new minor, re-check `opencode debug config`.
+opencode = "1"
 
 usage = "latest"
 
