@@ -5,7 +5,7 @@ node = "latest"
 
 # Coding-agent harnesses. Homebrew owns the ones with a formula (pi-coding-agent,
 # qwen-code — see modules/shared/darwin.nix); mise owns the npm-only ones plus
-# opencode (Conductor points its editor at the mise shim, so mise must own it).
+# opencode, so the pin stays explicit.
 # Orca discovers harnesses on PATH, so the shims go on a GUI launch's PATH too —
 # see the .zshenv entry in modules/shared/home.nix.
 # Major-version range, not "latest": 2.x moved compaction, TUI settings, and
@@ -36,11 +36,10 @@ uv = "latest"
 pin = true
 idiomatic_version_file_enable_tools = []
 
-# Auto-trust mise configs that live in the chezmoi source, the overlay clones,
-# and Conductor's workspaces, so running a mise shim from those trees doesn't
+# Auto-trust mise configs that live in the chezmoi source and the overlay
+# clones, so running a mise shim from those trees doesn't
 # nag for `mise trust` (and a non-interactive run doesn't hang on the prompt).
 trusted_config_paths = [
   "~/.local/share/chezmoi",
   "~/.config/nix-darwin/overlays",
-  "~/conductor/workspaces",
 ]

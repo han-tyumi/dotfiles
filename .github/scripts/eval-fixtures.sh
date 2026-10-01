@@ -5,20 +5,20 @@
 # one in a throwaway copy, leaving the workspace untouched.
 set -eu
 
-src="${CONDUCTOR_WORKSPACE_PATH:-$PWD}/dot_config/nix-darwin"
+src="$PWD/dot_config/nix-darwin"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 cp -R "$src/." "$tmp/"
 
 # Overlay layers live in their own repos, cloned next to the applied flake. Compose
-# each one in so test-all validates it. Point CONDUCTOR_OVERLAY_<name> at a worktree
+# each one in so test-all validates it. Point EVAL_OVERLAY_<name> at a worktree
 # to validate that layer's in-progress edits instead of the installed clone.
 installed_overlays="$HOME/.config/nix-darwin/overlays"
 if [ -d "$installed_overlays" ]; then
   for path in "$installed_overlays"/*/; do
     [ -d "$path" ] || continue
     name="$(basename "$path")"
-    override_var="CONDUCTOR_OVERLAY_${name}"
+    override_var="EVAL_OVERLAY_${name}"
     source_path="${!override_var:-$path}"
     mkdir -p "$tmp/overlays/$name"
     cp -R "$source_path/." "$tmp/overlays/$name/"
@@ -28,7 +28,7 @@ fi
 
 cat > "$tmp/machine.nix" <<'EOF'
 {
-  hostname = "conductor";
+  hostname = "eval-fixture";
   username = "runner";
   nixbldGid = 350;
   appStore = false;

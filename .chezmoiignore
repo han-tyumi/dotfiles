@@ -41,8 +41,6 @@ Documents
 # OpenCode's whole config dir is Mac-profile only (the work layer symlinks its
 # opencode.jsonc out of store here; Orca writes its plugin status into it).
 .config/opencode
-# Conductor.app itself is Mac-only.
-.conductor
 # .claude applies on Windows too (settings + CLAUDE.md + portable skills); only
 # these Mac-only pieces are skipped: the bash statusline, the agent-browser
 # symlink into /opt/homebrew, and skills whose CLI only the Mac profile provides

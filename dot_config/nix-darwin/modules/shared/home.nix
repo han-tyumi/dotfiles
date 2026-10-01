@@ -221,7 +221,7 @@ in
     file.".pi/agent/themes/catppuccin-mocha.json".source = ./pi-theme-mocha.json;
 
     # mise's shims and ~/.local/bin (the nu CLIs — apploi, wt, onboard) have to
-    # reach shells that read no rc file: a GUI orchestrator (Orca, Conductor) is a
+    # reach shells that read no rc file: a GUI orchestrator (Orca) is a
     # plain .app, so it inherits launchd's PATH, and it launches harnesses in
     # non-login panes. sessionPath is a prompt hook and `mise activate` a shell
     # hook, so neither reaches those, and a shim is just an executable — a PATH

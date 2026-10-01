@@ -90,10 +90,9 @@
       "postgres-app"
       "raycast"
 
-      # GUIs for orchestrating parallel agent sessions in per-worktree
-      # workspaces with per-session diff review. Conductor drives Claude Code;
-      # Orca is vendor-neutral (any CLI agent) and comes from the tap above.
-      "conductor"
+      # GUI for orchestrating parallel agent sessions in per-worktree
+      # workspaces with per-session diff review. Vendor-neutral (any CLI
+      # agent), comes from the tap above.
       "stablyai/orca/orca"
       "the-unarchiver"
       "vivaldi"
