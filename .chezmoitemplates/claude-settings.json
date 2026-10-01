@@ -5,8 +5,8 @@
 
        claude-settings.json.tmpl contributes top-level keys (the env block and
        "model" pin), spliced ahead of this shared base; when no layer provides one,
-       fall back to the latest 1M-context Opus. Its text is a comma-terminated run
-       of top-level keys.
+       fall back to the `sonnet` alias, which resolves to the latest Sonnet. Its
+       text is a comma-terminated run of top-level keys.
 
        The base sets "defaultMode": "auto" unconditionally. Auto mode is available
        by default on the Anthropic API, so a subscription profile gets it directly;
@@ -37,7 +37,7 @@
 {{-   end -}}
 {{- end }}
 {{- $joinedContributions := join "\n" $layerContributions }}
-{{ if $layerContributions }}{{ $joinedContributions }}{{ else }}  "model": "opus[1m]",{{ end }}
+{{ if $layerContributions }}{{ $joinedContributions }}{{ else }}  "model": "sonnet",{{ end }}
   "permissions": {
     "defaultMode": "auto",
     "allow": [
@@ -274,8 +274,22 @@
        setting, so a session can still opt out without editing the file. */}}
   "autoCompactEnabled": true,
   "autoCompactWindow": 200000,
-  "effortLevel": "xhigh",
-  "ultracode": true,
+{{- /* Sonnet 5.5 and newer models ignore the user-level effortLevel (and the
+       top-level value still applies to older models), so current models pin
+       their effort per-model in modelSettings, keyed by canonical Anthropic
+       name. ultracode is off: since v2.1.284 it runs at the session's effort
+       instead of forcing xhigh, but the deep-work pass still multiplies token
+       spend, so it stays opt-in per session. */}}
+  "effortLevel": "high",
+  "modelSettings": {
+    "claude-sonnet-5": {
+      "effortLevel": "high"
+    },
+    "claude-sonnet-5-5": {
+      "effortLevel": "high"
+    }
+  },
+  "ultracode": false,
   "tui": "fullscreen",
   "skipWorkflowUsageWarning": true,
   "cleanupPeriodDays": 180,
