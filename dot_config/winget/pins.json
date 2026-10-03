@@ -5,7 +5,7 @@
     { "PackageIdentifier": "Blizzard.BattleNet", "Reason": "Launcher updates itself; reports an unknown version and its manifest demands an install location." },
     { "PackageIdentifier": "CreativeTechnology.OpenAL", "Reason": "Reports an unknown version, so winget would reinstall the same runtime every run." },
     { "PackageIdentifier": "Git.Git", "Reason": "Upgraded separately with /SKIPIFINUSE so a running Git Bash defers it instead of failing." },
-    { "PackageIdentifier": "HypixelStudios.Hytale", "Reason": "Launcher updates itself; its recorded version never moves, so winget would reinstall over it." },
+    { "PackageIdentifier": "HypixelStudios.Hytale", "Reason": "Launcher updates itself. Its winget package is per-user only, so a machine-wide install cannot be upgraded by winget at all; reinstall per-user if the launcher ever gets stuck on an old build." },
     { "PackageIdentifier": "Microsoft.Edge", "Reason": "Edge Update keeps it current." },
     { "PackageIdentifier": "Microsoft.PowerShell", "Reason": "The MSI updates through Microsoft Update; winget's default installer is the MSIX, which breaks DISM cmdlets." },
     { "PackageIdentifier": "Microsoft.VisualStudioCode", "Reason": "Has its own updater." },
