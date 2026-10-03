@@ -12,10 +12,11 @@ if (-not (Test-Path $manifest)) {
   return
 }
 
-# winget updates PATH in the registry but not this session; resolve it from its
-# link dir when it is not yet on PATH.
+# winget is an App Installer execution alias in WindowsApps; resolve it there when
+# this session's PATH lacks that dir (a fresh install, or a User PATH flattened to
+# REG_SZ so its %USERPROFILE% entry no longer expands).
 $winget = (Get-Command winget -ErrorAction SilentlyContinue).Source
-if (-not $winget) { $winget = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links\winget.exe' }
+if (-not $winget) { $winget = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\winget.exe' }
 if (-not (Test-Path $winget)) {
   Write-Warning "winget not found; install 'App Installer' from the Microsoft Store, then re-run."
   exit 1
