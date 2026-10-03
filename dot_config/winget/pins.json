@@ -7,6 +7,7 @@
     { "PackageIdentifier": "Git.Git", "Reason": "Upgraded separately with /SKIPIFINUSE so a running Git Bash defers it instead of failing." },
     { "PackageIdentifier": "HypixelStudios.Hytale", "Reason": "Launcher updates itself; its recorded version never moves, so winget would reinstall over it." },
     { "PackageIdentifier": "Microsoft.Edge", "Reason": "Edge Update keeps it current." },
+    { "PackageIdentifier": "Microsoft.PowerShell", "Reason": "The MSI updates through Microsoft Update; winget's default installer is the MSIX, which breaks DISM cmdlets." },
     { "PackageIdentifier": "Microsoft.VisualStudioCode", "Reason": "Has its own updater." },
     { "PackageIdentifier": "Microsoft.WSL", "Reason": "Needs elevation winget's silent upgrade lacks; upgraded separately with wsl --update." },
     { "PackageIdentifier": "StablyAI.Orca", "Reason": "Has its own updater; its installer's process check would close the running agent sessions." },

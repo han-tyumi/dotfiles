@@ -40,6 +40,22 @@ if (Test-Path $pinManifest) {
   }
 }
 
+# PowerShell 7 comes from its MSI rather than the manifest: winget's default
+# installer for it is the MSIX, which breaks the DISM cmdlets ("Class not
+# registered") that WinUtil and windows-features rely on, and an import can't pick
+# an installer type. USE_MU/ENABLE_MU opt the MSI into Microsoft Update, which keeps
+# it current, so the package is pinned rather than upgraded by apploi.
+$pwshInstalledVersions = 'HKLM:\SOFTWARE\Microsoft\PowerShellCore\InstalledVersions'
+if (-not (Test-Path $pwshInstalledVersions)) {
+  & $winget install --id Microsoft.PowerShell --exact --installer-type wix `
+    --custom 'USE_MU=1 ENABLE_MU=1' --silent `
+    --accept-package-agreements --accept-source-agreements --disable-interactivity
+  if (-not (Test-Path $pwshInstalledVersions)) {
+    Write-Warning 'PowerShell 7 (MSI) did not install; re-run the apply to retry.'
+    exit 1
+  }
+}
+
 # Presence is the source of truth, not the import exit code. winget returns
 # non-zero when a package is already installed but cannot be reinstalled - e.g. an
 # app that is currently running (PersistentWindows) locks its own files - which is

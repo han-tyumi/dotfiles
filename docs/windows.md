@@ -63,6 +63,10 @@ goes through `upgrade.ps1`, which upgrades without anyone closing apps first:
   the first run with no Git Bash open (e.g. right after a reboot).
 - **WSL** needs elevation a silent winget upgrade lacks, so it goes through `wsl
   --update`, which prompts once.
+- **PowerShell 7** is installed from its MSI by `10-winget`, not from the manifest:
+  winget's default installer for it is the MSIX, which breaks the DISM cmdlets
+  (WinUtil's known issue). The MSI is opted into Microsoft Update (`UseMU`, also
+  asserted by `35-registry-tweaks`) and pinned, so Windows Update keeps it current.
 - **Dropped links**: some winget builds report a portable's command alias added
   without creating it, taking `mise` or `claude` off PATH; missing links are
   recreated at the end (symlinks need Developer Mode, which `35-registry-tweaks`

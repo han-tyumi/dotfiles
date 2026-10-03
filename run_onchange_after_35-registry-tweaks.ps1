@@ -1,9 +1,9 @@
 # Idempotent Windows registry tweaks generic to any Windows machine: a
 # dev-friendly Explorer (show hidden files and extensions, open to This PC,
 # expand the folder tree, show the full path in the title bar), GameDVR off,
-# PowerShell 7 telemetry opt-out, long-path support, Developer Mode, and a
-# Windows Update policy that stops quality updates from swapping an installed
-# driver for a generic one. The classic Windows 11 right-click menu is left to
+# PowerShell 7 telemetry opt-out and Microsoft Update servicing for its MSI,
+# long-path support, Developer Mode, and a Windows Update policy that stops
+# quality updates from swapping an installed driver for a generic one. The classic Windows 11 right-click menu is left to
 # WinUtil (which owns the debloat/services layer). The HKCU pass runs unelevated;
 # the HKLM pass self-elevates with a single UAC prompt, and only when an HKLM
 # value is actually out of date so an already-tweaked machine prompts for nothing.
@@ -28,7 +28,8 @@ $hklmTweaks = @(
   @{ Path = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR';              Name = 'AllowGameDVR';                      Value = 0 },
   @{ Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock'; Name = 'AllowDevelopmentWithoutDevLicense'; Value = 1 },
   @{ Path = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock'; Name = 'AllowAllTrustedApps';               Value = 1 },
-  @{ Path = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate';        Name = 'ExcludeWUDriversInQualityUpdate';   Value = 1 }
+  @{ Path = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate';        Name = 'ExcludeWUDriversInQualityUpdate';   Value = 1 },
+  @{ Path = 'HKLM:\SOFTWARE\Microsoft\PowerShellCore';                        Name = 'UseMU';                             Value = 1 }
 )
 
 function Test-HklmDrift {
