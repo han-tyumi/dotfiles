@@ -375,6 +375,7 @@ in
         { path = "${config.xdg.configHome}/${gitAliasFilePath}"; }
         { path = "${catppuccinDelta}/catppuccin.gitconfig"; }
       ];
+      # Mirrored for the Windows profile by dot_config/git/ignore; keep the two in step.
       ignores = [
         ".claude/*.local.md"
         ".claude/*.local.json"

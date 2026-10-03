@@ -1,0 +1,9 @@
+# Global git ignores for the Windows profile. The Mac generates this file from the
+# programs.git.ignores list in modules/shared/home.nix; keep the two in step.
+.claude/*.local.md
+.claude/*.local.json
+.env.local
+.mcp.local.json
+.scratch
+CLAUDE.local.md
+mise.local.toml

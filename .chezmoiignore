@@ -22,6 +22,7 @@ AUX
 # Windows-only targets — skipped on macOS/Linux.
 AppData
 Documents
+.config/git/ignore
 .config/winget
 .config/winutil
 .config/windows
