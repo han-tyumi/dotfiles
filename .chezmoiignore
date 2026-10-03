@@ -14,6 +14,10 @@ NUL
 CON
 PRN
 AUX
+# In-repo layers' Claude Code fragments are read from the source tree by
+# .chezmoitemplates/claude-settings.json; they are never targets themselves.
+.config/nix-darwin/modules/*/claude-settings.json
+.config/nix-darwin/modules/*/claude-permissions.json
 {{ if ne .chezmoi.os "windows" -}}
 # Windows-only targets — skipped on macOS/Linux.
 AppData

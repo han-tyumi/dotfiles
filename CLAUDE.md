@@ -194,7 +194,10 @@ To add a layer named `<name>` — in-repo, overlay, or both:
    `claude-settings.json.tmpl` (top-level keys such as the env block and `model`
    pin, spliced ahead of the shared base) and/or a `claude-permissions.json.tmpl`
    (extra `permissions.allow` rules merged into the single allow array). Both are
-   evaluated as templates, so they can resolve machine-local secrets.
+   evaluated as templates, so they can resolve machine-local secrets. In-repo
+   fragments are read from the source tree (so they work on Windows too) and are
+   spliced before overlay fragments, so an overlay wins a key both set — e.g. the
+   `personal` layer's Opus `model` yields to a work overlay's pin.
 6. **Verify** — in-repo layers get a `test-<name>` fixture automatically:
    `nix eval ~/.config/nix-darwin#darwinConfigurations.test-<name>.system.drvPath`.
 7. **Enable it** — add `<name>` to the machine's `layers` (overlays as `name=url` pairs) via

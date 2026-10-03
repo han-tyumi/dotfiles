@@ -22,18 +22,31 @@
        must merge into this array rather than living in a separate block. */ -}}
 {{- $layerContributions := list -}}
 {{- $permissionContributions := list -}}
+{{- /* In-repo layer dirs are read from the source tree, not their applied
+       targets: chezmoi renders a source .tmpl to a target without the suffix, and
+       Windows never applies the nix-darwin tree at all. Overlay clones live only
+       at their target path.
+
+       Every in-repo fragment is spliced before every overlay fragment. A key that
+       two fragments both set is resolved last-wins by the JSON parse, so an
+       overlay's "model" beats an in-repo layer's on a machine that enables both. */ -}}
+{{- $layerDirs := list -}}
 {{- range $layer := .layerList -}}
-{{-   range $root := list "modules" "overlays" -}}
-{{-     $fragment := joinPath $.chezmoi.homeDir ".config/nix-darwin" $root $layer "claude-settings.json.tmpl" -}}
-{{-     if stat $fragment -}}
-{{-       $rendered := output "chezmoi" "execute-template" (include $fragment) | trimAll "\n" -}}
-{{-       if trim $rendered -}}{{- $layerContributions = append $layerContributions $rendered -}}{{- end -}}
-{{-     end -}}
-{{-     $permFragment := joinPath $.chezmoi.homeDir ".config/nix-darwin" $root $layer "claude-permissions.json.tmpl" -}}
-{{-     if stat $permFragment -}}
-{{-       $renderedPerm := output "chezmoi" "execute-template" (include $permFragment) | trimAll "\n" -}}
-{{-       if trim $renderedPerm -}}{{- $permissionContributions = append $permissionContributions $renderedPerm -}}{{- end -}}
-{{-     end -}}
+{{-   $layerDirs = append $layerDirs (joinPath $.chezmoi.sourceDir "dot_config/nix-darwin/modules" $layer) -}}
+{{- end -}}
+{{- range $layer := .layerList -}}
+{{-   $layerDirs = append $layerDirs (joinPath $.chezmoi.homeDir ".config/nix-darwin/overlays" $layer) -}}
+{{- end -}}
+{{- range $layerDir := $layerDirs -}}
+{{-   $fragment := joinPath $layerDir "claude-settings.json.tmpl" -}}
+{{-   if stat $fragment -}}
+{{-     $rendered := output "chezmoi" "execute-template" (include $fragment) | trimAll "\n" -}}
+{{-     if trim $rendered -}}{{- $layerContributions = append $layerContributions $rendered -}}{{- end -}}
+{{-   end -}}
+{{-   $permFragment := joinPath $layerDir "claude-permissions.json.tmpl" -}}
+{{-   if stat $permFragment -}}
+{{-     $renderedPerm := output "chezmoi" "execute-template" (include $permFragment) | trimAll "\n" -}}
+{{-     if trim $renderedPerm -}}{{- $permissionContributions = append $permissionContributions $renderedPerm -}}{{- end -}}
 {{-   end -}}
 {{- end }}
 {{- $joinedContributions := join "\n" $layerContributions }}
@@ -282,6 +295,9 @@
        spend, so it stays opt-in per session. */}}
   "effortLevel": "high",
   "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    },
     "claude-sonnet-5": {
       "effortLevel": "high"
     },
