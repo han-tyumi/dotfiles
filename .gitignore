@@ -11,3 +11,6 @@ NUL
 CON
 PRN
 AUX
+
+# Local-only notes and throwaway output; also in the global ignore list.
+.scratch/
