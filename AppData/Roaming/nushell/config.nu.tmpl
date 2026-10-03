@@ -59,7 +59,7 @@ def apploi [--chezmoi (-c), --winget (-w), --mise (-m)] {
 
   if ($do_all or $winget) {
     print $"(ansi cyan)apploi(ansi reset): upgrading winget packages..."
-    winget upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity
+    ^pwsh -NoProfile -ExecutionPolicy Bypass -File ($nu.home-dir | path join '.config' 'winget' 'upgrade.ps1')
   }
 
   if ($do_all or $mise) {

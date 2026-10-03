@@ -1,0 +1,18 @@
+{
+  "Pins": [
+    { "PackageIdentifier": "Anthropic.Claude", "Reason": "Desktop app updates itself and bundles its own Claude Code." },
+    { "PackageIdentifier": "Bitwarden.Bitwarden", "Reason": "Has its own updater; a winget reinstall would kill the running vault." },
+    { "PackageIdentifier": "Blizzard.BattleNet", "Reason": "Launcher updates itself; reports an unknown version and its manifest demands an install location." },
+    { "PackageIdentifier": "CreativeTechnology.OpenAL", "Reason": "Reports an unknown version, so winget would reinstall the same runtime every run." },
+    { "PackageIdentifier": "Git.Git", "Reason": "Upgraded separately with /SKIPIFINUSE so a running Git Bash defers it instead of failing." },
+    { "PackageIdentifier": "HypixelStudios.Hytale", "Reason": "Launcher updates itself; its recorded version never moves, so winget would reinstall over it." },
+    { "PackageIdentifier": "Microsoft.Edge", "Reason": "Edge Update keeps it current." },
+    { "PackageIdentifier": "Microsoft.VisualStudioCode", "Reason": "Has its own updater." },
+    { "PackageIdentifier": "Microsoft.WSL", "Reason": "Needs elevation winget's silent upgrade lacks; upgraded separately with wsl --update." },
+    { "PackageIdentifier": "StablyAI.Orca", "Reason": "Has its own updater; its installer's process check would close the running agent sessions." },
+    { "PackageIdentifier": "Valve.Steam", "Reason": "Client updates itself." },
+    { "PackageIdentifier": "ViGEm.ViGEmBus", "Reason": "Installed as an MSI while newer releases ship an exe, so winget can only skip it." },
+    { "PackageIdentifier": "Vivaldi.Vivaldi", "Reason": "Browser has its own updater." },
+    { "PackageIdentifier": "ZedIndustries.Zed", "Reason": "Has its own updater (auto_update)." }
+  ]
+}

@@ -60,7 +60,7 @@ function apploi {
 
   if ($all -or $Winget) {
     Write-Host 'apploi: upgrading winget packages...' -ForegroundColor Cyan
-    winget upgrade --all --silent --include-unknown --accept-package-agreements --accept-source-agreements --disable-interactivity
+    & (Join-Path $HOME '.config\winget\upgrade.ps1')
   }
 
   if ($all -or $Mise) {

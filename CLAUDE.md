@@ -167,6 +167,8 @@ Orca app's own updater can rewrite the copies under `~/.agents/skills` (symlinke
 into `~/.claude/skills`). Chezmoi never tracks those files — a tracked copy would
 read as "Needs attention" to the app updater and churn diffs; the activation entry
 just guarantees the install on a fresh machine, guarded by the placement's absence.
+Windows mirrors it with `run_once_after_25-orca-skills.ps1` and installs Orca itself
+as the pinned winget package `StablyAI.Orca`.
 Orca's user settings split three ways. `~/.orca/keybindings.json` is shared and
 checked in; `~/.orca/jira-sites.json` and `jira-tokens/` are work account data
 (and secret) and stay out of shared. The global app settings themselves live in a
@@ -267,17 +269,20 @@ provisioned with **winget** and **mise** instead of Nix.
   and a Signing key — enabling SSH commit signing (see the git identity note below).
 - Provisioning is hash-gated `run_onchange` PowerShell, kept PowerShell 5.1-safe
   since pwsh 7 isn't present on the first apply: `10-winget-packages` imports
-  `dot_config/winget/packages.json` (and verifies each declared package installed);
+  `dot_config/winget/packages.json` with `--no-upgrade` (and verifies each declared
+  package installed), then adds any missing pin from `dot_config/winget/pins.json` —
+  the apps left to their own updaters;
   `20-mise-install` runs `mise install` against the shared `dot_config/mise/config.toml`
   (the personal layer's crystal/erlang/elixir are OS-gated out of `conf.d/personal.toml`
   on Windows) and appends `%LOCALAPPDATA%\mise\shims` to the User PATH, for apps that
   never run `mise activate` (the Claude desktop app's hooks and MCP servers); `30-nushell-activations` generates nushell's mise/starship/zoxide
   modules. `run_once_after_60-nerdfont.ps1` installs Iosevka Nerd Font (Mono)
   per-user; it fails loudly so a transient error re-fires on the next apply instead
-  of recording the run_once done with nothing done.
+  of recording the run_once done with nothing done. `run_once_after_25-orca-skills.ps1`
+  installs Orca's global skills the same way, mirroring the Mac `orcaSkills`.
 - One-command sync mirrors the Mac `apploi` (plain = do everything): `apploi`
   (defined in the PowerShell profile and the Windows nushell config) does an
-  `--ff-only` pull, `chezmoi apply`, then `winget upgrade --all` + `mise plugins
+  `--ff-only` pull, `chezmoi apply`, then `dot_config/winget/upgrade.ps1` + `mise plugins
   upgrade` + `mise upgrade`, and checks for a newer WinUtil release. Flags scope it
   to one step: `-c` config only (pull + apply, no upgrades), `-w` winget-only, `-m`
   mise-only. Opt-in commands `winutil-apply` (WinUtil tweak config) and

@@ -21,7 +21,7 @@ that step.
 
 | Command | What it does |
 |---|---|
-| `apploi` | pull + `chezmoi apply` + `winget upgrade --all` + `mise upgrade` |
+| `apploi` | pull + `chezmoi apply` + winget upgrades (`~/.config/winget/upgrade.ps1`) + `mise upgrade` |
 | `apploi -c` | config only: pull + apply, skip the upgrades (a quick sync) |
 | `apploi -w` | upgrade winget packages only |
 | `apploi -m` | upgrade mise plugins + runtimes (and regenerate the nushell activations) |
@@ -38,11 +38,44 @@ working tree (mid-edit) skips the pull; a dirty submodule does not.
 | Trigger | Scripts |
 |---|---|
 | `run_onchange` (re-runs when *its content* changes) | `10-winget` (install apps) · `20-mise` (runtimes, and mise's shims on the User PATH) · `30-nushell` (shell activations) · `35-registry-tweaks` (dev/privacy registry — self-elevates for the HKLM bits) |
-| `run_once` (once, then recorded) | `60-nerdfont` · `70-psfzf` |
+| `run_once` (once, then recorded) | `25-orca-skills` · `60-nerdfont` · `70-psfzf` |
 
 `35-registry-tweaks` pops a single UAC prompt, but only when its HKLM keys have
 drifted. Windows features are **not** in this table — they're the opt-in
 `windows-features` command (see below), kept out of the auto-apply path.
+
+## Winget upgrades
+
+Apps with an updater of their own are left to it: `~/.config/winget/pins.json` lists
+them, each with its reason, and `10-winget` adds any declared pin that is missing
+(never removing one set by hand — drop a pin from the list *and* run `winget pin
+remove --id <id>`). Unknown-version packages are skipped as well. Everything else
+goes through `upgrade.ps1`, which upgrades without anyone closing apps first:
+
+- **Running portables** (mise behind an MCP server, a tray app): Windows refuses to
+  delete a running exe but allows moving it, so the locked files of a package with
+  an upgrade pending are moved into `%TEMP%\winget-inuse` first. The old process
+  keeps running from there; the new version starts next launch. A failed upgrade
+  gets its files moved back.
+- **Git** refuses to upgrade while any Git Bash runs — and an agent session nearly
+  always has one. It is pinned and upgraded on its own with `/SKIPIFINUSE`, which
+  turns the refusal into a clean skip; `apploi` reports it deferred and it lands on
+  the first run with no Git Bash open (e.g. right after a reboot).
+- **WSL** needs elevation a silent winget upgrade lacks, so it goes through `wsl
+  --update`, which prompts once.
+- **Dropped links**: some winget builds report a portable's command alias added
+  without creating it, taking `mise` or `claude` off PATH; missing links are
+  recreated at the end (symlinks need Developer Mode, which `35-registry-tweaks`
+  turns on).
+
+## Orca
+
+Orca is a winget package (pinned: its in-app updater offers new releases, and its
+installer would close running agent sessions). `25-orca-skills` installs its global
+skills once with `npx skills add`, as the Mac activation does; Orca's updater owns
+them after that. `~/.orca/keybindings.json` is shared with the Mac. The Orca CLI is
+bundled but not on PATH until registered once from **Settings → Orca CLI**. App
+settings live in `%APPDATA%\Orca`.
 
 ## WinUtil tweaks
 

@@ -23,6 +23,7 @@
         { "PackageIdentifier": "ZedIndustries.Zed" },
         { "PackageIdentifier": "Anthropic.Claude" },
         { "PackageIdentifier": "Anthropic.ClaudeCode" },
+        { "PackageIdentifier": "StablyAI.Orca" },
         { "PackageIdentifier": "Vivaldi.Vivaldi" },
         { "PackageIdentifier": "Bitwarden.Bitwarden" },
         { "PackageIdentifier": "kangyu-california.PersistentWindows" },

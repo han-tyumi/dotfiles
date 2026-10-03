@@ -1,7 +1,9 @@
 # winget packages hash: {{ include "dot_config/winget/packages.json" | sha256sum }}
+# winget pins hash: {{ include "dot_config/winget/pins.json" | sha256sum }}
 #
-# Converge to the declared winget package set. `winget import` installs missing
-# packages (it does NOT upgrade; that is what `apploi -u` does). Kept PowerShell
+# Converge to the declared winget package set and pins. `winget import
+# --no-upgrade` installs missing packages only; upgrades are `apploi`'s job
+# (dot_config/winget/upgrade.ps1), and pins keep it off self-updating apps. Kept PowerShell
 # 5.1-safe: on a fresh machine pwsh 7 is not installed yet, so chezmoi runs this
 # under Windows PowerShell 5.1 on the first apply.
 $manifest = Join-Path $env:USERPROFILE '.config\winget\packages.json'
@@ -21,8 +23,22 @@ if (-not (Test-Path $winget)) {
 
 & $winget import --import-file $manifest `
   --accept-package-agreements --accept-source-agreements `
-  --ignore-unavailable --disable-interactivity
+  --ignore-unavailable --no-upgrade --disable-interactivity
 $importExit = $LASTEXITCODE
+
+# Add each declared pin that is missing. A pin set by hand is left alone, so
+# this only ever adds; dropping a pin from pins.json means `winget pin remove`.
+$pinManifest = Join-Path $env:USERPROFILE '.config\winget\pins.json'
+if (Test-Path $pinManifest) {
+  $existingPins = & $winget pin list --accept-source-agreements --disable-interactivity | Out-String
+  $declaredPins = (Get-Content $pinManifest -Raw | ConvertFrom-Json).Pins
+  foreach ($pin in $declaredPins) {
+    $pinId = $pin.PackageIdentifier
+    if ($existingPins -match ('(?m)\s' + [regex]::Escape($pinId) + '\s')) { continue }
+    & $winget pin add --id $pinId --exact --source winget --accept-source-agreements --disable-interactivity | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Warning "Could not pin $pinId (winget exit $LASTEXITCODE)." }
+  }
+}
 
 # Presence is the source of truth, not the import exit code. winget returns
 # non-zero when a package is already installed but cannot be reinstalled - e.g. an
