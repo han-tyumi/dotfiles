@@ -54,6 +54,19 @@ if ($Apply) {
     exit 1
   }
 
+  # Invoke-WinUtilTweaks catches a missing service as
+  # [System.ServiceProcess.ServiceNotFoundException], a type .NET does not have, so
+  # any listed service absent from this edition (CscService on Home) throws
+  # "Unable to find type" and aborts every tweak after it. Catch the exception
+  # Get-Service really throws; Set-WinUtilService already warns and skips a missing
+  # service. A build without the bad type runs unpatched.
+  $badServiceCatch = 'catch [System.ServiceProcess.ServiceNotFoundException]'
+  if ($source.Contains($badServiceCatch)) {
+    $winutil = Join-Path $winutilDir "release-$PinnedVersion-patched.ps1"
+    $patchedSource = $source.Replace($badServiceCatch, 'catch [Microsoft.PowerShell.Commands.ServiceCommandException]')
+    [System.IO.File]::WriteAllText($winutil, $patchedSource, (New-Object System.Text.UTF8Encoding($false)))
+  }
+
   Write-Host "Applying config.json headless with WinUtil $PinnedVersion..."
   $global:LASTEXITCODE = 0
   $null = & $winutil -Config $configPath
