@@ -107,8 +107,15 @@ winutil-apply
 `winutil-apply` runs `~/.config/winutil/manage.ps1 -Apply`, which **self-elevates**
 (one UAC prompt), downloads the pinned WinUtil build to `%LOCALAPPDATA%\winutil`, and
 runs WinUtil's own headless `-Config` mode, passing on its exit code (logs land in
-`%LOCALAPPDATA%\winutil\logs`). A config naming a tweak the pinned build lacks fails
-the whole run before anything is applied. Run it on a fresh machine, after a Windows
+`%LOCALAPPDATA%\winutil\logs`). It runs WinUtil in Windows PowerShell, its native
+host: under pwsh 7 the AppX removals load through a proxy that WinUtil's own
+temp-file cleanup deletes mid-run. A config naming a tweak the pinned build lacks
+fails the whole run before anything is applied.
+
+WinUtil counts a missing target as an error, so a re-run usually ends "Finished
+with problems" over things already gone: the `BagMRU` key, the `wermgr` service,
+the `PeriodInNanoSeconds` value, a `FileCoAuth` process that isn't running, and
+`CscService`, which Home editions don't have. Anything else in the log is real. Run it on a fresh machine, after a Windows
 update resets tweaks, or after bumping the pinned version.
 
 **Update flow:** `apploi` prints a yellow notice when a newer WinUtil release exists.

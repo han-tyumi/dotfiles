@@ -20,13 +20,16 @@ function Get-LatestWinUtilTag {
 }
 
 if ($Apply) {
+  # WinUtil targets Windows PowerShell 5.1. Under pwsh 7 the Appx cmdlets load
+  # through a compatibility proxy kept in %TEMP%, which WinUtil's own temp-file
+  # tweak deletes mid-run, so the AppX removals (Widgets, Windows AI) fail.
   $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-  if (-not $isAdmin) {
-    # Relaunch elevated (one UAC prompt); -NoExit keeps the window open so the
-    # tweak log stays readable.
+  if (-not $isAdmin -or $PSVersionTable.PSEdition -ne 'Desktop') {
+    # Relaunch elevated in Windows PowerShell (one UAC prompt); -NoExit keeps the
+    # window open so the tweak log stays readable.
     $self = if ($PSCommandPath) { $PSCommandPath } else { $MyInvocation.MyCommand.Definition }
-    if (-not $self) { Write-Warning 'Cannot resolve the script path to self-elevate; run from an elevated shell.'; exit 1 }
-    Start-Process -FilePath 'pwsh' -Verb RunAs -ArgumentList @('-NoExit', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $self, '-Apply')
+    if (-not $self) { Write-Warning 'Cannot resolve the script path to self-elevate; run from an elevated Windows PowerShell.'; exit 1 }
+    Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList @('-NoExit', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $self, '-Apply')
     exit 0
   }
   if (-not (Test-Path $configPath)) { Write-Warning "config.json not found at $configPath"; exit 1 }
@@ -61,11 +64,12 @@ if ($Apply) {
   # Get-Service really throws; Set-WinUtilService already warns and skips a missing
   # service. A build without the bad type runs unpatched.
   $badServiceCatch = 'catch [System.ServiceProcess.ServiceNotFoundException]'
-  if ($source.Contains($badServiceCatch)) {
-    $winutil = Join-Path $winutilDir "release-$PinnedVersion-patched.ps1"
-    $patchedSource = $source.Replace($badServiceCatch, 'catch [Microsoft.PowerShell.Commands.ServiceCommandException]')
-    [System.IO.File]::WriteAllText($winutil, $patchedSource, (New-Object System.Text.UTF8Encoding($false)))
-  }
+  $runSource = $source.Replace($badServiceCatch, 'catch [Microsoft.PowerShell.Commands.ServiceCommandException]')
+
+  # The release ships as UTF-8 without a BOM, which Windows PowerShell reads as the
+  # ANSI code page, mangling its non-ASCII text; the copy it runs carries a BOM.
+  $winutil = Join-Path $winutilDir "release-$PinnedVersion-run.ps1"
+  [System.IO.File]::WriteAllText($winutil, $runSource, (New-Object System.Text.UTF8Encoding($true)))
 
   Write-Host "Applying config.json headless with WinUtil $PinnedVersion..."
   $global:LASTEXITCODE = 0
