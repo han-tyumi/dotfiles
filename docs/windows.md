@@ -71,6 +71,15 @@ goes through `upgrade.ps1`, which upgrades without anyone closing apps first:
   without creating it, taking `mise` or `claude` off PATH; missing links are
   recreated at the end (symlinks need Developer Mode, which `35-registry-tweaks`
   turns on).
+- **Flattened User PATH**: an installer that appends to the User PATH through .NET
+  rewrites it as `REG_SZ`, so its `%USERPROFILE%`/`%LOCALAPPDATA%` entries stop
+  expanding and winget (the WindowsApps alias) and the mise shims drop off PATH.
+  `upgrade.ps1` restores `REG_EXPAND_SZ` first and calls winget by its full alias
+  path; already-open shells keep the broken PATH until restarted.
+- **Machine-wide installs of per-user packages** (Hytale's launcher): winget can't
+  upgrade across scopes, and a launcher in `Program Files` may not manage its own
+  update either. Reinstall per-user with `winget install --scope user --force`,
+  then uninstall the old one; game data in `%APPDATA%` is shared by both.
 
 ## Orca
 
