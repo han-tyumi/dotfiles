@@ -127,8 +127,8 @@ To take it: bump `$PinnedVersion` in `manage.ps1`, re-verify `config.json` still
 matches (WinUtil renames tweak IDs across versions), then `winutil-apply`.
 
 chezmoi's `35-registry-tweaks` owns the dev/registry tweaks WinUtil doesn't (Explorer
-dev settings, LongPaths, Developer Mode, GameDVR, WU driver-exclusion, PS7 telemetry
-opt-out), so the two tools don't fight over the same keys.
+dev settings, LongPaths, Developer Mode, GameDVR, Windows Update driver delivery, PS7
+telemetry opt-out), so the two tools don't fight over the same keys.
 
 ## Windows features
 
@@ -142,18 +142,17 @@ stay dormant until used. To turn SSH off: `Stop-Service sshd; Set-Service sshd
 
 ## Drivers
 
-winget does not service hardware drivers, and neither does anything here. Only the
-policy half is automated: `35-registry-tweaks` sets `ExcludeWUDriversInQualityUpdate`
-so Windows Update stops swapping a tuned GPU/OEM driver for a generic one (feature
-updates reset it, which is why it's re-asserted rather than set once).
+Drivers update themselves through Windows Update: `35-registry-tweaks` sets
+`ExcludeWUDriversInQualityUpdate` to 0, so Wi-Fi, Bluetooth, chipset and other
+vendor drivers arrive with quality updates instead of waiting under Optional
+updates. Windows Update only installs a driver it ranks above the installed one,
+so it doesn't downgrade a newer GPU driver from the vendor's own tool.
 
-The rest is deliberate and manual. Non-GPU drivers (WiFi, Bluetooth, chipset) can go
-through `PSWindowsUpdate` from an elevated shell — `Get-WindowsUpdate -UpdateType
-Driver` to see what's on offer, then `Install-WindowsUpdate -UpdateType Driver
--AcceptAll -IgnoreReboot`. Never on a schedule and never with `-AutoReboot`: a
-handheld can be mid-game. GPU (AMD Adrenalin / Intel Graphics), the OEM driver pack,
-and BIOS/EC firmware are hand-installed; freeze a known-good GPU driver and move off
-it on purpose.
+The GPU is the one to watch. AMD Adrenalin (or Intel Graphics) owns it through its
+own updater, and its drivers normally outrank the ones published to Windows Update.
+If Windows Update ever replaces a known-good GPU driver, roll it back in Device
+Manager and set the value to 1 here to keep drivers out of quality updates. The OEM
+driver pack and BIOS/EC firmware stay hand-installed.
 
 ## Games in Steam
 
