@@ -17,6 +17,20 @@
 # - Some winget builds report a portable's command alias as added without
 #   creating the link, which takes the command off PATH; missing links are
 #   recreated at the end.
+# - Installers that append to the User PATH through .NET rewrite it as REG_SZ,
+#   which leaves its %VAR% entries (winget's WindowsApps alias dir, mise's shims)
+#   unexpanded and so off PATH in every new process. The value kind is restored
+#   first, and winget is called by its full alias path so a broken PATH cannot
+#   stop this run.
+$environmentKey = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey('Environment', $true)
+$userPath = [string]$environmentKey.GetValue('Path', '', 'DoNotExpandEnvironmentNames')
+if ($userPath.Contains('%') -and $environmentKey.GetValueKind('Path') -ne [Microsoft.Win32.RegistryValueKind]::ExpandString) {
+  $environmentKey.SetValue('Path', $userPath, [Microsoft.Win32.RegistryValueKind]::ExpandString)
+  Write-Host 'apploi: restored the User PATH to REG_EXPAND_SZ so its %VAR% entries expand again (new shells pick it up)' -ForegroundColor Yellow
+}
+$environmentKey.Close()
+
+$winget = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\winget.exe'
 $commonArgs = @('--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
 $packageRoot = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages'
 $linkDir = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
@@ -44,7 +58,7 @@ if (Test-Path $stashDir) {
   New-Item -ItemType Directory -Path $stashDir | Out-Null
 }
 
-$upgradeList = winget upgrade --include-pinned --accept-source-agreements --disable-interactivity | Out-String
+$upgradeList = & $winget upgrade --include-pinned --accept-source-agreements --disable-interactivity | Out-String
 
 $stashedFiles = @()
 Get-ChildItem $packageRoot -Directory -Filter "*$sourceSuffix" | ForEach-Object {
@@ -62,11 +76,11 @@ Get-ChildItem $packageRoot -Directory -Filter "*$sourceSuffix" | ForEach-Object 
     }
 }
 
-winget upgrade --all --silent @commonArgs
+& $winget upgrade --all --silent @commonArgs
 
 if (Test-UpgradeListed $upgradeList 'Git.Git') {
   $gitBefore = git --version
-  winget upgrade --id Git.Git --exact --silent --custom '/SKIPIFINUSE' @commonArgs | Out-Null
+  & $winget upgrade --id Git.Git --exact --silent --custom '/SKIPIFINUSE' @commonArgs | Out-Null
   if ((git --version) -eq $gitBefore) {
     Write-Host 'apploi: Git upgrade deferred: a Git Bash is running, so it lands on the next run with none open' -ForegroundColor Yellow
   } else {
