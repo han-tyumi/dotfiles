@@ -80,19 +80,36 @@ settings live in `%APPDATA%\Orca`.
 ## WinUtil tweaks
 
 The debloat / privacy / QoL tweaks are captured in `~/.config/winutil/config.json`
-(a flat list of WinUtil tweak IDs, pinned to a specific WinUtil version). They are
-**not** re-applied every sync — they're one-time system state — so apply them
-deliberately:
+(a flat list of WinUtil tweak IDs, pinned to a specific WinUtil version).
+
+**How they're chosen:** WinUtil's *Standard* (recommended) preset as the base, plus
+only what fits a gaming handheld that's kept minimal — removing what's never used
+(OneDrive, Widgets, Windows AI, Store search results, Edge's extras), Explorer
+quality-of-life, and handheld conveniences (no lock screen, battery percentage). Not
+taken: anything a handheld needs (hibernation, Modern Standby, IPv6, Teredo for some
+games), the "not for laptops" power plans, and visual-effects or background-app
+switches that trade polish for little.
+
+**Telemetry has one owner: WinUtil.** Its Telemetry, Activity, Location, Windows AI
+and Edge tweaks cover what O&O ShutUp10 would, so ShutUp10 isn't used — one less
+tool to keep current. Two values are written by both WinUtil and `35-registry-tweaks`
+with the same result, which is harmless: Explorer's `LaunchTo` (a side effect of
+removing Home and Gallery) and `POWERSHELL_TELEMETRY_OPTOUT` (machine scope from
+WinUtil, user scope here).
+
+They are **not** re-applied every sync — they're one-time system state — so apply
+them deliberately:
 
 ```
 winutil-apply
 ```
 
 `winutil-apply` runs `~/.config/winutil/manage.ps1 -Apply`, which **self-elevates**
-(one UAC prompt), downloads the pinned WinUtil build, works around WinUtil's broken
-headless mode (a null-guard + WPF preload — see the comments in `manage.ps1`), and
-applies the config with no GUI. Run it on a fresh machine, after a Windows update
-resets tweaks, or after bumping the pinned version.
+(one UAC prompt), downloads the pinned WinUtil build to `%LOCALAPPDATA%\winutil`, and
+runs WinUtil's own headless `-Config` mode, passing on its exit code (logs land in
+`%LOCALAPPDATA%\winutil\logs`). A config naming a tweak the pinned build lacks fails
+the whole run before anything is applied. Run it on a fresh machine, after a Windows
+update resets tweaks, or after bumping the pinned version.
 
 **Update flow:** `apploi` prints a yellow notice when a newer WinUtil release exists.
 To take it: bump `$PinnedVersion` in `manage.ps1`, re-verify `config.json` still
@@ -298,8 +315,5 @@ Steam closes.
 
 ## Deferred
 
-- **O&O ShutUp10** — granular per-app privacy (camera/mic/location defaults,
-  SmartScreen data, inking/typing data) that WinUtil doesn't cover; a candidate to
-  add later.
 - **Device-specific categories** — GPD/AMD/gaming tools, Fallout 4 config — kept out
   of the shared config for now.
