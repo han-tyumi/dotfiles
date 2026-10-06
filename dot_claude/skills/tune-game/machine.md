@@ -10,8 +10,14 @@
   that need it, but it's untested.
 - **GPUs**:
   - RX 9070 XT (RDNA 4, 16 GB) over OCuLink: renders games. Resizable BAR (Smart
-    Access Memory) is off (GPU-Z, 2026-10-06); turning it on needs BIOS support
-    (Above 4G Decoding and Re-Size BAR), which is unverified for the OCuLink port.
+    Access Memory) is on (verified 2026-10-06): BAR0 is 16 GB, not 256 MB. The
+    BIOS switch is Advanced > GFX Configuration > PCIE Resizable BAR support; it
+    also needs the PCI Subsystem's Above 4G Decoding and Resizable BAR, both on,
+    and the Above 4GB MMIO Limit is 40-bit. To check unelevated, run `reg query` on the
+    card's `HKLM\SYSTEM\CurrentControlSet\Enum\PCI\VEN_1002&DEV_7550&...\Control`
+    `AllocConfig` and decode its first descriptor (type 7, length scaled by its
+    `LARGE_40` flag). WMI's `Win32_DeviceMemoryAddress` omits ranges over 4 GB, so it
+    shows only the 256 MB BAR2.
   - Radeon 890M (iGPU): drives the internal panel and composes the desktop.
 - **Storage**: 2 TB NVMe. Steam library at `D:\SteamLibrary`.
 
