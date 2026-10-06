@@ -77,6 +77,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           Get-Content dot_config/winget/packages.json -Raw | Test-Json | Out-Null
           Get-Content dot_config/winget/pins.json -Raw | Test-Json | Out-Null
+          Get-ChildItem dot_config/winget/layers -Filter *.json | ForEach-Object { Get-Content $_.FullName -Raw | Test-Json | Out-Null }
           # Windows Terminal settings is JSONC (create_, write-once); drop // line comments before Test-Json.
           $wt = 'AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/create_settings.json'
           (((Get-Content $wt) -notmatch '^\s*//') -join "`n") | Test-Json | Out-Null
@@ -85,11 +86,12 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          # init writes a config with the layer data the templates read; apply
+          # init writes a config with the layer data the templates read (every
+          # in-repo layer, so layer-gated template branches render too); apply
           # --dry-run then renders every managed template under os=windows,
           # respecting .chezmoiignore. It runs no scripts and changes nothing, but
           # errors on any template failure.
-          chezmoi init --source "$PWD" --promptString "layers=personal" --promptString "overlays="
+          chezmoi init --source "$PWD" --promptString "layers=personal gpd-win-max-2" --promptString "overlays="
           if ($LASTEXITCODE) { throw "chezmoi init failed" }
           $out = chezmoi --source "$PWD" apply --dry-run --force 2>&1
           if ($LASTEXITCODE) { $out; throw "template render failed" }

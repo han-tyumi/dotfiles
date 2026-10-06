@@ -22,7 +22,9 @@ Configuration is composed from **layers**, selected per machine by chezmoi data:
 
 - **shared** (`modules/shared/`) — always applied: dev core plus every-machine apps
 - **in-repo layers** (`modules/<name>/`) — e.g. `personal`: hobby/games/media, personal
-  git identity, V/Roc, personal mise runtimes
+  git identity, V/Roc, personal mise runtimes. A layer needs no Nix modules: the
+  `gpd-win-max-2` device layer is only a `.chezmoilayers/` manifest gating its
+  targets (the `tune-game` skill and a winget manifest in `dot_config/winget/layers/`)
 - **overlay layers** (`overlays/<name>/`) — private repos declared per machine in
   chezmoi data and cloned by a chezmoi external next to the flake. Their
   `darwin.nix`/`home.nix` are imported when the layer is enabled, and chezmoi
@@ -67,7 +69,8 @@ Caveats:
 - Toggling a layer **off** orphans already-applied files (chezmoi never removes
   newly-ignored targets): manually `rm` a disabled layer's leftover targets;
   Homebrew's zap cleanup (`--force-cleanup --zap` extraFlags) removes the
-  casks/brews itself.
+  casks/brews itself. On Windows nothing uninstalls a layer's winget packages, and
+  `apploi` keeps upgrading them, so `winget uninstall` them by hand.
 - Renaming the Mac (LocalHostName) breaks `darwin-rebuild`'s attr lookup until the
   next `chezmoi apply` re-renders `machine.nix` — the failure is loud, the fix is
   one apply.
@@ -193,8 +196,12 @@ To add a layer named `<name>` — in-repo, overlay, or both:
 2. **Ignore manifest** — `.chezmoilayers/<name>.ignore` listing the targets and externals
    that layer owns, so they're skipped (and the externals not fetched) when it's off.
 3. **Layer scripts** (optional) — `.chezmoiscripts/<name>/`; they derive their layer name
-   from `.chezmoi.sourceFile`, not a hardcoded string.
-4. **mise runtimes** (optional) — a `conf.d/<name>.toml` fragment for layer-specific tools.
+   from `.chezmoi.sourceFile`, not a hardcoded string. `.chezmoiscripts/**` is
+   ignored on Windows, so a Windows layer's provisioners are root `run_*.ps1`
+   scripts listed in its manifest by attribute-stripped name.
+4. **mise runtimes and winget packages** (optional) — a `conf.d/<name>.toml` fragment for
+   layer-specific tools; on Windows, a `dot_config/winget/layers/<name>.json` manifest
+   (packages.json's schema), listed in the ignore manifest by its target path.
 5. **Claude Code fragments** (optional) — a layer dir can provide a
    `claude-settings.json.tmpl` (top-level keys such as the env block and `model`
    pin, spliced ahead of the shared base) and/or a `claude-permissions.json.tmpl`
@@ -203,7 +210,7 @@ To add a layer named `<name>` — in-repo, overlay, or both:
    fragments are read from the source tree (so they work on Windows too) and are
    spliced before overlay fragments, so an overlay wins a key both set — e.g. the
    `personal` layer's Opus `model` yields to a work overlay's pin.
-6. **Verify** — in-repo layers get a `test-<name>` fixture automatically:
+6. **Verify** — in-repo layers with a `modules/<name>/` dir get a `test-<name>` fixture automatically:
    `nix eval ~/.config/nix-darwin#darwinConfigurations.test-<name>.system.drvPath`.
 7. **Enable it** — add `<name>` to `layers` (overlays as `name=url` pairs) in
    `~/.config/chezmoi/chezmoi.toml` and run `chezmoi apply --init` to regenerate
@@ -260,7 +267,7 @@ provisioned with **winget** and **mise** instead of Nix.
 - `.chezmoiignore` splits targets by `.chezmoi.os`: on Windows the whole
   `dot_config/nix-darwin` tree, the Mac installers (`.chezmoiscripts/**`, the root
   `*.sh`/`*.toml` run scripts), and the Mac shell/editor targets (`.config/zed`,
-  `.config/nvim`, `.config/ghostty`, `.claude`, `.local`, `Library`) are skipped; on
+  `.config/nvim`, `.config/ghostty`, `.local`, `Library`) are skipped; on
   macOS the Windows targets (`AppData`, `Documents`, `.config/winget`, `.gitconfig`,
   the `*.ps1` provisioners) are skipped. Root run-scripts are ignored by their
   attribute-stripped name (e.g. `1-mise-config.toml`, `10-winget-packages.ps1`).
@@ -275,7 +282,8 @@ provisioned with **winget** and **mise** instead of Nix.
   and a Signing key — enabling SSH commit signing (see the git identity note below).
 - Provisioning is hash-gated `run_onchange` PowerShell, kept PowerShell 5.1-safe
   since pwsh 7 isn't present on the first apply: `10-winget-packages` imports
-  `dot_config/winget/packages.json` with `--no-upgrade` (and verifies each declared
+  `dot_config/winget/packages.json` plus each enabled layer's
+  `dot_config/winget/layers/<layer>.json` with `--no-upgrade` (and verifies each declared
   package installed), then adds any missing pin from `dot_config/winget/pins.json` —
   the apps left to their own updaters;
   `20-mise-install` runs `mise install` against the shared `dot_config/mise/config.toml`
@@ -302,7 +310,8 @@ provisioned with **winget** and **mise** instead of Nix.
   SSH commit signing turns on when `dot_gitconfig`'s `stat` gate sees the bootstrap
   key). `.claude`
   applies on Windows too — settings.json (with the rtk hook, unix statusline, and
-  `/tmp` gated to macOS), the global CLAUDE.md, and the portable `create-skill` skill;
+  `/tmp` gated to macOS), the global CLAUDE.md, the portable `create-skill` skill, and
+  (with the `gpd-win-max-2` layer on) the `tune-game` skill;
   the bash statusline, the agent-browser symlink, and the skills whose CLI only the
   Mac profile provides (the `gh stack` extension, `wt`) stay Mac-only via
   `.chezmoiignore`.

@@ -332,7 +332,32 @@ Steam shortcut added by hand. Non-Steam games appearing on another device is Rem
 Play advertising from a running host rather than sync — they vanish when that host's
 Steam closes.
 
+## Device layer: `gpd-win-max-2`
+
+Pieces that only make sense on the GPD Win Max 2 live in their own layer, so other
+Windows machines never get them. Today that is the `tune-game` Claude Code skill and the
+winget packages it drives. Given
+a game, it finds and backs up the game's settings, tunes them for this handheld's
+eGPU setup, and checks for a steady 60 fps with PresentMon captures. It writes each
+game's results to `games/<game>.md` in the chezmoi source, so they land in the repo.
+
+To enable it, edit `~/.config/chezmoi/chezmoi.toml` so that
+`layers = "personal gpd-win-max-2"`, then run `apploi -c` (its `apply --init`
+regenerates `layerList`). `chezmoi init --promptString` alone keeps an existing
+`layers` value. On a fresh machine, pass the layers to `bootstrap.ps1` or set
+`$env:DOTFILES_LAYERS`.
+
+The tools the skill drives (`Intel.PresentMon.Console`, `TechPowerUp.GPU-Z`,
+`REALiX.HWiNFO`, `Microsoft.WinDbg`) come from the layer's winget manifest,
+`~/.config/winget/layers/gpd-win-max-2.json`, which `10-winget` imports only while the
+layer is on; `apploi` upgrades them like any other package. The AMD driver, the TDP
+tool (Motion Assistant) and RTSS stay manual, and so does the Performance Log Users
+membership that lets PresentMon run unelevated (elevated:
+`Add-LocalGroupMember -SID S-1-5-32-559 -Member $env:USERNAME`, then sign out and back
+in). Turning the layer off leaves `~/.claude/skills/tune-game`, that
+manifest and the installed tools behind; remove them by hand.
+
 ## Deferred
 
-- **Device-specific categories** — GPD/AMD/gaming tools, Fallout 4 config — kept out
-  of the shared config for now.
+- **Device-specific categories**: a Windows gaming category (RTSS, Steam) has no
+  manifest yet, and Fallout 4 config is still uncaptured.

@@ -1,5 +1,14 @@
+{{ $wingetLayers := list -}}
+{{ range .layerList -}}
+{{ if stat (joinPath $.chezmoi.sourceDir "dot_config/winget/layers" (printf "%s.json" .)) -}}
+{{ $wingetLayers = append $wingetLayers . -}}
+{{ end -}}
+{{ end -}}
 # winget packages hash: {{ include "dot_config/winget/packages.json" | sha256sum }}
 # winget pins hash: {{ include "dot_config/winget/pins.json" | sha256sum }}
+{{ range $wingetLayers -}}
+# winget {{ . }} layer hash: {{ include (printf "dot_config/winget/layers/%s.json" .) | sha256sum }}
+{{ end -}}
 #
 # Converge to the declared winget package set and pins. `winget import
 # --no-upgrade` installs missing packages only; upgrades are `apploi`'s job
@@ -12,6 +21,22 @@ if (-not (Test-Path $manifest)) {
   return
 }
 
+# Each enabled layer can add a manifest of the same schema. The list comes from the
+# layer selection rather than the directory, so a disabled layer's leftover manifest
+# is never imported.
+$layerManifests = @(
+{{- range $wingetLayers }}
+  Join-Path $env:USERPROFILE '.config\winget\layers\{{ . }}.json'
+{{- end }}
+)
+foreach ($layerManifest in $layerManifests) {
+  if (-not (Test-Path $layerManifest)) {
+    Write-Warning "Layer winget manifest not found at $layerManifest; re-run the apply."
+    exit 1
+  }
+}
+$manifests = @($manifest) + $layerManifests
+
 # winget is an App Installer execution alias in WindowsApps; resolve it there when
 # this session's PATH lacks that dir (a fresh install, or a User PATH flattened to
 # REG_SZ so its %USERPROFILE% entry no longer expands).
@@ -22,10 +47,18 @@ if (-not (Test-Path $winget)) {
   exit 1
 }
 
-& $winget import --import-file $manifest `
-  --accept-package-agreements --accept-source-agreements `
-  --ignore-unavailable --no-upgrade --disable-interactivity
-$importExit = $LASTEXITCODE
+# Keep the first failure code, letting only the benign -1978335189 be replaced, so a
+# later manifest's import can't mask a real failure in an earlier one.
+$importExit = 0
+foreach ($packageManifest in $manifests) {
+  & $winget import --import-file $packageManifest `
+    --accept-package-agreements --accept-source-agreements `
+    --ignore-unavailable --no-upgrade --disable-interactivity
+  $manifestImportExit = $LASTEXITCODE
+  if ($manifestImportExit -ne 0 -and ($importExit -eq 0 -or $importExit -eq -1978335189)) {
+    $importExit = $manifestImportExit
+  }
+}
 
 # Add each declared pin that is missing. A pin set by hand is left alone, so
 # this only ever adds; dropping a pin from pins.json means `winget pin remove`.
@@ -65,7 +98,9 @@ if (-not (Test-Path $pwshInstalledVersions)) {
 # present and fail only on a genuinely missing one.
 $missing = @()
 try {
-  $ids = (Get-Content $manifest -Raw | ConvertFrom-Json).Sources[0].Packages | ForEach-Object { $_.PackageIdentifier }
+  $ids = foreach ($packageManifest in $manifests) {
+    (Get-Content $packageManifest -Raw | ConvertFrom-Json).Sources[0].Packages | ForEach-Object { $_.PackageIdentifier }
+  }
   foreach ($id in $ids) {
     & $winget list --id $id --exact --disable-interactivity --accept-source-agreements | Out-Null
     if ($LASTEXITCODE -ne 0) { $missing += $id }
