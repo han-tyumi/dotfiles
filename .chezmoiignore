@@ -4,16 +4,16 @@ bootstrap.sh
 bootstrap.ps1
 windows-sandbox.wsb
 docs/**
-# Reserved DOS device names. A tool running `> NUL` (or `2> NUL`, `*> NUL`) inside
-# the source dir under a POSIX shell writes a literal file by that name instead of
+# Reserved DOS device names. A tool running `> NUL` (or `2> NUL`, `*> NUL`) in any
+# source dir under a POSIX shell writes a literal file by that name instead of
 # discarding output, which Windows tooling that assumes cmd.exe semantics does.
 # chezmoi would then try to manage a target of the same name, whose bare path
 # resolves to the character device, aborting the whole apply. These are never real
-# managed targets, so ignore them on every OS.
-NUL
-CON
-PRN
-AUX
+# managed targets, so ignore them at any depth on every OS.
+**/NUL
+**/CON
+**/PRN
+**/AUX
 # In-repo layers' Claude Code fragments are read from the source tree by
 # .chezmoitemplates/claude-settings.json; they are never targets themselves.
 .config/nix-darwin/modules/*/claude-settings.json
