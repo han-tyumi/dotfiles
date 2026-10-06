@@ -36,8 +36,11 @@ A layer may exist in-repo, as an overlay, or both; any combination of layers wor
 Selection flows from chezmoi data into the flake through the generated `machine.nix`:
 
 ```bash
-# Space-separated; overlays are name=url pairs.
-chezmoi init --promptString "layers=personal work,overlays=work=git@github.com:user/repo.git"
+# Space-separated; overlays are name=url pairs. --prompt makes the promptStringOnce
+# prompts take these values even when the machine already has a selection, but it
+# re-asks every one of them: pass both keys, or the missing one blocks on a prompt
+# (Enter clears it).
+chezmoi init --prompt --promptString "layers=personal work,overlays=work=git@github.com:user/repo.git"
 chezmoi data   # inspect current selection
 ```
 
@@ -202,8 +205,11 @@ To add a layer named `<name>` — in-repo, overlay, or both:
    `personal` layer's Opus `model` yields to a work overlay's pin.
 6. **Verify** — in-repo layers get a `test-<name>` fixture automatically:
    `nix eval ~/.config/nix-darwin#darwinConfigurations.test-<name>.system.drvPath`.
-7. **Enable it** — add `<name>` to the machine's `layers` (overlays as `name=url` pairs) via
-   `chezmoi init --promptString` or by editing the chezmoi data.
+7. **Enable it** — add `<name>` to `layers` (overlays as `name=url` pairs) in
+   `~/.config/chezmoi/chezmoi.toml` and run `chezmoi apply --init` to regenerate
+   `layerList`. `chezmoi init --prompt --promptString` also works, but only with
+   both `layers` and `overlays` given (see [Layers](#layers)); without `--prompt`, an
+   existing selection wins.
 
 ## Common Commands
 
