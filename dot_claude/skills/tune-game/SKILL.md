@@ -127,6 +127,16 @@ labels.
   ```
   `WorstWindows` lists the worst 10 s stretches by time since the capture
   started (m:ss); ask the user what was on screen then.
+- **Core placement**: start next to a session capture, also in the background
+  before launch. It logs once a second to the captures folder until the game
+  exits, then prints the share of seconds the busiest CPU was a Zen 5 core:
+  ```powershell
+  pwsh -NoProfile -File "${CLAUDE_SKILL_DIR}/scripts/watch-cores.ps1" -Process <exe> -Label session-cores
+  ```
+  Rows carry wall-clock times; line them up with the capture's windows by the
+  capture's start time (in its file name). CPU-bound drops while `BusiestOnZen5`
+  is 0 point at the [scheduler policy](machine.md#scheduler-policy), not the
+  game's settings.
 - **Re-analyze** a saved CSV (`-AsJson` for comparisons). It defaults to 60 Hz;
   pass `-RefreshHz 40` for a capture taken at 40 Hz:
   ```powershell

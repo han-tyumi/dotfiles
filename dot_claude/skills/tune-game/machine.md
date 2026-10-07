@@ -106,10 +106,9 @@ foreach ($setting in 'SCHEDPOLICY 5', 'SHORTSCHEDPOLICY 5', 'HETEROPOLICY 4') { 
 Whether the defaults keep the main thread on Zen 5 is untested; if it still
 lands on 8-23, try `SCHEDPOLICY 2` (prefer performant processors). Leave
 Windows Game Mode off: its power overlay sets `CPMINCORES1`, the minimum share
-of unparked Zen 5 cores, to 0. Log placement with a per-second
-`\Processor(*)\% Processor Time` sample next to the game's per-thread CPU time:
-a main thread near 100% of one core with the top logical CPU at 8 or above
-means it's on Zen 5c.
+of unparked Zen 5 cores, to 0. `scripts/watch-cores.ps1` logs placement
+during a session: a main thread near 100% of one core with the busiest logical
+CPU at 8 or above means it's on Zen 5c.
 
 ## Drivers
 
