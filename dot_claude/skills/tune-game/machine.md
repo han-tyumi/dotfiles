@@ -3,8 +3,12 @@
 ## Hardware
 
 - **CPU**: Ryzen AI 9 HX 370, 12 cores / 24 threads (4 Zen 5 + 8 Zen 5c).
-  Clocks depend on the TDP (see [Power](#power)); dense open-world scenes are
-  usually CPU-bound here, ray tracing included (BVH updates run on the CPU).
+  Logical CPUs 0-7 are the Zen 5 cores (about 5.15 GHz under game load); 8-23
+  are Zen 5c (about 3.3 GHz). A game's main thread on a Zen 5c core runs at
+  roughly two thirds the speed, so check placement before blaming settings (see
+  [Scheduler policy](#scheduler-policy)). Clocks depend on the TDP (see
+  [Power](#power)); dense open-world scenes are usually CPU-bound here, ray
+  tracing included (BVH updates run on the CPU).
 - **Memory**: 32 GB LPDDR5X-8000, 8 GB of it reserved for the 890M (Windows sees
   about 23.6 GB). Lowering the BIOS UMA reservation to 1–2 GB frees RAM for games
   that need it, but it's untested.
@@ -73,8 +77,39 @@
 - Target 28–30 W on AC. Go to 35 W when captures are CPU-bound and temperatures
   stay in range. During a drop, CPU package power well below the target (HWiNFO)
   means the TDP isn't applied.
-- PCIe ASPM is off on AC (the user set it with powercfg), which keeps the
-  OCuLink link out of low-power link states and their wake-up latency.
+- PCIe ASPM is off on AC and DC (the user set both with powercfg), which keeps
+  the OCuLink link out of low-power link states and their wake-up latency, also
+  through a brief AC drop.
+
+### Scheduler policy
+
+The Balanced plan carries explicit overrides of 0 ("any processor") for
+`SCHEDPOLICY`, `SHORTSCHEDPOLICY` and `HETEROPOLICY`, where Windows defaults
+to 5, 5 and 4 (automatic). With 0, nothing steers a game's busiest thread to
+the Zen 5 cores: in one Witcher 3 session the busiest CPU was a Zen 5 core in
+3% of seconds, in the next in 61-85% of each minute, with no settings change.
+Read the values unelevated:
+
+```powershell
+powercfg /query SCHEME_CURRENT SUB_PROCESSOR SCHEDPOLICY
+powercfg /query SCHEME_CURRENT SUB_PROCESSOR SHORTSCHEDPOLICY
+powercfg /query SCHEME_CURRENT SUB_PROCESSOR HETEROPOLICY
+```
+
+Restoring the defaults is the user's change; they run this, then restart the
+game (the same line with 0, 0, 0 undoes it):
+
+```powershell
+foreach ($setting in 'SCHEDPOLICY 5', 'SHORTSCHEDPOLICY 5', 'HETEROPOLICY 4') { $name, $value = $setting.Split(' '); powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR $name $value; powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR $name $value }; powercfg /setactive SCHEME_CURRENT
+```
+
+Whether the defaults keep the main thread on Zen 5 is untested; if it still
+lands on 8-23, try `SCHEDPOLICY 2` (prefer performant processors). Leave
+Windows Game Mode off: its power overlay sets `CPMINCORES1`, the minimum share
+of unparked Zen 5 cores, to 0. Log placement with a per-second
+`\Processor(*)\% Processor Time` sample next to the game's per-thread CPU time:
+a main thread near 100% of one core with the top logical CPU at 8 or above
+means it's on Zen 5c.
 
 ## Drivers
 
@@ -127,6 +162,22 @@ or HWiNFO yourself: both raise a UAC prompt.
   (`whoami /groups` should list S-1-5-32-559). `--help` prints to stderr and exits 1.
 - The scripts parse columns by name, so adding flags is safe for them, but each
   `--track_*` beta flag adds columns.
+- Column names depend on the schema. `capture-frames.ps1` passes
+  `--v2_metrics`: `CPUStartTime`, `FrameTime`, `CPUBusy`, `GPUBusy`,
+  `DisplayedTime`. A plain `presentmon` run writes the 2.x default:
+  `CPUStartTimeInMs`, `MsBetweenPresents`, `MsCPUBusy`, `MsGPUBusy`,
+  `MsBetweenDisplayChange`. `analyze-frames.ps1` reads both; an ad hoc script
+  must use the names in the file's header. `DisplayedTime` is `NA` for a frame
+  that was never shown.
+- A second, short probe can run beside a long capture under its own session
+  name, without disturbing it:
+  ```powershell
+  presentmon --process_name <exe> --output_file <probe.csv> --session_name tune-game-probe --timed 60 --terminate_after_timed --no_console_stats
+  ```
+- `--terminate_on_proc_exit` sometimes leaves the session running after the
+  game exits. `presentmon --terminate_existing_session --session_name <name>`
+  stops it; exit 7 ("no existing sessions found") means it had already ended
+  and the CSV is complete.
 
 ### OCuLink link check
 
@@ -179,6 +230,12 @@ the crash.
   it. Try the same for other games that crash with `DXGI_ERROR_DEVICE_REMOVED`,
   and treat turning off Hardware-accelerated GPU scheduling (on for both GPUs
   today) as an untested toggle if the error recurs.
+- **eGPU surprise removal**: moving the charger cable between the USB-C ports
+  dropped the RX 9070 XT off the bus 10 ms after AC loss, and Windows hung past
+  a watchdog live dump until a forced power-off. A 9-second AC blip earlier the
+  same day left the eGPU connected, so the OCuLink plug getting jostled is the
+  likely cause, not the switch to battery. Change charger ports only with games
+  closed, and steady the OCuLink plug while doing it.
 - **Old Motion Assistant copy**: a backup of the previous build (title
   `Power Mod 2.1.1`) sits under `Documents\Backups` with its exe renamed to
   `MotionAssistant.exe.disabled`. It loads the old WinRing0 driver
@@ -189,3 +246,34 @@ the crash.
   click. Recheck the file after the first launch.
 - **Shader compilation**: the first launch after a driver update recompiles
   shaders; don't capture until the game has warmed its cache in the test area.
+- **Speaker pops**: the built-in speakers popped during play while AirPods
+  stayed clean. The speaker endpoint runs five DTS effect stages (DTS Sound
+  Unbound / DTS:X Ultra); the first fix is Settings > System > Sound >
+  Speakers > Audio enhancements Off and Spatial sound Off. An unconfirmed
+  fallback, reported on the Win 4 2025: the catalog AMD HD Audio Controller
+  driver with `MSISupported=1`. LatencyMon needs admin, so the user runs it.
+
+## Device quirks
+
+Researched 2026-10-06 (GPD, DroiX, owner reports). BIOS 0.21 and EC 0.10 are
+the newest for this model.
+
+- **Spacebar misses**: one switch under the centre of the bar. The owner fix
+  from earlier models is a shim (about 1 mm of tape) on the keycap's underside
+  where it meets the switch; there's no firmware fix. Self-repair damage voids
+  DroiX's warranty, so consider warranty service first.
+- **Controller**: `VID_2F24&PID_0135`, DMI `G1619-05`. GPD lists WinControls
+  v1.16 and the GamePad Test Calibration Tool V1.03 for the 2025, and no
+  gamepad firmware. Don't flash firmware v3.14 / v1.23: it's listed only for
+  the 6800U, 7640U and 7840U models.
+- **GPD Tool 1.65** replaces Motion Assistant (TDP up to 40 W, vibration, back
+  buttons). Don't run both at once.
+- **Charge limit**: on the 2025 the BIOS charge-limit option reportedly changes
+  only the LED behaviour, not the charging. Docked on AC all day, watch the
+  battery for swelling.
+- **Phantom touches** (GXTP7385 touchscreen): disabling the HID-compliant pen
+  device is the owner fix.
+- **eGPU**: OCuLink isn't hot-pluggable. Connect or disconnect it only with
+  the laptop off, and power the eGPU on before the laptop.
+- **Don't flash**: BIOS 0.42, the touchpad firmware, or the gamepad firmware
+  above; none are for the HX 370.
