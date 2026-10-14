@@ -278,7 +278,7 @@
     extraInit = ''
       eval "$(/opt/homebrew/bin/brew shellenv)"
     '' + ''
-      # bash/fish equivalent of home.nix's ~/.zshenv PATH entry (they have no
+      # fish equivalent of home.nix's ~/.zshenv PATH entry (it has no
       # zshenv): it lands in setEnvironment, sourced for every shell. The marker
       # ~/.zshenv exports keeps a zsh that already ran it from doubling PATH.
       # mise shims prepend so its node wins over nixpkgs'; ~/.local/bin too, since
