@@ -140,7 +140,12 @@ in
     # subcommand exempt from gh's auth check, and with the extension already at the
     # newest release it is a no-op. Non-fatal, since a flaky network or an
     # unauthenticated gh must not abort activation.
+    #
+    # A real upgrade makes gh ad-hoc sign the downloaded binary with `codesign`,
+    # which lives in /usr/bin and is missing from activation's minimal PATH; without
+    # it the new release lands unsigned and the install reports failure.
     activation.ghStackExtension = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      export PATH="$PATH:/usr/bin"
       run ${config.programs.gh.package}/bin/gh extension install --force github/gh-stack || {
         echo "gh extension install --force github/gh-stack failed; re-run it by hand." >&2
         echo "On a name collision or a missing latest version, another extension owns the 'stack' command: 'gh extension remove stack' first." >&2
