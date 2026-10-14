@@ -232,6 +232,10 @@ Per-machine setup:
   var. Repo work goes through the `gh` CLI (the github MCP server was retired:
   every tool it had has a `gh` equivalent, and `gh` calls run in the shell where
   any inspecting hook sees them)
+- **Steam Web API key** (personal layer): run
+  `nu ~/.claude/skills/steam/scripts/steam.nu setup` — it stores the key and the
+  account's SteamID64 in the OS credential store (Keychain / Credential Manager)
+  through the Python keyring CLI, which the `steam` skill reads on each call
 - **private overlays**: a fresh SSH key per machine — `bootstrap.sh` offers to
   generate them and prints the public keys to register with the matching GitHub
   account; keys are referenced by name, so per-machine material works without
@@ -310,8 +314,9 @@ provisioned with **winget** and **mise** instead of Nix.
   SSH commit signing turns on when `dot_gitconfig`'s `stat` gate sees the bootstrap
   key). `.claude`
   applies on Windows too — settings.json (with the rtk hook, unix statusline, and
-  `/tmp` gated to macOS), the global CLAUDE.md, the portable `create-skill` skill, and
-  (with the `gpd-win-max-2` layer on) the `tune-game` skill;
+  `/tmp` gated to macOS), the global CLAUDE.md, the portable `create-skill` skill,
+  (with the `personal` layer on) the `steam` skill, and (with the `gpd-win-max-2`
+  layer on) the `tune-game` skill;
   the bash statusline, the agent-browser symlink, and the skills whose CLI only the
   Mac profile provides (the `gh stack` extension, `wt`) stay Mac-only via
   `.chezmoiignore`.
