@@ -60,10 +60,12 @@
   $profiles = 'C:\Program Files\Motion Assistant\Profiles'
   Get-Item -LiteralPath "$profiles\General\default.ini", "$profiles\Process\<ProcessName>.ini" -ErrorAction SilentlyContinue |
     Select-String -Pattern '^(ACTDP|AutoSetTDP|ACRTSS)='
-  (Get-Process MotionAssistant -ErrorAction SilentlyContinue).MainWindowTitle
+  Get-Process MotionAssistant -ErrorAction SilentlyContinue | Select-Object Id, StartTime, MainWindowTitle
   (Get-ScheduledTask -TaskName MotionAssistant -ErrorAction SilentlyContinue).Actions.Execute
   ```
-  The title must end in `Power Mod 2.2.3.1` (see [Known gotchas](#known-gotchas)).
+  A returned process means it's running. While it sits minimized in the tray its
+  title is empty; once the user opens its window, the title must end in
+  `Power Mod 2.2.3.1` (see [Known gotchas](#known-gotchas)).
   The task exists once the user ticks "Start with windows" on the Advanced tab; it
   starts the Program Files exe elevated at logon, and "Minimized to tray" keeps it
   out of the way.
@@ -83,28 +85,37 @@
 
 ### Scheduler policy
 
-The Balanced plan carries explicit overrides of 0 ("any processor") for
-`SCHEDPOLICY`, `SHORTSCHEDPOLICY` and `HETEROPOLICY`, where Windows defaults
-to 5, 5 and 4 (automatic). With 0, nothing steers a game's busiest thread to
-the Zen 5 cores: in one Witcher 3 session the busiest CPU was a Zen 5 core in
-3% of seconds, in the next in 61-85% of each minute, with no settings change.
-Read the values unelevated:
+Windows defaults `SCHEDPOLICY`, `SHORTSCHEDPOLICY` and `HETEROPOLICY` to 5, 5
+and 4 (automatic), which steer a game's busiest thread to the Zen 5 cores:
+with them, Witcher 3's busiest CPU was a Zen 5 core in 100% of a 40-minute
+session's seconds. Explicit overrides of 0 ("any processor") in the Balanced
+plan stop the steering: with them it was 3% in one session and 61-85% of each
+minute in the next. Motion Assistant writes these on every start (at logon, or
+a relaunch from the tray) from the core dropdown on its TDP tab, for the active
+power source only. "All Cores Auto", its default when the profile has no
+`ACCoreSet`, writes 0, 0, 0; none of its options gives Windows' 5, 5, 4. Since
+2026-10-16 the default profile has `ACCoreSet=AllCoresPrefPCore` ("Prefer
+P-Cores"), which writes `SCHEDPOLICY` 2, `SHORTSCHEDPOLICY` 2 and `HETEROPOLICY`
+1 on AC; DC keeps 5, 5, 4. A per-game profile replaces the default, so it needs
+the same dropdown setting. They're hidden settings, so `/query`
+prints nothing for them; read them unelevated with `/qh`:
 
 ```powershell
-powercfg /query SCHEME_CURRENT SUB_PROCESSOR SCHEDPOLICY
-powercfg /query SCHEME_CURRENT SUB_PROCESSOR SHORTSCHEDPOLICY
-powercfg /query SCHEME_CURRENT SUB_PROCESSOR HETEROPOLICY
+powercfg /qh SCHEME_CURRENT SUB_PROCESSOR SCHEDPOLICY
+powercfg /qh SCHEME_CURRENT SUB_PROCESSOR SHORTSCHEDPOLICY
+powercfg /qh SCHEME_CURRENT SUB_PROCESSOR HETEROPOLICY
 ```
 
-Restoring the defaults is the user's change; they run this, then restart the
-game (the same line with 0, 0, 0 undoes it):
+If AC reads 0, 0, 0, the user sets the dropdown back to "Prefer P-Cores" and
+clicks that row's Apply, then restarts the game. Running powercfg by hand holds
+only until Motion Assistant's next start (elevated; the same line with 0, 0, 0
+undoes it):
 
 ```powershell
 foreach ($setting in 'SCHEDPOLICY 5', 'SHORTSCHEDPOLICY 5', 'HETEROPOLICY 4') { $name, $value = $setting.Split(' '); powercfg /setacvalueindex SCHEME_CURRENT SUB_PROCESSOR $name $value; powercfg /setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR $name $value }; powercfg /setactive SCHEME_CURRENT
 ```
 
-Whether the defaults keep the main thread on Zen 5 is untested; if it still
-lands on 8-23, try `SCHEDPOLICY 2` (prefer performant processors). Leave
+Leave
 Windows Game Mode off: its power overlay sets `CPMINCORES1`, the minimum share
 of unparked Zen 5 cores, to 0. `scripts/watch-cores.ps1` logs placement
 during a session: a main thread near 100% of one core with the busiest logical
@@ -120,6 +131,13 @@ CPU at 8 or above means it's on Zen 5c.
   `dxgmms2!VIDMM_GLOBAL::InitPagingProcessVaSpace` right after an `amdkmdag.sys`
   swap); rerunning the installer restores Adrenalin. Downloads from amd.com need an amd.com Referer; use the
   `-b` combined package.
+- Leave the AMD User Experience Program unticked in the Adrenalin installer and
+  off in Settings > Preferences. Its `AUEPMaster.exe` spawns `cmd.exe /C
+  "powershell ..."` at logoff, which fails with 0xc0000142: one or more
+  "cmd.exe - Application Error" popups at every shutdown (System event 26, then
+  winsrvext 100 "AUEPMaster.exe is delaying system shutdown" ~5 s later). Every
+  Adrenalin install so far has re-added it; the `\AMDInstallLauncher` task
+  (`InstallManagerApp.exe /InstallAUEP`) can too.
 
 ## Adrenalin profile
 
@@ -127,7 +145,7 @@ Per-game profile baseline (Adrenalin > Gaming > the game):
 
 | Setting | Value | Why |
 |---|---|---|
-| Radeon Chill | Off | Fights the game's own limiter. |
+| Radeon Chill | Off | Fights the game's own limiter, and as a 60/60 cap it paces worse than RTSS ([Frame caps](#frame-caps)). |
 | Enhanced Sync | Off | Lets frames tear below 60; use the game's vsync. |
 | AFMF (Fluid Motion Frames) | Off | See [Display path](#display-path). |
 | Radeon Image Sharpening | Off | Stacks on the game's own sharpening and sharpens the UI. |
@@ -135,14 +153,40 @@ Per-game profile baseline (Adrenalin > Gaming > the game):
 | Radeon Boost | Off | Drops resolution on motion. |
 | Anti-Lag | Game's Anti-Lag 2 when offered | Driver Anti-Lag only for games without it. |
 
+The Adrenalin overlay (Alt+R) doesn't open in every game (Enshrouded); the user
+then sets the profile in the desktop app under Gaming > Games.
+
+### Frame caps
+
+For a game without its own limiter, or whose vsync stalls on the cross-adapter
+path, cap it with RTSS. Its profiles folder is user-writable (granted
+2026-10-16), so write the cap yourself, ASCII:
+
+```powershell
+$profilePath = 'C:\Program Files (x86)\RivaTuner Statistics Server\Profiles\<exe>.cfg'
+[IO.File]::WriteAllText($profilePath, "[Framerate]`r`nLimit=60`r`n", [Text.Encoding]::ASCII)
+```
+
+- RTSS reads a profile when the game starts; editing it while the game runs
+  changes nothing until the next launch.
+- RTSS must be running before the game. `StartWithWindows=1` in `Profiles\Config`
+  means the user ticked Start with Windows; it needs admin, so only the user
+  starts it. Check with `Get-Process RTSS`.
+- Motion Assistant writes RTSS's `Global` profile and, for each of its per-game
+  profiles, that game's `<exe>.cfg` (see [Power](#power)). Before writing a cap,
+  check that the game has no Motion Assistant profile under `Profiles\Process`,
+  or its next start overwrites the cap.
+- On Enshrouded, RTSS at 60 held 1 frame in 30 s where Radeon Chill at 60/60
+  held 11.
+
 ## Tools
 
 | Tool | Where | Notes |
 |---|---|---|
 | PresentMon (console) | `presentmon` on PATH (winget `Intel.PresentMon.Console`) | Unelevated, because the user is in Performance Log Users. Wrapped by `scripts/capture-frames.ps1`, which reads the refresh rate from the active display. |
-| GPU-Z | `C:\Program Files (x86)\GPU-Z\GPU-Z.exe` (winget `TechPowerUp.GPU-Z`) | Requires admin, so the user starts it. Once it's open, `scripts/read-gpuz.ps1` reads its fields unelevated for the card selected in its dropdown: Bus Interface (`max @ current` link), Resizable BAR, driver, GPU load. |
+| GPU-Z | `C:\Program Files (x86)\GPU-Z\GPU-Z.exe` (winget `TechPowerUp.GPU-Z`) | Requires admin, so the user starts it. Once it's open, `scripts/read-gpuz.ps1` reads its fields unelevated for the card selected in its dropdown: Bus Interface (`max @ current` link), Resizable BAR, driver, and the Sensors tab's load, board power, clocks, voltage, hot spot and VRAM. |
 | HWiNFO64 (free) | `C:\Program Files\HWiNFO64\HWiNFO64.EXE` (winget `REALiX.HWiNFO`) | Requires admin, so the user runs it and clicks Logging start; command-line CSV logging (`-l`) is Pro-only. CPU package power, clocks, temperatures, GPU power. |
-| RivaTuner Statistics Server | `C:\Program Files (x86)\RivaTuner Statistics Server` | On-screen overlay and frame cap fallback for games without a limiter. |
+| RivaTuner Statistics Server | `C:\Program Files (x86)\RivaTuner Statistics Server` (winget `Guru3D.RTSS`) | Frame caps for games without a usable limiter; see [Frame caps](#frame-caps). Runs elevated, so the user starts it. |
 | WinDbg | `kdX64.exe`, `cdbX64.exe`, `WinDbgX.exe` aliases (winget `Microsoft.WinDbg`) | Runs unelevated. See [crash dumps](#crash-dumps). |
 
 Never pass `--restart_as_admin` to PresentMon; it triggers UAC. Never launch GPU-Z
@@ -177,6 +221,10 @@ or HWiNFO yourself: both raise a UAC prompt.
   game exits. `presentmon --terminate_existing_session --session_name <name>`
   stops it; exit 7 ("no existing sessions found") means it had already ended
   and the CSV is complete.
+- Killing `presentmon` with `Stop-Process` leaves its ETW session alive. The
+  next capture then reports "ETW events were lost" and records no frames.
+  Before capturing again, run the `--terminate_existing_session` line above for
+  each `tune-game-<label>` session left over.
 
 ### OCuLink link check
 
@@ -186,7 +234,10 @@ GPU-Z's Bus Interface does show the OCuLink link: `PCIe x16 5.0 @ x4 4.0` while 
 GPU is active (verified 2026-10-06), dropping to `@ x4 1.1` at idle as power
 management slows the link. Have the user open GPU-Z on the 9070 XT and start its
 render test (the `?` beside Bus Interface) or a game, then run
-`scripts/read-gpuz.ps1 -Samples 15`. Under load, anything other than `@ x4 4.0`
+`scripts/read-gpuz.ps1 -Samples 15`. The same samples show whether the card is
+really working: at full load it draws about 250-300 W. GPU load flipping
+between 0% and 100% at 40-130 W while PresentMon reports high GPU busy means
+the GPU is waiting, not loaded (see SKILL.md step 7). Under load, anything other than `@ x4 4.0`
 means a cable or seating problem. HWiNFO's GPU `PCIe Link Speed` sensor (16 GT/s is
 Gen4) is the fallback.
 
@@ -263,8 +314,29 @@ the newest for this model.
   DroiX's warranty, so consider warranty service first.
 - **Controller**: `VID_2F24&PID_0135`, DMI `G1619-05`. GPD lists WinControls
   v1.16 and the GamePad Test Calibration Tool V1.03 for the 2025, and no
-  gamepad firmware. Don't flash firmware v3.14 / v1.23: it's listed only for
-  the 6800U, 7640U and 7840U models.
+  gamepad firmware. Its downloads sit behind an image verification code, so
+  the user fetches them. V1.02 and V1.03 are on the Desktop (unsigned, run
+  without admin); WinControls is in `C:\Program Files (x86)\win3`. The
+  calibration tool's UI is Chinese only: 开始校准 starts calibrating,
+  校准成功! means it succeeded, 校准失败! that it failed, and a mode error
+  means the gamepad/mouse switch is on mouse. Its status line reads 已校准
+  (calibrated) and the controller firmware as X315K123. V1.03's window is
+  titled "win3 Test V1.0.3" and opens over an unrelated "HJZ Controller
+  Tester for PS3&PS4" window that reports the device disconnected. Don't flash firmware v3.14 /
+  v1.23: it's listed only for the 6800U, 7640U and 7840U models.
+- **Left stick, upper arc**: on this unit the left stick read only 72-85% of
+  full scale from NE to NW, though it travels fully (XInput log, 2026-10-07).
+  The module has vertical play: pressing the stick down lifts north from 75%
+  to 91-100%, and it falls back once the stick recenters. The sticks are
+  contactless magnetic (Hall), so dry-cleaning changed nothing. The unit had
+  never been calibrated by the user (the status read 已校准 from the factory),
+  and a first V1.03 calibration fixed it (98-121% in every direction, rest
+  still 0,0). Roll the left stick around the rim with a light touch that
+  reaches the edge, without pressing down, since pressing down reads high.
+  Recalibrate if it comes back; the fallback is a Steam Input outer deadzone
+  of about 75%, then warranty service through DroiX (2 years; no
+  replacement module is sold). WinControls has only deadzone and centring offsets,
+  no range scale.
 - **GPD Tool 1.65** replaces Motion Assistant (TDP up to 40 W, vibration, back
   buttons). Don't run both at once.
 - **Charge limit**: on the 2025 the BIOS charge-limit option reportedly changes
@@ -273,6 +345,10 @@ the newest for this model.
 - **Phantom touches** (GXTP7385 touchscreen): disabling the HID-compliant pen
   device is the owner fix.
 - **eGPU**: OCuLink isn't hot-pluggable. Connect or disconnect it only with
-  the laptop off, and power the eGPU on before the laptop.
+  the laptop off, and power the eGPU on before the laptop. Fast startup makes
+  Shut down a kernel hibernate, so a swap after it fails the resume
+  (Kernel-Boot 29, `0xC00000D4`, then Kernel-Power 41) and cold-boots, losing
+  the last unflushed writes, event log entries included. Hold Shift while
+  clicking Shut down before a swap for a full power-off.
 - **Don't flash**: BIOS 0.42, the touchpad firmware, or the gamepad firmware
   above; none are for the HX 370.

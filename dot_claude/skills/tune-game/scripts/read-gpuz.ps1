@@ -6,8 +6,8 @@ Reads the open GPU-Z window's fields for the card it shows.
 GPU-Z runs elevated, so only the user can start it, but its window text reads
 unelevated. Prints the card selected in GPU-Z's dropdown with its Bus Interface
 (max @ current link), Resizable BAR state and driver version, plus the Sensors
-tab's GPU load and board power. With -Samples, reads that many times two
-seconds apart, for catching the link under load.
+tab's load, board power, clocks, voltage, hot spot and VRAM use. With -Samples,
+reads that many times two seconds apart, for catching the link under load.
 
 .EXAMPLE
 pwsh -NoProfile -File read-gpuz.ps1
@@ -55,8 +55,10 @@ public static class GpuzWindowText {
 }
 '@
 
-function Get-FieldValue([string[]] $texts, [string] $label) {
-  $labelIndex = [array]::IndexOf($texts, $label)
+# GPU Clock appears on both tabs: the Graphics Card tab's is the spec clock, so
+# -Last picks the Sensors tab's live reading.
+function Get-FieldValue([string[]] $texts, [string] $label, [switch] $Last) {
+  $labelIndex = if ($Last) { [array]::LastIndexOf($texts, $label) } else { [array]::IndexOf($texts, $label) }
   if ($labelIndex -ge 0 -and $labelIndex + 1 -lt $texts.Count) { $texts[$labelIndex + 1] }
 }
 
@@ -75,5 +77,12 @@ foreach ($sampleNumber in 1..$Samples) {
     DriverVersion = Get-FieldValue $texts 'Driver Version'
     GpuLoad = Get-FieldValue $texts 'GPU Load'
     BoardPowerDraw = Get-FieldValue $texts 'Board Power Draw'
+    GpuClock = Get-FieldValue $texts 'GPU Clock' -Last
+    MemoryClock = Get-FieldValue $texts 'Memory Clock'
+    GpuVoltage = Get-FieldValue $texts 'GPU Voltage'
+    HotSpot = Get-FieldValue $texts 'GPU Temperature (Hot Spot)'
+    MemoryControllerLoad = Get-FieldValue $texts 'Memory Controller Load'
+    VramDedicated = Get-FieldValue $texts 'Memory Used (Dedicated)'
+    VramDynamic = Get-FieldValue $texts 'Memory Used (Dynamic)'
   }
 }

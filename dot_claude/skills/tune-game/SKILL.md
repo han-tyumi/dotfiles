@@ -71,7 +71,9 @@ Apply these defaults unless the game's research says otherwise:
 - **Upscaler**: FSR 4 > FSR 3.1 > XeSS > the game's TAA. Start at Quality. Turn
   off dynamic resolution unless it targets a fixed 60; it cannot help a
   CPU-bound frame.
-- **Frame pacing**: the game's own 60 fps limiter plus vsync. Frame generation
+- **Frame pacing**: the game's own 60 fps limiter plus vsync. A game without a
+  limiter gets an RTSS cap instead (see [machine.md](machine.md#frame-caps)),
+  which you write yourself. Frame generation
   and AFMF stay off on the internal panel: at a 60 cap they render only 30 real
   frames, which doubles latency, and with no VRR every miss judders. Anti-Lag 2
   on when the game offers it.
@@ -100,6 +102,8 @@ Apply these defaults unless the game's research says otherwise:
    ```
 3. Give the user the Adrenalin per-game profile to set by hand (it can't be
    scripted): see the baseline in [machine.md](machine.md#adrenalin-profile).
+   Frame caps don't need it: write the RTSS profile
+   ([machine.md](machine.md#frame-caps)) before the game launches.
 4. Check the power setup with the read-only commands in
    [machine.md](machine.md#power). If Motion Assistant isn't running, its title
    isn't the 2.2.3.1 build, it has no startup task, or the profile has
@@ -173,6 +177,10 @@ capture 30 s at the same spot, then restore both:
   foliage, and RT (BVH updates cost CPU).
 - An uncapped frame rate far above 60 with drops only at the cap points to
   pacing (limiter, vsync, shader compilation) rather than raw performance.
+- Frames near 33 ms with vsync on, GPU busy barely moving when settings or the
+  upscaler tier drop, and GPU-Z showing low board power while GPU load flips
+  between 0% and 100%: the game's vsync is stalling on the cross-adapter path.
+  Turn its vsync off and cap with RTSS (Enshrouded: 37 → a steady 60).
 
 ### 8. Iterate
 
