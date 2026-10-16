@@ -94,6 +94,11 @@
       # workspaces with per-session diff review. Vendor-neutral (any CLI
       # agent), comes from the tap above.
       "stablyai/orca/orca"
+
+      # WireGuard mesh between my own devices: lets Orca Mobile reach this
+      # laptop off-LAN (pair with the Tailscale 100.x address), and SSH from
+      # anywhere, without exposing anything to the public internet.
+      "tailscale"
       "the-unarchiver"
       "vivaldi"
       "zed"
@@ -104,7 +109,10 @@
 
       # --zap also removes a dropped cask's leftover state, and --force-cleanup
       # skips the confirmation prompt activation can't answer.
-      extraFlags = [ "--force-cleanup" "--zap" ];
+      extraFlags = [
+        "--force-cleanup"
+        "--zap"
+      ];
 
       # Every activation reprints brew's "hide these hints" advice otherwise.
       # The sudo/launchctl domain warning stays: it reports real behavior.
@@ -277,7 +285,8 @@
 
     extraInit = ''
       eval "$(/opt/homebrew/bin/brew shellenv)"
-    '' + ''
+    ''
+    + ''
       # fish equivalent of home.nix's ~/.zshenv PATH entry (it has no
       # zshenv): it lands in setEnvironment, sourced for every shell. The marker
       # ~/.zshenv exports keeps a zsh that already ran it from doubling PATH.
