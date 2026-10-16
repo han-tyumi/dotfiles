@@ -153,25 +153,48 @@ Per-game profile baseline (Adrenalin > Gaming > the game):
 | Radeon Boost | Off | Drops resolution on motion. |
 | Anti-Lag | Game's Anti-Lag 2 when offered | Driver Anti-Lag only for games without it. |
 
-The Adrenalin overlay (Alt+R) doesn't open in every game (Enshrouded); the user
-then sets the profile in the desktop app under Gaming > Games.
+`scripts/adrenalin.ps1` reads and sets these through the desktop app's
+accessibility tree, unelevated, with no clicking. It needs the window open, not
+only the tray icon; if it isn't, ask the user to open AMD Software. Its synopsis
+has examples.
+
+- A game on "Use Global Experience" can't take a per-game change directly:
+  enabling a feature opens a dialog that would switch the game to a Custom
+  Gaming Experience. The script prints the dialog and cancels it; rerun with
+  `-Confirm` to accept.
+- Global Gaming > Graphics has a GPU 1 / GPU 2 picker; GPU 1 is the 890M. Per-game
+  pages show the 9070 XT's options (the FSR ML-based upgrade), not the 890M's.
+- Toggling a global setting and back can relabel the global experience from
+  Custom to Default with every value unchanged. Clicking "Custom" restores the
+  label and keeps the settings.
+- The Adrenalin overlay (Alt+R) doesn't open in every game (Enshrouded); use the
+  desktop app.
 
 ### Frame caps
 
 For a game without its own limiter, or whose vsync stalls on the cross-adapter
-path, cap it with RTSS. Its profiles folder is user-writable (granted
-2026-10-16), so write the cap yourself, ASCII:
+path, cap it with RTSS. Caps are declared in the chezmoi source, so a rebuilt
+machine gets them back:
 
-```powershell
-$profilePath = 'C:\Program Files (x86)\RivaTuner Statistics Server\Profiles\<exe>.cfg'
-[IO.File]::WriteAllText($profilePath, "[Framerate]`r`nLimit=60`r`n", [Text.Encoding]::ASCII)
-```
+1. Add `dot_config/rtss/profiles/<exe>.cfg` to the chezmoi source with only the
+   keys to set, e.g. `[Framerate]` / `Limit=60`.
+2. On `chezmoi apply`, `run_onchange_after_40-rtss.ps1` merges those keys into
+   RTSS's `Profiles\<exe>.cfg`, keeping keys RTSS's own UI added. It also
+   grants the user write access to `Profiles`, sets `StartWithWindows=1`, and
+   registers the `RTSS` logon task, self-elevating once only when the grant or
+   task is missing.
+3. To cap now without waiting for an apply, write the same keys straight into
+   RTSS's copy, ASCII (the folder is already user-writable here):
+   ```powershell
+   $profilePath = 'C:\Program Files (x86)\RivaTuner Statistics Server\Profiles\<exe>.cfg'
+   [IO.File]::WriteAllText($profilePath, "[Framerate]`r`nLimit=60`r`n", [Text.Encoding]::ASCII)
+   ```
 
 - RTSS reads a profile when the game starts; editing it while the game runs
   changes nothing until the next launch.
-- RTSS must be running before the game. `StartWithWindows=1` in `Profiles\Config`
-  means the user ticked Start with Windows; it needs admin, so only the user
-  starts it. Check with `Get-Process RTSS`.
+- RTSS must be running before the game. The `RTSS` task starts it elevated at
+  logon; otherwise only the user starts it, since it needs admin. Check with
+  `Get-Process RTSS`.
 - Motion Assistant writes RTSS's `Global` profile and, for each of its per-game
   profiles, that game's `<exe>.cfg` (see [Power](#power)). Before writing a cap,
   check that the game has no Motion Assistant profile under `Profiles\Process`,
@@ -186,7 +209,7 @@ $profilePath = 'C:\Program Files (x86)\RivaTuner Statistics Server\Profiles\<exe
 | PresentMon (console) | `presentmon` on PATH (winget `Intel.PresentMon.Console`) | Unelevated, because the user is in Performance Log Users. Wrapped by `scripts/capture-frames.ps1`, which reads the refresh rate from the active display. |
 | GPU-Z | `C:\Program Files (x86)\GPU-Z\GPU-Z.exe` (winget `TechPowerUp.GPU-Z`) | Requires admin, so the user starts it. Once it's open, `scripts/read-gpuz.ps1` reads its fields unelevated for the card selected in its dropdown: Bus Interface (`max @ current` link), Resizable BAR, driver, and the Sensors tab's load, board power, clocks, voltage, hot spot and VRAM. |
 | HWiNFO64 (free) | `C:\Program Files\HWiNFO64\HWiNFO64.EXE` (winget `REALiX.HWiNFO`) | Requires admin, so the user runs it and clicks Logging start; command-line CSV logging (`-l`) is Pro-only. CPU package power, clocks, temperatures, GPU power. |
-| RivaTuner Statistics Server | `C:\Program Files (x86)\RivaTuner Statistics Server` (winget `Guru3D.RTSS`) | Frame caps for games without a usable limiter; see [Frame caps](#frame-caps). Runs elevated, so the user starts it. |
+| RivaTuner Statistics Server | `C:\Program Files (x86)\RivaTuner Statistics Server` (winget `Guru3D.RTSS`) | Frame caps for games without a usable limiter; see [Frame caps](#frame-caps). Runs elevated: the `RTSS` logon task starts it, or the user does. |
 | WinDbg | `kdX64.exe`, `cdbX64.exe`, `WinDbgX.exe` aliases (winget `Microsoft.WinDbg`) | Runs unelevated. See [crash dumps](#crash-dumps). |
 
 Never pass `--restart_as_admin` to PresentMon; it triggers UAC. Never launch GPU-Z

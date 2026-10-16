@@ -100,10 +100,11 @@ Apply these defaults unless the game's research says otherwise:
    (Get-Counter "\GPU Process Memory(pid_$($gamePid)_*)\Dedicated Usage").CounterSamples | Select-Object InstanceName, CookedValue
    Get-ChildItem HKLM:\SOFTWARE\Microsoft\DirectX | Get-ItemProperty | Where-Object Description | ForEach-Object { '{0} 0x{1:x}' -f $_.Description, $_.AdapterLuid }
    ```
-3. Give the user the Adrenalin per-game profile to set by hand (it can't be
-   scripted): see the baseline in [machine.md](machine.md#adrenalin-profile).
-   Frame caps don't need it: write the RTSS profile
-   ([machine.md](machine.md#frame-caps)) before the game launches.
+3. Set the Adrenalin per-game profile to the baseline in
+   [machine.md](machine.md#adrenalin-profile) with `scripts/adrenalin.ps1`; dump
+   the game's page first and change only what differs. Frame caps don't need
+   Adrenalin: write the RTSS profile ([machine.md](machine.md#frame-caps)) before
+   the game launches.
 4. Check the power setup with the read-only commands in
    [machine.md](machine.md#power). If Motion Assistant isn't running, its title
    isn't the 2.2.3.1 build, it has no startup task, or the profile has
@@ -215,5 +216,6 @@ the next steps if 60 doesn't hold. Don't commit unless the user asks.
 ## Report to the user
 
 - A table of changed settings (before → after, why).
-- What the user must do by hand: Adrenalin profile, TDP, in-game checks.
+- What the user must do by hand: TDP, in-game checks, and the Adrenalin profile
+  only when its window wasn't open to script.
 - The capture verdict (`Steady`, 1% low, worst windows) or that it is untested.
