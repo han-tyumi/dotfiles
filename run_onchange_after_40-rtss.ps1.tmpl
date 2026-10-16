@@ -1,0 +1,120 @@
+{{ range glob (joinPath .chezmoi.sourceDir "dot_config/rtss/profiles/*.cfg") -}}
+# rtss profile {{ base . }} hash: {{ include . | sha256sum }}
+{{ end -}}
+#
+# Converge RivaTuner Statistics Server (installed by the gpd-win-max-2 layer's
+# winget manifest) to the declared state: the user can write its Profiles folder,
+# it starts with Windows, and each per-game profile under ~/.config/rtss/profiles
+# has its keys merged into RTSS's copy of that profile. Merging keeps keys RTSS's
+# own UI added; RTSS reads a profile when the game starts. The ACL grant and the
+# autostart task need admin, so the script self-elevates once, only when either is
+# missing. Kept PowerShell 5.1-safe, like the other provisioners.
+param([string]$ElevatedPassFor)
+
+$rtssRoot = Join-Path ${env:ProgramFiles(x86)} 'RivaTuner Statistics Server'
+$rtssExe = Join-Path $rtssRoot 'RTSS.exe'
+$profilesDir = Join-Path $rtssRoot 'Profiles'
+
+# The same task RTSS's own Start with Windows option registers.
+function Register-RtssTask($userId) {
+  $action = New-ScheduledTaskAction -Execute $rtssExe -Argument '/s'
+  $trigger = New-ScheduledTaskTrigger -AtLogOn -User $userId
+  $principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType Interactive -RunLevel Highest
+  $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero)
+  Register-ScheduledTask -TaskName 'RTSS' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+}
+
+if ($ElevatedPassFor) {
+  & icacls.exe $profilesDir /grant "${ElevatedPassFor}:(OI)(CI)M" | Out-Null
+  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  Register-RtssTask $ElevatedPassFor
+  exit 0
+}
+
+if (-not (Test-Path $rtssExe)) {
+  Write-Warning "RTSS not found at $rtssExe; re-run the apply once the winget layer has installed it."
+  exit 1
+}
+
+function Test-ProfilesWritable {
+  $probe = Join-Path $profilesDir ".write-probe-$PID"
+  try {
+    [IO.File]::WriteAllText($probe, '')
+    Remove-Item -LiteralPath $probe
+    return $true
+  } catch {
+    return $false
+  }
+}
+
+$userId = "$env:USERDOMAIN\$env:USERNAME"
+$hasTask = [bool](Get-ScheduledTask -TaskName 'RTSS' -ErrorAction SilentlyContinue)
+if (-not (Test-ProfilesWritable) -or -not $hasTask) {
+  $selfPath = if ($PSCommandPath) { $PSCommandPath } else { $MyInvocation.MyCommand.Definition }
+  $elevated = Start-Process -FilePath 'powershell.exe' -Verb RunAs -PassThru -Wait -ArgumentList @(
+    '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$selfPath`"", '-ElevatedPassFor', "`"$userId`""
+  )
+  if ($elevated.ExitCode -ne 0) {
+    Write-Warning "RTSS elevated pass exited $($elevated.ExitCode); re-run apply to retry."
+    exit 1
+  }
+}
+
+# Sets each section/key/value in an RTSS ini-style profile, adding missing
+# sections and keys, and writes the file only when something changed.
+function Merge-RtssProfile($targetPath, $updates) {
+  $lines = New-Object System.Collections.Generic.List[string]
+  if (Test-Path -LiteralPath $targetPath) {
+    foreach ($line in [IO.File]::ReadAllLines($targetPath)) { $lines.Add($line) }
+  }
+  $original = $lines -join "`r`n"
+  foreach ($update in $updates) {
+    $header = "[$($update.Section)]"
+    $sectionStart = $lines.IndexOf($header)
+    if ($sectionStart -lt 0) {
+      $lines.Add($header)
+      $lines.Add("$($update.Key)=$($update.Value)")
+      continue
+    }
+    $sectionEnd = $sectionStart + 1
+    while ($sectionEnd -lt $lines.Count -and -not $lines[$sectionEnd].StartsWith('[')) { $sectionEnd++ }
+    $keyLine = -1
+    for ($lineIndex = $sectionStart + 1; $lineIndex -lt $sectionEnd; $lineIndex++) {
+      if ($lines[$lineIndex] -like "$($update.Key)=*") { $keyLine = $lineIndex; break }
+    }
+    if ($keyLine -ge 0) {
+      $lines[$keyLine] = "$($update.Key)=$($update.Value)"
+    } else {
+      $insertAt = $sectionEnd
+      while ($insertAt -gt $sectionStart + 1 -and $lines[$insertAt - 1] -eq '') { $insertAt-- }
+      $lines.Insert($insertAt, "$($update.Key)=$($update.Value)")
+    }
+  }
+  $merged = $lines -join "`r`n"
+  if ($merged -ne $original) {
+    [IO.File]::WriteAllText($targetPath, "$merged`r`n", [Text.Encoding]::ASCII)
+    Write-Output "Updated RTSS profile $(Split-Path -Leaf $targetPath)."
+  }
+}
+
+function Read-ProfileUpdates($sourcePath) {
+  $section = $null
+  foreach ($line in [IO.File]::ReadAllLines($sourcePath)) {
+    $trimmed = $line.Trim()
+    if ($trimmed -match '^\[(.+)\]$') { $section = $Matches[1]; continue }
+    if ($section -and $trimmed -match '^([^=]+)=(.*)$') {
+      @{ Section = $section; Key = $Matches[1]; Value = $Matches[2] }
+    }
+  }
+}
+
+$configPath = Join-Path $profilesDir 'Config'
+if (Test-Path -LiteralPath $configPath) {
+  Merge-RtssProfile $configPath @(@{ Section = 'Settings'; Key = 'StartWithWindows'; Value = '1' })
+}
+
+$sourceDir = Join-Path $env:USERPROFILE '.config\rtss\profiles'
+foreach ($sourceProfile in Get-ChildItem -Path $sourceDir -Filter '*.cfg' -ErrorAction SilentlyContinue) {
+  Merge-RtssProfile (Join-Path $profilesDir $sourceProfile.Name) @(Read-ProfileUpdates $sourceProfile.FullName)
+}
+exit 0

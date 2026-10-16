@@ -24,6 +24,7 @@ AppData
 Documents
 .config/git/ignore
 .config/winget
+.config/rtss
 .config/winutil
 .config/windows
 .gitconfig
@@ -32,6 +33,7 @@ Documents
 25-orca-skills.ps1
 30-nushell-activations.ps1
 35-registry-tweaks.ps1
+40-rtss.ps1
 60-nerdfont.ps1
 70-psfzf.ps1
 {{ end -}}

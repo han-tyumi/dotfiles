@@ -7,6 +7,7 @@
         { "PackageIdentifier": "Intel.PresentMon.Console" },
         { "PackageIdentifier": "TechPowerUp.GPU-Z" },
         { "PackageIdentifier": "REALiX.HWiNFO" },
+        { "PackageIdentifier": "Guru3D.RTSS" },
         { "PackageIdentifier": "Microsoft.WinDbg" }
       ],
       "SourceDetails": {

@@ -1,2 +1,4 @@
 .claude/skills/tune-game
 .config/winget/layers/gpd-win-max-2.json
+.config/rtss
+40-rtss.ps1
