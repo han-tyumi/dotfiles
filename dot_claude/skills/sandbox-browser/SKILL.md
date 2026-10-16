@@ -13,11 +13,15 @@ agent can keep using `agent-browser` directly.
 
 ## Workflow
 
-1. `sandbox-browser status`. If it says `running: yes`, go to step 3.
-2. `sandbox-browser start` must run outside the sandbox: request an unsandboxed run
-   for exactly that command (add `--headed` when the user wants to watch). Only the
-   user's approval or the harness's reviewer can allow it. Do not look for another
-   way to launch a browser.
+1. `sandbox-browser status`. If it says `running: yes` and its `limits` cover the
+   domains the task needs, go to step 3.
+2. `sandbox-browser start --allowed-domains <domains>` must run outside the sandbox:
+   request an unsandboxed run for exactly that command, listing only the domains the
+   task needs (for example `example.com,*.example.com`; add `--headed` when the user
+   wants to watch). Only the user's approval or the harness's reviewer can allow it.
+   Use `--unrestricted` instead only when the user asked for open-ended browsing. Do
+   not look for another way to launch a browser. To change the domains, `stop` and
+   start again.
 3. Run commands as `sandbox-browser <command>`: `sandbox-browser open <url>`,
    `sandbox-browser snapshot`, `sandbox-browser click @e3`,
    `sandbox-browser screenshot ./shot.png`, and so on.
@@ -27,11 +31,19 @@ agent can keep using `agent-browser` directly.
 
 Each worktree has its own browser, so parallel agents do not share tabs or cookies.
 
+## Limits
+
+With `--allowed-domains` the browser reaches only the listed domains: other domains,
+`file://` and `data:` URLs are blocked, including links the page follows itself.
+Only everyday page actions run; `download`, `upload`, `state save`, `pdf`, tracing,
+recording and cookie reads are denied. If a command is denied, report it to the user
+instead of working around it.
+
 ## Rules
 
 - The browser runs outside the sandbox with the user's full file access, so it is a
-  way around the sandbox: it can write a screenshot or download anywhere and open
-  `file://` URLs. Write screenshots and downloads inside the workspace only, open
-  only URLs the task needs, and never navigate to `file://` URLs.
+  way around the sandbox. The limits above are a guard, not a boundary: a screenshot
+  can still be written to any path. Write screenshots inside the workspace only, and
+  never call `agent-browser` directly to widen the limits.
 - If `sandbox-browser` reports that no browser is running, follow step 2; do not retry
   the failing command in a loop.

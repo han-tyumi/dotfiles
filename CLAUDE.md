@@ -434,9 +434,16 @@ worktree`), so each workspace gets its own browser. The `sandbox-browser` skill 
 chezmoi copy under `dot_claude/skills/`; `dot_agents/skills/` links it into
 `~/.agents/skills`, the directory Codex reads (Claude Code and OpenCode read
 `~/.claude/skills`). All three are macOS-only. The unsandboxed browser is a hole in
-the sandbox by construction: it writes screenshots and downloads anywhere the user
-can and reads `file://` URLs, so the skill restricts a sandboxed agent to workspace
-paths and web URLs by instruction only, with no technical enforcement.
+the sandbox by construction: left alone it reads `file://` URLs and writes
+screenshots and downloads anywhere the user can. `start` therefore requires
+`--allowed-domains` (or an explicit `--unrestricted`), so the approver sees the scope,
+and records the list plus an allow-list action policy next to the socket; the
+wrapper reapplies both to every command. That blocks other domains, `file://` and
+`data:`, and denies download, upload, state save, pdf, trace and recording. It is a
+guard against mistakes and prompt injection, not a boundary: agent-browser takes its
+limits from whichever client command launches the browser, so a client that calls
+`agent-browser` directly on the socket relaunches it unrestricted, and a screenshot
+can still be written to any path.
 
 All shells integrate:
 - Homebrew environment via `/opt/homebrew/bin/brew shellenv`

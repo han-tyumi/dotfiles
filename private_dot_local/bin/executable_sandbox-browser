@@ -9,23 +9,121 @@
 # wrapper pins both ends to one socket directory and to a session name derived from
 # the worktree, so every workspace gets its own browser.
 #
-#   sandbox-browser start [--headed]   launch this worktree's browser (outside the sandbox)
-#   sandbox-browser stop               close it
-#   sandbox-browser status             show the session and whether it is running
-#   sandbox-browser <command> ...      any agent-browser command, run against that session
+#   sandbox-browser start --allowed-domains LIST [--headed]   launch this worktree's browser
+#   sandbox-browser start --unrestricted [--headed]           launch it without a domain limit
+#   sandbox-browser stop                                      close it
+#   sandbox-browser status                                    show the session and its limits
+#   sandbox-browser <command> ...                             any agent-browser command
 #
-# The socket directory is separate from ~/.agent-browser on purpose: the Chrome
-# binaries live there, and they stay read-only to a sandboxed client.
+# `start` runs outside the sandbox, so its arguments are what the approver sees. It
+# records the domain list and an action policy next to the socket, and every later
+# command applies them, so the browser can reach only the listed domains (no file://
+# or data: URLs) and can only run everyday page actions: no download, upload, state
+# save, pdf, trace, recording or profiling.
 #
-# The browser itself is not sandboxed. A sandboxed client can make it write files
-# anywhere the user can (screenshot, download, state save) and read local files
-# (file:// URLs), so this is a hole in the filesystem sandbox by construction.
+# This is a guard against mistakes and prompt injection, not a security boundary.
+# The browser still runs unsandboxed, and a client that bypasses this wrapper and
+# talks to the socket with its own agent-browser flags relaunches the browser without
+# any limit; a screenshot can still be written to any path. The socket
+# directory is separate from ~/.agent-browser on purpose: the Chrome binaries live
+# there, and they stay read-only to a sandboxed client.
 
 set -euo pipefail
 
 export AGENT_BROWSER_SOCKET_DIR="${SANDBOX_BROWSER_SOCKET_DIR:-$HOME/.cache/sandbox-browser}"
 session_name="$(agent-browser session id --scope worktree --prefix sandbox)"
-socket_path="$AGENT_BROWSER_SOCKET_DIR/$session_name.sock"
+session_path="$AGENT_BROWSER_SOCKET_DIR/$session_name"
+socket_path="$session_path.sock"
+limits_path="$session_path.limits"
+policy_path="$session_path.policy.json"
+unrestricted_marker="unrestricted"
+
+# Export the limits recorded by `start` so this command matches the running browser.
+# Missing limits for a running browser stop the command rather than lift the limits.
+apply_limits() {
+  if [ ! -f "$limits_path" ]; then
+    echo "sandbox-browser: the limits recorded for this browser are missing (session $session_name)." >&2
+    echo "Run 'sandbox-browser stop' and start it again." >&2
+    exit 1
+  fi
+  local limits
+  limits="$(cat "$limits_path")"
+  if [ "$limits" != "$unrestricted_marker" ]; then
+    export AGENT_BROWSER_ALLOWED_DOMAINS="$limits"
+    export AGENT_BROWSER_ACTION_POLICY="$policy_path"
+  fi
+}
+
+start_browser() {
+  local allowed_domains=""
+  local unrestricted=false
+  local passthrough_arguments=()
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --allowed-domains)
+        allowed_domains="${2:-}"
+        shift
+        [ "$#" -gt 0 ] && shift
+        ;;
+      --allowed-domains=*)
+        allowed_domains="${1#*=}"
+        shift
+        ;;
+      --unrestricted)
+        unrestricted=true
+        shift
+        ;;
+      *)
+        passthrough_arguments+=("$1")
+        shift
+        ;;
+    esac
+  done
+
+  if { [ -z "$allowed_domains" ] && [ "$unrestricted" = false ]; } ||
+    { [ -n "$allowed_domains" ] && [ "$unrestricted" = true ]; }; then
+    echo "usage: sandbox-browser start (--allowed-domains example.com,*.example.com | --unrestricted) [--headed]" >&2
+    exit 2
+  fi
+
+  mkdir -p "$AGENT_BROWSER_SOCKET_DIR"
+  chmod 700 "$AGENT_BROWSER_SOCKET_DIR"
+
+  local start_url="about:blank"
+  if [ "$unrestricted" = true ]; then
+    echo "$unrestricted_marker" >"$limits_path"
+  else
+    echo "$allowed_domains" >"$limits_path"
+    # Allow list of everyday page actions; anything else, such as download, upload,
+    # state save, pdf, trace, recording and profiling, is denied.
+    cat >"$policy_path" <<'POLICY'
+{
+  "default": "deny",
+  "allow": [
+    "launch", "navigate", "back", "forward", "reload", "close",
+    "click", "dblclick", "hover", "focus", "fill", "type", "press", "keyboard",
+    "select", "check", "uncheck", "scroll", "scrollintoview", "wait", "drag",
+    "mousemove", "dialog", "mainframe", "viewport",
+    "tab_list", "tab_new", "tab_switch", "tab_close",
+    "snapshot", "diff_snapshot", "screenshot", "read", "console", "errors",
+    "gettext", "innerhtml", "url", "title", "count", "isvisible", "getbyrole",
+    "evaluate"
+  ]
+}
+POLICY
+    # A domain allowlist rejects about:blank, so the first browser page is the first listed domain.
+    local first_domain="${allowed_domains%%,*}"
+    first_domain="${first_domain#\*.}"
+    local scheme="https"
+    case "$first_domain" in
+      localhost | localhost:* | 127.0.0.1 | 127.0.0.1:*) scheme="http" ;;
+    esac
+    start_url="$scheme://$first_domain"
+  fi
+
+  apply_limits
+  exec agent-browser --session "$session_name" ${passthrough_arguments[@]+"${passthrough_arguments[@]}"} open "$start_url"
+}
 
 if [ "$#" -eq 0 ]; then
   echo "usage: sandbox-browser start|stop|status|<agent-browser command> ..." >&2
@@ -37,18 +135,19 @@ shift
 
 case "$subcommand" in
   start)
-    mkdir -p "$AGENT_BROWSER_SOCKET_DIR"
-    chmod 700 "$AGENT_BROWSER_SOCKET_DIR"
-    exec agent-browser --session "$session_name" "$@" open about:blank
+    start_browser "$@"
     ;;
   stop)
-    exec agent-browser --session "$session_name" close
+    [ -f "$limits_path" ] && apply_limits
+    agent-browser --session "$session_name" close
+    rm -f "$limits_path" "$policy_path" 2>/dev/null || true
     ;;
   status)
     echo "session: $session_name"
     echo "socket directory: $AGENT_BROWSER_SOCKET_DIR"
     if [ -S "$socket_path" ]; then
       echo "running: yes"
+      echo "limits: $(cat "$limits_path" 2>/dev/null || echo "missing")"
     else
       echo "running: no (run 'sandbox-browser start' outside the sandbox)"
     fi
@@ -63,6 +162,7 @@ case "$subcommand" in
       echo "(request an unsandboxed run, or ask the user), then retry." >&2
       exit 1
     fi
+    apply_limits
     exec agent-browser --session "$session_name" "$subcommand" "$@"
     ;;
 esac
