@@ -1,9 +1,9 @@
 # The Witcher 3: Wild Hunt (Remastered 5.00, DX12)
 
-- **Status:** gameplay holds 60 apart from brief riding dips. The bar
-  cutscene that stuttered in session10 replayed clean in session11, with the
-  main thread on the Zen 5 cores. Next: restore the scheduler policy (see
-  [machine.md](../machine.md#scheduler-policy)), then redo the Anti-Lag 2 A/B.
+- **Status:** gameplay holds 60. Session12 (2026-10-07) ran with the
+  scheduler policy restored ([machine.md](../machine.md#scheduler-policy)):
+  the main thread stayed on Zen 5 throughout and held frames fell to 0.14%.
+  Next: the Anti-Lag 2 A/B, through a cutscene.
 - **Version:** hotfix 5.00c (exe FileVersion 5.0.0.1044392, Steam build
   25646871, 2026-10-01). Patch notes through 5.00c mention no CPU or cutscene
   performance work.
@@ -28,7 +28,7 @@
 | `[PostProcess]` FSR2Quality | 0 → 2 (Auto → Quality) | Fixed internal resolution; Auto swings with load. |
 | `[Rendering/DRS]` Enable | true → false | DRS can't help a CPU-bound frame and softens the image. |
 | `[Viewport]` FullScreenMode | 2 → 1 (exclusive → borderless) | Alt-tab back into exclusive fullscreen took several tries; borderless works first time and still holds 60. |
-| `[Viewport]` AMDAntiLag | 0 → 1 → 0 | Off as a test. Unresolved: session10 (off) stuttered with the main thread on Zen 5c, session11 (off) was clean with it on Zen 5. |
+| `[Viewport]` AMDAntiLag | 0 → 1 → 0 → 1 | On for session13, the "on" half of the A/B against session12 (off, clean with the main thread on Zen 5). |
 | `[Gameplay/EntityPool]` SpawnedLimit | 160 → 130 (Ultra+ → High) | Crowd count is the main CPU cost in Novigrad. |
 | `[Rendering]` GrassDensity | 6000 → 3500 | CPU/GPU cost with little visual return past this. |
 | `[Rendering]` MeshLODDistanceScale | 1.5 → 1.3 | Fewer draw calls. |
@@ -69,6 +69,14 @@ generation and path tracing stay off.
   at 30 fps while CPU busy fell and the CPU jumped to 94-96 °C, the signature
   of a menu or paused game rather than gameplay. Peak CPU 96 °C, median
   81 °C, no throttling.
+- **session12 (scheduler defaults restored, Anti-Lag off, 26 min of play):**
+  the busiest CPU was a Zen 5 core in 100% of 2,431 seconds. Over the minutes
+  at full rate, held 0.14% (session11: 0.33% by the same measure), 49 of them
+  GPU-side (session11: 463); GPU busy median 14.2 / P95 15.9 ms. Play ran 1-11
+  held frames a minute at 82-90 °C. One 20-second stretch at 30 fps with GPU
+  busy near 4.5 ms (a loading screen or video) and the initial load set the
+  1% low of 31.9 fps. A 14-minute pause reached 99-100 °C with clocks dropping
+  to 30%.
 - Captures that span a long pause read as a perfect 60 overall; analyze only
   the minutes before the pause.
 
@@ -94,8 +102,9 @@ generation and path tracing stay off.
   file after the first launch, since the game sometimes resets settings.
 - Busy test spots: Novigrad's Hierarch Square (crowds, CPU), Crookback Bog
   (foliage, RT), Beauclair (draw distance).
-- Left paused in the background, the game pushes the CPU to 95-97 °C and can
-  trip the 100 °C thermal limit; foreground play stays at 78-87 °C.
+- Paused, the game pushes the CPU to 99-100 °C within minutes and throttles
+  (clocks down to 30% in session12); play stays at 78-90 °C. Close the game
+  for long breaks.
 - With Anti-Lag 2 off, PresentMon's CPU busy and GPU busy medians both sit at
   about the frame interval (16.6 ms at 60 fps, about 31 ms at 30), so they may
   not tell a CPU-bound frame from a GPU-bound one (unverified). Judge those
@@ -106,14 +115,12 @@ generation and path tracing stay off.
 
 1. In-game cutscene drops (CPU-bound): test one change per session, logging
    core placement each time.
-   1. Restore the scheduler policy (machine.md) and confirm the main thread
-      stays on logical CPUs 0-7.
-   2. With placement steady, redo the AMDAntiLag A/B: 1 for one session, 0
-      for the next, same route and cutscene.
-   3. RT shadows 1 → 0 (`[Rendering/RT]` Shadows=0), also trimming GPU peaks.
-   4. `[Rendering/RT]` EnableRT=false, which is the user's call because it
+   1. With placement steady (session12), redo the AMDAntiLag A/B: 1 for one
+      session, 0 for the next, same route and cutscene.
+   2. RT shadows 1 → 0 (`[Rendering/RT]` Shadows=0), also trimming GPU peaks.
+   3. `[Rendering/RT]` EnableRT=false, which is the user's call because it
       drops RTGI everywhere.
-   5. Minor: TDP 30 → 35 W in Motion Assistant, `AllowCutsceneDOF=false`,
+   4. Minor: TDP 30 → 35 W in Motion Assistant, `AllowCutsceneDOF=false`,
       CascadeShadowDistanceScale2/3 1.5 → 1.
 2. CPU-bound drops in Novigrad: SpawnedLimit 130 → 100 (Wccftech saw little
    difference on 5.0), then EnableRT=false.
