@@ -423,6 +423,21 @@ as a completable nu command via a `symlink_<name>.nu.tmpl` in the nushell
 a comment, so the one source serves both). Such scripts must stay module-clean:
 consts and defs only, no top-level statements.
 
+`sandbox-browser` (`~/.local/bin`, a bash wrapper) lets an agent inside a filesystem
+sandbox drive a browser. Chromium can't launch under Codex's Seatbelt profile, so
+the browser runs outside the sandbox (`sandbox-browser start`, an unsandboxed or
+approved run) and the sandboxed client only connects to its unix socket. The wrapper
+pins `AGENT_BROWSER_SOCKET_DIR` to `~/.cache/sandbox-browser` (kept apart from
+`~/.agent-browser`, which holds the Chrome binaries and stays read-only to the
+client) and derives the session from the worktree (`agent-browser session id --scope
+worktree`), so each workspace gets its own browser. The `sandbox-browser` skill is a
+chezmoi copy under `dot_claude/skills/`; `dot_agents/skills/` links it into
+`~/.agents/skills`, the directory Codex reads (Claude Code and OpenCode read
+`~/.claude/skills`). All three are macOS-only. The unsandboxed browser is a hole in
+the sandbox by construction: it writes screenshots and downloads anywhere the user
+can and reads `file://` URLs, so the skill restricts a sandboxed agent to workspace
+paths and web URLs by instruction only, with no technical enforcement.
+
 All shells integrate:
 - Homebrew environment via `/opt/homebrew/bin/brew shellenv`
 - mise activation for runtime management

@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+#
+# Drive agent-browser from inside an agent's filesystem sandbox.
+#
+# Chromium cannot start under Codex's Seatbelt profile (it is denied the
+# mach-register lookup it makes at launch), and agent-browser's default socket
+# directory, ~/.agent-browser, is read-only there. So the browser runs outside the
+# sandbox and the sandboxed agent only talks to it through a unix socket. This
+# wrapper pins both ends to one socket directory and to a session name derived from
+# the worktree, so every workspace gets its own browser.
+#
+#   sandbox-browser start [--headed]   launch this worktree's browser (outside the sandbox)
+#   sandbox-browser stop               close it
+#   sandbox-browser status             show the session and whether it is running
+#   sandbox-browser <command> ...      any agent-browser command, run against that session
+#
+# The socket directory is separate from ~/.agent-browser on purpose: the Chrome
+# binaries live there, and they stay read-only to a sandboxed client.
+#
+# The browser itself is not sandboxed. A sandboxed client can make it write files
+# anywhere the user can (screenshot, download, state save) and read local files
+# (file:// URLs), so this is a hole in the filesystem sandbox by construction.
+
+set -euo pipefail
+
+export AGENT_BROWSER_SOCKET_DIR="${SANDBOX_BROWSER_SOCKET_DIR:-$HOME/.cache/sandbox-browser}"
+session_name="$(agent-browser session id --scope worktree --prefix sandbox)"
+socket_path="$AGENT_BROWSER_SOCKET_DIR/$session_name.sock"
+
+if [ "$#" -eq 0 ]; then
+  echo "usage: sandbox-browser start|stop|status|<agent-browser command> ..." >&2
+  exit 2
+fi
+
+subcommand="$1"
+shift
+
+case "$subcommand" in
+  start)
+    mkdir -p "$AGENT_BROWSER_SOCKET_DIR"
+    chmod 700 "$AGENT_BROWSER_SOCKET_DIR"
+    exec agent-browser --session "$session_name" "$@" open about:blank
+    ;;
+  stop)
+    exec agent-browser --session "$session_name" close
+    ;;
+  status)
+    echo "session: $session_name"
+    echo "socket directory: $AGENT_BROWSER_SOCKET_DIR"
+    if [ -S "$socket_path" ]; then
+      echo "running: yes"
+    else
+      echo "running: no (run 'sandbox-browser start' outside the sandbox)"
+    fi
+    ;;
+  -h | --help | help | skills | --version)
+    exec agent-browser "$subcommand" "$@"
+    ;;
+  *)
+    if [ ! -S "$socket_path" ]; then
+      echo "sandbox-browser: no browser is running for this worktree (session $session_name)." >&2
+      echo "Chromium cannot launch inside the sandbox. Run 'sandbox-browser start' outside it" >&2
+      echo "(request an unsandboxed run, or ask the user), then retry." >&2
+      exit 1
+    fi
+    exec agent-browser --session "$session_name" "$subcommand" "$@"
+    ;;
+esac
