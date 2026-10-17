@@ -1,0 +1,91 @@
+{
+  "adrenalin": {
+    "graphics": {
+      "1": {
+        "toggles": {
+          "Radeon Super Resolution": "Off",
+          "AMD Fluid Motion Frames 2.1": "Off",
+          "Radeon Anti-Lag": "Off",
+          "Radeon Boost": "Off",
+          "Radeon Chill": "Off",
+          "Video Super Resolution": "Off",
+          "Frame Rate Target Control": "Off",
+          "Morphological Anti-Aliasing": "Off",
+          "Anisotropic Filtering": "Off",
+          "Surface Format Optimization": "Off",
+          "OpenGL Triple Buffering": "Off",
+          "10-Bit Pixel Format": "Off"
+        },
+        "choices": {
+          "Wait for Vertical Refresh": "Off, unless application specifies",
+          "Anti-Aliasing": "Use application settings",
+          "Texture Filtering Quality": "High",
+          "Tessellation Mode": "AMD optimized"
+        }
+      },
+      "2": {
+        "toggles": {
+          "Radeon Super Resolution": "Off",
+          "AMD Fluid Motion Frames 2.1": "Off",
+          "AMD FSR Upscaling": "On",
+          "FidelityFX Denoise Upgrade": "Off",
+          "Radeon Anti-Lag": "Off",
+          "Radeon Boost": "Off",
+          "Radeon Chill": "Off",
+          "Video Upscale": "Off",
+          "Radeon Enhanced Sync": "Off",
+          "Frame Rate Target Control": "Off",
+          "Morphological Anti-Aliasing": "Off",
+          "Anisotropic Filtering": "Off",
+          "Surface Format Optimization": "Off",
+          "OpenGL Triple Buffering": "Off",
+          "10-Bit Pixel Format": "Off"
+        },
+        "choices": {
+          "Wait for Vertical Refresh": "Off, unless application specifies",
+          "Anti-Aliasing": "Use application settings",
+          "Texture Filtering Quality": "High",
+          "Tessellation Mode": "AMD optimized"
+        }
+      }
+    },
+    "preferences": {
+      "toggles": {
+        "In-Game Overlay": "Off",
+        "Advertisements": "Off",
+        "AMD Image Inspector": "Off"
+      },
+      "choices": {
+        "AMD User Experience Program": "Unsubscribed"
+      }
+    }
+  },
+  "gpuPreferences": {
+    "D:\\SteamLibrary\\steamapps\\common\\Enshrouded\\enshrouded.exe": 2,
+    "D:\\SteamLibrary\\steamapps\\common\\Path of Exile 2\\PathOfExileSteam.exe": 2,
+    "D:\\SteamLibrary\\steamapps\\common\\The Witcher 3\\bin\\x64_dx12\\witcher3.exe": 2,
+    "D:\\SteamLibrary\\steamapps\\common\\Hardspace Shipbreaker\\Shipbreaker.exe": 1,
+    "D:\\SteamLibrary\\steamapps\\common\\PowerWash Simulator\\PowerWashSimulator.exe": 1,
+    "D:\\SteamLibrary\\steamapps\\common\\Ravenswatch\\Ravenswatch.exe": 1,
+    "D:\\SteamLibrary\\steamapps\\common\\Risk of Rain Returns\\Risk of Rain Returns.exe": 1,
+    "D:\\SteamLibrary\\steamapps\\common\\Skul\\Skul.exe": 1
+  },
+  "registry": [
+    { "path": "HKCU:\\Software\\Microsoft\\GameBar", "name": "AutoGameModeEnabled", "value": 0 }
+  ],
+  "absentStartupEntries": ["AMDNoiseSuppression"],
+  "powerSettings": [
+    { "subgroup": "SUB_PROCESSOR", "setting": "SCHEDPOLICY", "ac": 2, "dc": 5 },
+    { "subgroup": "SUB_PROCESSOR", "setting": "SHORTSCHEDPOLICY", "ac": 2, "dc": 5 },
+    { "subgroup": "SUB_PROCESSOR", "setting": "HETEROPOLICY", "ac": 1, "dc": 4 },
+    { "subgroup": "SUB_PCIEXPRESS", "setting": "ASPM", "ac": 0, "dc": 0 }
+  ],
+  "motionAssistant": {
+    "profile": "C:\\Program Files\\Motion Assistant\\Profiles\\General\\default.ini",
+    "keys": { "AutoSetTDP": "True", "ACRTSS": "0", "ACCoreSet": "AllCoresPrefPCore" },
+    "acTdpRange": [28, 35]
+  },
+  "runningProcesses": ["MotionAssistant", "RTSS"],
+  "scheduledTasks": ["MotionAssistant", "RTSS"],
+  "amdDriverVersion": "32.0.32015.2008"
+}

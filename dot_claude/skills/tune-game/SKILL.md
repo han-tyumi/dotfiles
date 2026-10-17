@@ -17,6 +17,16 @@ Read [machine.md](machine.md) first: hardware, the eGPU display path, power, the
 tool inventory, and known gotchas. Then check `games/` for a record of this game
 from an earlier run and pick up from its status and next steps.
 
+Before tuning, confirm the machine-wide defaults still hold (a driver install or
+Windows update can reset them):
+
+```powershell
+pwsh -NoProfile -File "${CLAUDE_SKILL_DIR}/scripts/check-machine.ps1" -Apply
+```
+
+Rows it prints as `manual` go into the report for the user. A new game's GPU
+preference (step 5.2) goes into [machine-state.json](machine-state.json) too.
+
 Scripts live in `${CLAUDE_SKILL_DIR}/scripts`; run each with
 `pwsh -NoProfile -File <script> ...`. Each has a `.SYNOPSIS` with examples.
 
@@ -100,9 +110,11 @@ Apply these defaults unless the game's research says otherwise:
    (Get-Counter "\GPU Process Memory(pid_$($gamePid)_*)\Dedicated Usage").CounterSamples | Select-Object InstanceName, CookedValue
    Get-ChildItem HKLM:\SOFTWARE\Microsoft\DirectX | Get-ItemProperty | Where-Object Description | ForEach-Object { '{0} 0x{1:x}' -f $_.Description, $_.AdapterLuid }
    ```
-3. Set the Adrenalin per-game profile to the baseline in
-   [machine.md](machine.md#adrenalin-profile) with `scripts/adrenalin.ps1`; dump
-   the game's page first and change only what differs. Frame caps don't need
+3. Prefer machine-wide defaults to per-game overrides. Dump the game's Adrenalin
+   page with `scripts/adrenalin.ps1` and check it shows "Use Global Experience"
+   and the global baseline in [machine.md](machine.md#adrenalin-profile). Override
+   a setting for this game only when it needs an exception; if a fix would
+   suit every game, change the global setting instead. Frame caps don't need
    Adrenalin: write the RTSS profile ([machine.md](machine.md#frame-caps)) before
    the game launches.
 4. Check the power setup with the read-only commands in

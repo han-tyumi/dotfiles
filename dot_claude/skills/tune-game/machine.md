@@ -10,8 +10,8 @@
   [Power](#power)); dense open-world scenes are usually CPU-bound here, ray
   tracing included (BVH updates run on the CPU).
 - **Memory**: 32 GB LPDDR5X-8000, 8 GB of it reserved for the 890M (Windows sees
-  about 23.6 GB). Lowering the BIOS UMA reservation to 1–2 GB frees RAM for games
-  that need it, but it's untested.
+  about 23.6 GB). The 8 GB reservation is deliberate; revisit it only if a game
+  runs short of system RAM (the BIOS can lower it to 1–2 GB).
 - **GPUs**:
   - RX 9070 XT (RDNA 4, 16 GB) over OCuLink: renders games. Resizable BAR (Smart
     Access Memory) is on (verified 2026-10-06): BAR0 is 16 GB, not 256 MB. The
@@ -121,6 +121,29 @@ of unparked Zen 5 cores, to 0. `scripts/watch-cores.ps1` logs placement
 during a session: a main thread near 100% of one core with the busiest logical
 CPU at 8 or above means it's on Zen 5c.
 
+## Machine state
+
+[machine-state.json](machine-state.json) declares the machine-wide settings every
+game relies on: the Adrenalin global Graphics settings per GPU and its
+Preferences, per-game GPU preferences, Game Mode off, startup entries that should
+stay out, the power-plan values above, the Motion Assistant default profile, the
+processes and logon tasks that must exist, and the AMD driver version.
+`scripts/check-machine.ps1` compares the machine with it, unelevated:
+
+```powershell
+pwsh -NoProfile -File scripts/check-machine.ps1          # report
+pwsh -NoProfile -File scripts/check-machine.ps1 -Apply   # also fix what it can
+```
+
+`-Apply` fixes Adrenalin (its window must be open), GPU preferences, HKCU values
+and startup entries. Power settings, Motion Assistant, RTSS and drivers need
+admin, so they print as `manual` with what the user should do. A game that isn't
+installed is skipped, and its preference stays declared for a reinstall. When a
+machine-wide default changes, update the JSON in the same change. The Windows
+settings chezmoi already provisions (GameDVR and the driver-update policy in
+`run_onchange_after_35-registry-tweaks.ps1`, RTSS profiles in
+`run_onchange_after_40-rtss.ps1`) aren't repeated here.
+
 ## Drivers
 
 - AMD Adrenalin 26.9.2 (driver 32.0.32015.2008) on both GPUs. Windows Update can
@@ -141,17 +164,27 @@ CPU at 8 or above means it's on Zen 5c.
 
 ## Adrenalin profile
 
-Per-game profile baseline (Adrenalin > Gaming > the game):
+The baseline lives in the global settings (Gaming > Graphics, set for both GPU 1
+and GPU 2), so every game inherits it through "Use Global Experience". Both GPUs
+matched it on 2026-10-16. A per-game override is for an exception that game
+needs, recorded in its `games/` file; making one switches that game to its own
+Custom Gaming Experience, so later global changes stop reaching it.
 
 | Setting | Value | Why |
 |---|---|---|
 | Radeon Chill | Off | Fights the game's own limiter, and as a 60/60 cap it paces worse than RTSS ([Frame caps](#frame-caps)). |
 | Enhanced Sync | Off | Lets frames tear below 60; use the game's vsync. |
 | AFMF (Fluid Motion Frames) | Off | See [Display path](#display-path). |
-| Radeon Image Sharpening | Off | Stacks on the game's own sharpening and sharpens the UI. |
+| Radeon Image Sharpening | Off | Stacks on the game's own sharpening and sharpens the UI. Not offered as its own toggle on this driver. |
 | Radeon Super Resolution | Off | Upscales UI too; use the game's upscaler. |
 | Radeon Boost | Off | Drops resolution on motion. |
-| Anti-Lag | Game's Anti-Lag 2 when offered | Driver Anti-Lag only for games without it. |
+| AMD FSR Upscaling (9070 XT) | On | Upgrades a game's FSR 3.1 to FSR 4 where supported. |
+| Wait for Vertical Refresh | Off, unless application specifies | The game's own vsync setting decides. |
+| Anti-Lag | Off globally | Use the game's Anti-Lag 2 when offered; driver Anti-Lag is a per-game exception, worth an A/B only when GPU-bound. |
+| Texture Filtering Quality | High | Costs next to nothing on either GPU; set 2026-10-16 (Standard before). |
+
+[machine-state.json](machine-state.json) holds the full list for both GPUs,
+Preferences included; see [Machine state](#machine-state).
 
 `scripts/adrenalin.ps1` reads and sets these through the desktop app's
 accessibility tree, unelevated, with no clicking. It needs the window open, not
@@ -162,13 +195,17 @@ has examples.
   enabling a feature opens a dialog that would switch the game to a Custom
   Gaming Experience. The script prints the dialog and cancels it; rerun with
   `-Confirm` to accept.
-- Global Gaming > Graphics has a GPU 1 / GPU 2 picker; GPU 1 is the 890M. Per-game
-  pages show the 9070 XT's options (the FSR ML-based upgrade), not the 890M's.
+- Global Gaming > Graphics has a GPU 1 / GPU 2 picker; GPU 1 is the 890M. Opening
+  the page resets it to GPU 1, so pass `-Gpu 2` on every `-Graphics` call for the
+  9070 XT. Per-game pages show the 9070 XT's options (the FSR ML-based upgrade),
+  not the 890M's.
 - Toggling a global setting and back can relabel the global experience from
   Custom to Default with every value unchanged. Clicking "Custom" restores the
   label and keeps the settings.
-- The Adrenalin overlay (Alt+R) doesn't open in every game (Enshrouded); use the
-  desktop app.
+- The in-game overlay (Alt+R) is off (Settings > Preferences > In-Game Overlay),
+  so it opens in no game; use the desktop app. Record & Stream isn't installed.
+- AMD Noise Suppression is off and its `AMDNoiseSuppression` entry is out of
+  the user's Run key (removed 2026-10-16); an Adrenalin install can add it back.
 
 ### Frame caps
 

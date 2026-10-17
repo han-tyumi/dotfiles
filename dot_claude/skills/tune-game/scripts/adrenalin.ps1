@@ -8,7 +8,9 @@ dropdowns to UI Automation, so its settings can be read and set without
 clicking. The window must be open (not only the tray icon).
 
 -Game opens that game's profile under Gaming > Games first; -Graphics opens the
-global Gaming > Graphics page instead. Then:
+global Gaming > Graphics page instead, on GPU 1 (the 890M) unless -Gpu 2 selects
+the 9070 XT. Opening the page resets it to GPU 1, so every -Graphics call for
+the 9070 XT needs -Gpu 2. Then:
 - Dump (default) lists named elements with their index, type and state:
   toggle=On/Off for checkboxes, and the label after a dropdown is its value.
   Offscreen elements are included; actions reach them without scrolling.
@@ -26,6 +28,9 @@ and cancels it, unless -Confirm is passed, in which case it accepts.
 pwsh -NoProfile -File adrenalin.ps1 -Game 'Enshrouded'
 
 .EXAMPLE
+pwsh -NoProfile -File adrenalin.ps1 -Graphics -Gpu 2 -Action Choose -Name 'Texture Filtering Quality' -Value 'High'
+
+.EXAMPLE
 pwsh -NoProfile -File adrenalin.ps1 -Game 'Enshrouded' -Action SetToggle -Name '*Anti-Lag' -Value On -Confirm
 
 .EXAMPLE
@@ -36,6 +41,7 @@ param(
   [ValidateSet('Dump', 'SetToggle', 'Choose', 'Click', 'SetText')] [string] $Action = 'Dump',
   [string] $Game,
   [switch] $Graphics,
+  [ValidateSet(1, 2)] [int] $Gpu = 1,
   [string] $Name,
   [string] $Value,
   [switch] $Confirm
@@ -130,6 +136,8 @@ if ($Game) {
   [void](Wait-ForElement 'Launch Game' @($controlType::Button))
 } elseif ($Graphics) {
   Open-GamingTab 'Graphics'
+  Invoke-Element (Wait-ForElement "GPU $Gpu" @($controlType::Button))
+  Start-Sleep -Milliseconds 500
 }
 
 switch ($Action) {

@@ -4,7 +4,9 @@
   Quality: `Steady`, 60.0 fps, 1 held frame in 30 s, with the in-game vsync
   off and an RTSS 60 fps cap. A 9-minute session the same day, from the vault
   out through the outdoor tutorial, held 60 apart from two short stretches
-  (see Captures). Larger areas and big bases are untested.
+  (see Captures). A 3.7-hour session that evening, with a new character and
+  world, was `Steady` throughout (0.06% held). Big bases and the Shroud past
+  the starting area are untested.
 - **Steam app id:** 1203620
 - **Executable:** `D:\SteamLibrary\steamapps\common\Enshrouded\enshrouded.exe`
   (renders on the 9070 XT: its dedicated memory sits on the 9070 XT's LUID)
@@ -90,10 +92,25 @@ false, HDR off.
   exit. The rest of the session held about 0.1%. GPU-Z at the cap read
   105-115 W at 1.9-2.0 GHz, so the card has headroom.
 
+Adrenalin's global Texture Filtering Quality went from Standard to High before
+the next two sessions.
+
+- **session (Ultra, FSR 3 Quality, RTSS 60, 6 min):** mostly character
+  creation and the first world load, ending in an accidental quit. 61.3 fps,
+  held 0.44% (88; 82 CPU-limited), 1% low 56.3, GPU busy median 9.7 /
+  P95 15.6 ms. 64 of the held frames fell in 20 s about two minutes in, plus
+  load hitches of 425 ms at startup and 703 ms later. The busiest CPU was on
+  Zen 5 in 65% of 332 s.
+- **session2 (same settings, 225 min):** `Steady`, 60.1 fps, held 0.06%
+  (457; 351 GPU-limited), 1% low 55.6, 0.1% low 53.8, GPU busy median 15.3 /
+  P95 16.0 ms (clocks down at the cap, as above). The worst stretch was
+  65:30-65:50 with 164 held frames but no frame over 18.5 ms; what was on
+  screen is unrecorded. The busiest CPU was on Zen 5 in 98% of 13,359 s.
+
 ## Next steps
 
-Capture a later session in the open Springlands, a base with many lights, or
-the Shroud, all heavier than the tutorial area.
+Capture a later session at a large base with many lights or deep in the Shroud,
+both heavier than what session2 covered.
 
 - **If 60 slips GPU-side:** measure Ultra uncapped first. RTSS reads a
   profile when the game starts, so set `Limit=0` before launch, capture 30 s,
