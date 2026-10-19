@@ -239,6 +239,30 @@ machine gets them back:
 - On Enshrouded, RTSS at 60 held 1 frame in 30 s where Radeon Chill at 60/60
   held 11.
 
+### Per-GPU profiles
+
+Without the eGPU the 890M renders, and a game tuned for the 9070 XT won't hold
+on it. `~/.config/gpu-profiles/gpu-profiles.json` (chezmoi source
+`dot_config/gpu-profiles/`) lists the GPUs by adapter-name pattern and, per
+game, its settings file and a profile per GPU: an RTSS `rtssLimit` and
+dotted-path `settings` for a JSON settings file. The `GpuProfiles` logon task
+(registered unelevated by `run_onchange_after_45-gpu-profiles.ps1`) runs
+`switch-gpu-profile.ps1`, which picks the first GPU in the list that is working.
+The eGPU can't change while the machine is on, so once per logon is enough.
+
+- Switching saves the live settings file as the outgoing GPU's copy under
+  `%LOCALAPPDATA%gpu-profiles<game><gpu>` and restores the incoming GPU's
+  copy, so menu changes stay with the GPU they were made on. A GPU with no copy
+  yet gets the manifest's `settings` applied over the live file.
+- After tuning, put the new values in the manifest so a rebuilt machine gets
+  them, then, with the game closed, apply them to the current GPU's file:
+  `pwsh -NoProfile -File ~/.config/gpu-profiles/switch-gpu-profile.ps1 -Reseed`.
+- `-GpuProfile <name>` forces a profile, e.g. to test one. A running game is
+  skipped. `switch.log` and `state.json` (the active profile per game) sit in
+  the same folder.
+- The rtssLimit overrides the `dot_config/rtss/profiles` cap at each logon;
+  until then, a `40-rtss` run puts that cap back.
+
 ## Tools
 
 | Tool | Where | Notes |

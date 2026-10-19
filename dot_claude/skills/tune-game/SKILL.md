@@ -225,6 +225,13 @@ verified, or regressed, with dates), exe and config paths, backups, a table of
 changed settings with before, after and why, capture results, test spots, and
 the next steps if 60 doesn't hold. Don't commit unless the user asks.
 
+When the game has a profile per GPU in `~/.config/gpu-profiles/gpu-profiles.json`
+(see [machine.md](machine.md#per-gpu-profiles)), also set the tuned values in
+the manifest's source for the GPU they were tuned on, and run
+`switch-gpu-profile.ps1 -Reseed` with the game closed. Tuning on the 890M (no
+eGPU) follows the same workflow at a lower target: 30 fps under its profile's
+RTSS cap, analyzed at the panel's 60 Hz.
+
 ## Report to the user
 
 - A table of changed settings (before → after, why).

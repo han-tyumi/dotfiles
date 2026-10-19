@@ -25,6 +25,7 @@ Documents
 .config/git/ignore
 .config/winget
 .config/rtss
+.config/gpu-profiles
 .config/winutil
 .config/windows
 .gitconfig
@@ -34,6 +35,7 @@ Documents
 30-nushell-activations.ps1
 35-registry-tweaks.ps1
 40-rtss.ps1
+45-gpu-profiles.ps1
 60-nerdfont.ps1
 70-psfzf.ps1
 {{ end -}}

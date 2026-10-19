@@ -5,9 +5,10 @@
   off and an RTSS 60 fps cap. A 9-minute session the same day, from the vault
   out through the outdoor tutorial, held 60 apart from two short stretches
   (see Captures). A 3.7-hour session that evening, with a new character and
-  world, was `Steady` throughout (0.06% held), and so was a 4.1-hour one on
-  2026-10-18 (0.08% held). Big bases and the Shroud past
-  the starting area are untested.
+  world, was `Steady` throughout (0.06% held), and so were a 4.1-hour one
+  on 2026-10-18 (0.08% held) and a 9-hour one on 2026-10-19 (0.09% held).
+  Big bases and the Shroud past the starting area are untested. The 890M
+  profile (see [Per-GPU profiles](#per-gpu-profiles)) is set but untested.
 - **Steam app id:** 1203620
 - **Executable:** `D:\SteamLibrary\steamapps\common\Enshrouded\enshrouded.exe`
   (renders on the 9070 XT: its dedicated memory sits on the 9070 XT's LUID)
@@ -23,7 +24,7 @@
   game's Ultra defaults). The install folder's `enshrouded_local.json` was
   written during tuning and is unused.
 - **Frame cap:** `C:\Program Files (x86)\RivaTuner Statistics Server\Profiles\enshrouded.exe.cfg`
-  (`[Framerate]` `Limit=60`). The game has no frame limiter.
+  (`[Framerate]` `Limit=60`, or 30 on the 890M). The game has no frame limiter.
 - **Target:** a locked 60 on the internal panel.
 
 ## Settings
@@ -114,6 +115,29 @@ the next two sessions.
   stall at 10 fps for a few seconds, likely a load (fast travel or a new
   area); the user noticed no hitches. The busiest CPU was on Zen 5 in 94% of
   14,757 s.
+- **session4 (same settings, 537 min, 2026-10-19):** `Steady`, 60.1 fps,
+  held 0.09% (1,820; 1,487 GPU-limited), 1% low 51.5, 0.1% low 36.3, GPU busy
+  median 15.3 / P95 16.2 ms, 4,074 frame-time spikes, P99 animation error
+  5.9 ms. The worst stretches were 61:00-65:00 (four windows of 9-13 held,
+  worst frame 37.6 ms) and 279:00-284:00 (worst 38.0 ms). The busiest CPU was
+  on Zen 5 in 91% of 31,900 s; the capture stopped on its own when the game
+  exited.
+
+## Per-GPU profiles
+
+The game is in `~/.config/gpu-profiles/gpu-profiles.json` (see
+[machine.md](../machine.md#per-gpu-profiles)), so its settings file and RTSS
+cap follow the GPU present at logon:
+
+- **rx-9070-xt:** the settings above, RTSS 60.
+- **890m:** RTSS 30 (even pacing at 60 Hz without changing the panel rate),
+  FSR 3 Performance, `shadows`, `fog`, `ssao`, `distantObjects`, `decoObjects`,
+  `detailScattering`, `voxelMeshQuality` and `pointLightShadows` Low,
+  `dynamicGi`, `reflections`, `water` and `models` Performance,
+  `contactShadows` and `tessellation` Disabled, `textureAnisotropy` Medium.
+  No 890M benchmark exists; a 780M runs under 30 fps at 720p and a Steam Deck
+  about 30 at 800p on Lowest, so this is a starting point. Capture a session
+  on it and tune from there; on battery the TDP drops, so test on AC first.
 
 ## Next steps
 

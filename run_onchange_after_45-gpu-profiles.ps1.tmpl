@@ -1,0 +1,26 @@
+# gpu-profiles manifest hash: {{ include "dot_config/gpu-profiles/gpu-profiles.json" | sha256sum }}
+# gpu-profiles switcher hash: {{ include "dot_config/gpu-profiles/switch-gpu-profile.ps1" | sha256sum }}
+#
+# Register the logon task that switches games to the settings for the GPU
+# present (see ~/.config/gpu-profiles), then run the switch once. The eGPU can
+# only change while the machine is off, so once per logon is enough. The task
+# runs unelevated as the current user, so this needs no admin. Kept PowerShell
+# 5.1-safe, like the other provisioners.
+
+$switcher = Join-Path $env:USERPROFILE '.config\gpu-profiles\switch-gpu-profile.ps1'
+$pwshCommand = Get-Command pwsh.exe -ErrorAction SilentlyContinue
+if (-not $pwshCommand) {
+  Write-Warning 'pwsh not found; re-run the apply once the winget layer has installed it.'
+  exit 1
+}
+$pwsh = $pwshCommand.Source
+
+$userId = "$env:USERDOMAIN\$env:USERNAME"
+$action = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless `"$pwsh`" -NoProfile -File `"$switcher`""
+$trigger = New-ScheduledTaskTrigger -AtLogOn -User $userId
+$principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType Interactive -RunLevel Limited
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+Register-ScheduledTask -TaskName 'GpuProfiles' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+
+& $pwsh -NoProfile -File $switcher
+exit 0

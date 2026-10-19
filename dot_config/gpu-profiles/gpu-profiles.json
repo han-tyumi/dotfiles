@@ -1,0 +1,62 @@
+{
+  "gpus": [
+    { "name": "rx-9070-xt", "match": "*RX 9070 XT*" },
+    { "name": "890m", "match": "*890M*" }
+  ],
+  "games": {
+    "enshrouded": {
+      "exe": "enshrouded.exe",
+      "settingsFile": "%USERPROFILE%\\Saved Games\\keen games\\Enshrouded\\local_settings.json",
+      "profiles": {
+        "rx-9070-xt": {
+          "rtssLimit": 60,
+          "settings": {
+            "graphics.vsync": false,
+            "graphics.render.preset": "Custom",
+            "graphics.render.antiAliasing": "Fsr3",
+            "graphics.render.fsr3": "Quality",
+            "graphics.render.shadows": "Ultra",
+            "graphics.render.contactShadows": "Enabled",
+            "graphics.render.dynamicGi": "Ultra",
+            "graphics.render.reflections": "Ultra",
+            "graphics.render.water": "Ultra",
+            "graphics.render.fog": "Ultra",
+            "graphics.render.ssao": "High",
+            "graphics.render.distantObjects": "High",
+            "graphics.render.decoObjects": "High",
+            "graphics.render.detailScattering": "High",
+            "graphics.render.voxelMeshQuality": "High",
+            "graphics.render.tessellation": "High",
+            "graphics.render.pointLightShadows": "Ultra",
+            "graphics.render.textureAnisotropy": "Ultra",
+            "graphics.render.models": "Quality"
+          }
+        },
+        "890m": {
+          "rtssLimit": 30,
+          "settings": {
+            "graphics.vsync": false,
+            "graphics.render.preset": "Custom",
+            "graphics.render.antiAliasing": "Fsr3",
+            "graphics.render.fsr3": "Performance",
+            "graphics.render.shadows": "Low",
+            "graphics.render.contactShadows": "Disabled",
+            "graphics.render.dynamicGi": "Performance",
+            "graphics.render.reflections": "Performance",
+            "graphics.render.water": "Performance",
+            "graphics.render.fog": "Low",
+            "graphics.render.ssao": "Low",
+            "graphics.render.distantObjects": "Low",
+            "graphics.render.decoObjects": "Low",
+            "graphics.render.detailScattering": "Low",
+            "graphics.render.voxelMeshQuality": "Low",
+            "graphics.render.tessellation": "Disabled",
+            "graphics.render.pointLightShadows": "Low",
+            "graphics.render.textureAnisotropy": "Medium",
+            "graphics.render.models": "Performance"
+          }
+        }
+      }
+    }
+  }
+}
