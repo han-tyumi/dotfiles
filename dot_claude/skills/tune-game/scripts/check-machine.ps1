@@ -169,7 +169,11 @@ foreach ($powerSetting in $desiredState.powerSettings) {
   $dcIndex = ($query | Select-String 'Current DC Power Setting Index: 0x([0-9a-f]+)').Matches.Groups[1].Value
   $actual = '{0}/{1}' -f [Convert]::ToInt32($acIndex, 16), [Convert]::ToInt32($dcIndex, 16)
   $expected = '{0}/{1}' -f $powerSetting.ac, $powerSetting.dc
-  $note = if ($powerSetting.subgroup -eq 'SUB_PROCESSOR') { "Motion Assistant's core dropdown writes it: set Prefer P-Cores and click Apply." } else { 'Needs admin: powercfg /setacvalueindex and /setdcvalueindex.' }
+  $note = switch ($powerSetting.subgroup) {
+    'SUB_PROCESSOR' { "Motion Assistant's core dropdown writes it: set Prefer P-Cores and click Apply." }
+    'SUB_SLEEP' { "powercfg /change standby-timeout-ac $($powerSetting.ac / 60) (and -dc); the Claude app keeps the machine awake while a session works." }
+    default { 'Needs admin: powercfg /setacvalueindex and /setdcvalueindex.' }
+  }
   Add-Result 'Power (AC/DC)' $powerSetting.setting $expected $actual (Get-StatusFor ($actual -eq $expected) 'manual') ($actual -eq $expected ? '' : $note)
 }
 
