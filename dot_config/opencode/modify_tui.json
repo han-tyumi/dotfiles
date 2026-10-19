@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+# chezmoi modify_ script: set the managed OpenCode TUI keys and keep everything else in
+# the live file. Orca adds a "plugin" entry with an absolute path to its status plugin,
+# which a plain managed file would revert on every apply (and report as a conflict).
+# Managed keys win; keys present only in the live file are kept. Output is plain JSON,
+# which OpenCode reads fine.
+#
+# The theme is Catppuccin Mocha to match Ghostty's `theme = Catppuccin Mocha` and the
+# shared delta/Pi palettes. OpenCode keeps TUI settings here rather than in opencode.json,
+# whose schema rejects unknown keys.
+import json
+import re
+import sys
+
+MANAGED = {
+    "$schema": "https://opencode.ai/tui.json",
+    "theme": "catppuccin-mocha",
+}
+
+
+def load(text):
+    text = re.sub(r"(?m)^[ \t]*//.*$", "", text)
+    text = re.sub(r",(\s*[}\]])", r"\1", text)
+    return json.loads(text) if text.strip() else {}
+
+
+live = load(sys.stdin.read())
+live.update(MANAGED)
+json.dump(live, sys.stdout, indent=2)
+sys.stdout.write("\n")

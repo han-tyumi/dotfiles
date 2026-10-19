@@ -98,7 +98,7 @@
       # WireGuard mesh between my own devices: lets Orca Mobile reach this
       # laptop off-LAN (pair with the Tailscale 100.x address), and SSH from
       # anywhere, without exposing anything to the public internet.
-      "tailscale"
+      "tailscale-app"
       "the-unarchiver"
       "vivaldi"
       "zed"
