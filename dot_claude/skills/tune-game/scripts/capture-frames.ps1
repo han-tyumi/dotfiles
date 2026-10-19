@@ -51,10 +51,11 @@ New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $gameName = [IO.Path]::GetFileNameWithoutExtension($processName)
 $outputPath = Join-Path $OutputDirectory ('{0}-{1}-{2:yyyyMMdd-HHmmss}.csv' -f $gameName, $Label, (Get-Date))
 
+$sessionName = "tune-game-$Label"
 $presentMonArguments = @(
   '--process_name', $processName,
   '--output_file', $outputPath,
-  '--session_name', "tune-game-$Label",
+  '--session_name', $sessionName,
   '--stop_existing_session',
   '--no_console_stats',
   '--v2_metrics',
@@ -67,8 +68,29 @@ if ($Seconds -gt 0) {
   $presentMonArguments += '--terminate_on_proc_exit'
 }
 
-& $presentMon @presentMonArguments
-if ($LASTEXITCODE -ne 0) { throw "presentmon exited with $LASTEXITCODE." }
+$capture = Start-ThreadJob {
+  & $using:presentMon @using:presentMonArguments *> $null
+  $LASTEXITCODE
+}
+
+# Unelevated, PresentMon can't see the game exit, so --terminate_on_proc_exit
+# never fires; watch the game here and stop the session once it has run and gone.
+if ($Seconds -le 0) {
+  $gameSeen = $false
+  while (-not (Wait-Job $capture -Timeout 2)) {
+    $gameRunning = [bool](Get-Process -Name $gameName -ErrorAction SilentlyContinue)
+    if ($gameRunning) { $gameSeen = $true }
+    if ($gameSeen -and -not $gameRunning) {
+      if (-not (Wait-Job $capture -Timeout 10)) {
+        & $presentMon --terminate_existing_session --session_name $sessionName *> $null
+      }
+      break
+    }
+  }
+}
+
+$presentMonExitCode = Receive-Job $capture -Wait -AutoRemoveJob | Select-Object -Last 1
+if ($presentMonExitCode -ne 0) { throw "presentmon exited with $presentMonExitCode." }
 if (-not (Test-Path -LiteralPath $outputPath) -or (Get-Content -LiteralPath $outputPath -TotalCount 2).Count -lt 2) {
   throw "No frames recorded for $processName. Is it running and presenting under this account?"
 }

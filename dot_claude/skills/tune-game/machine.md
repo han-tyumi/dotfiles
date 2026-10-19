@@ -277,10 +277,12 @@ or HWiNFO yourself: both raise a UAC prompt.
   ```powershell
   presentmon --process_name <exe> --output_file <probe.csv> --session_name tune-game-probe --timed 60 --terminate_after_timed --no_console_stats
   ```
-- `--terminate_on_proc_exit` sometimes leaves the session running after the
-  game exits. `presentmon --terminate_existing_session --session_name <name>`
-  stops it; exit 7 ("no existing sessions found") means it had already ended
-  and the CSV is complete.
+- Unelevated, `--terminate_on_proc_exit` never fires: PresentMon can't see the
+  game exit. `capture-frames.ps1 -Seconds 0` watches the game itself and stops
+  the session about 10 s after it exits. A stray session from a raw
+  `presentmon` run stops with `presentmon --terminate_existing_session
+  --session_name <name>`; exit 7 ("no existing sessions found") means it had
+  already ended and the CSV is complete.
 - Killing `presentmon` with `Stop-Process` leaves its ETW session alive. The
   next capture then reports "ETW events were lost" and records no frames.
   Before capturing again, run the `--terminate_existing_session` line above for

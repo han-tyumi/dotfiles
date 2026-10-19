@@ -5,7 +5,8 @@
   off and an RTSS 60 fps cap. A 9-minute session the same day, from the vault
   out through the outdoor tutorial, held 60 apart from two short stretches
   (see Captures). A 3.7-hour session that evening, with a new character and
-  world, was `Steady` throughout (0.06% held). Big bases and the Shroud past
+  world, was `Steady` throughout (0.06% held), and so was a 4.1-hour one on
+  2026-10-18 (0.08% held). Big bases and the Shroud past
   the starting area are untested.
 - **Steam app id:** 1203620
 - **Executable:** `D:\SteamLibrary\steamapps\common\Enshrouded\enshrouded.exe`
@@ -106,6 +107,13 @@ the next two sessions.
   P95 16.0 ms (clocks down at the cap, as above). The worst stretch was
   65:30-65:50 with 164 held frames but no frame over 18.5 ms; what was on
   screen is unrecorded. The busiest CPU was on Zen 5 in 98% of 13,359 s.
+- **session3 (same settings, 249 min, 2026-10-18):** `Steady`, 60.1 fps,
+  held 0.08% (691; 563 GPU-limited), 1% low 53.3, 0.1% low 38, GPU busy
+  median 15.2 / P95 16.0 ms. 1,310 frame-time spikes against session2's 17,
+  most of them single frames. The worst stretch was 228:30-228:50, a 269 ms
+  stall at 10 fps for a few seconds, likely a load (fast travel or a new
+  area); the user noticed no hitches. The busiest CPU was on Zen 5 in 94% of
+  14,757 s.
 
 ## Next steps
 
