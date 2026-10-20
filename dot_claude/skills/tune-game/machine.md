@@ -431,10 +431,10 @@ the newest for this model.
 - **Phantom touches** (GXTP7385 touchscreen): disabling the HID-compliant pen
   device is the owner fix.
 - **eGPU**: OCuLink isn't hot-pluggable. Connect or disconnect it only with
-  the laptop off, and power the eGPU on before the laptop. Fast startup makes
-  Shut down a kernel hibernate, so a swap after it fails the resume
-  (Kernel-Boot 29, `0xC00000D4`, then Kernel-Power 41) and cold-boots, losing
-  the last unflushed writes, event log entries included. Hold Shift while
-  clicking Shut down before a swap for a full power-off.
+  the laptop off, and power the eGPU on before the laptop. Fast startup is
+  off (`HiberbootEnabled` 0, in machine-state.json), so Shut down is a full
+  power-off. With it on, Shut down is a kernel hibernate and a swap after it
+  fails the resume (Kernel-Boot 29, `0xC00000D4`, then Kernel-Power 41) and
+  cold-boots, losing the last unflushed writes, event log entries included.
 - **Don't flash**: BIOS 0.42, the touchpad firmware, or the gamepad firmware
   above; none are for the HX 370.

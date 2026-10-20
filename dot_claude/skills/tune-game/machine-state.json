@@ -71,7 +71,8 @@
     "D:\\SteamLibrary\\steamapps\\common\\Skul\\Skul.exe": 1
   },
   "registry": [
-    { "path": "HKCU:\\Software\\Microsoft\\GameBar", "name": "AutoGameModeEnabled", "value": 0 }
+    { "path": "HKCU:\\Software\\Microsoft\\GameBar", "name": "AutoGameModeEnabled", "value": 0 },
+    { "path": "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", "name": "HiberbootEnabled", "value": 0 }
   ],
   "absentStartupEntries": ["AMDNoiseSuppression"],
   "powerSettings": [

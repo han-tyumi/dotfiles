@@ -5,7 +5,7 @@ Compares this machine's game-relevant settings with machine-state.json and, with
 
 .DESCRIPTION
 Checks the Adrenalin global Graphics settings for each GPU and its Preferences,
-per-game GPU preferences, HKCU registry values, startup entries that should be
+per-game GPU preferences, registry values, startup entries that should be
 absent, power-plan values, the Motion Assistant default profile, the processes
 and logon tasks that must exist, and the AMD driver version.
 
