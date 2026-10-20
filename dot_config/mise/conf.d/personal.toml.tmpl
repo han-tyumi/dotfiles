@@ -12,7 +12,9 @@ erlang = "latest"
 gleam = "latest"
 go = "latest"
 just = "latest"
+{{- if ne .chezmoi.os "windows" }}
 kotlin = "2"
+{{- end }}
 "github:knope-dev/knope" = "latest"
 rust = "stable"
 zig = "latest"
