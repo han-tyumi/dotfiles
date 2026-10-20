@@ -291,9 +291,9 @@ provisioned with **winget** and **mise** instead of Nix.
   package installed), then adds any missing pin from `dot_config/winget/pins.json` —
   the apps left to their own updaters;
   `20-mise-install` runs `mise install` against the shared `dot_config/mise/config.toml.tmpl`
-  and the layer fragments, both OS-gated down on Windows to the coding agents plus the
-  runtimes something there runs (node for npx and the `npm:` tools, uv for the steam
-  skill, bun for the Claude desktop app's MCP servers), and appends `%LOCALAPPDATA%\mise\shims` to the User PATH, for apps that
+  and the layer fragments, both OS-gated down on Windows to the runtimes something
+  there runs (node for the Orca skills' npx install, uv for the steam skill, bun for
+  the Claude desktop app's MCP servers), and appends `%LOCALAPPDATA%\mise\shims` to the User PATH, for apps that
   never run `mise activate` (the Claude desktop app's hooks and MCP servers); `30-nushell-activations` generates nushell's mise/starship/zoxide
   modules. `run_once_after_60-nerdfont.ps1` installs Iosevka Nerd Font (Mono)
   per-user; it fails loudly so a transient error re-fires on the next apply instead
