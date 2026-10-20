@@ -1,4 +1,4 @@
-# mise config hash: {{ include "dot_config/mise/config.toml" | sha256sum }}
+# mise config hash: {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
 {{- range .layerList }}
 {{- $fragment := printf "dot_config/mise/conf.d/%s.toml" . }}
 {{- $fragmentTmpl := printf "dot_config/mise/conf.d/%s.toml.tmpl" . }}
@@ -17,9 +17,9 @@
 # resolve the exe directly from its install location and fall back to PATH only
 # for a mise installed some other way. Two passes: backend tools (npm:, pipx:)
 # resolve through runtimes declared in the same file, which do not exist on the
-# first pass. The personal layer's Windows-unbuildable runtimes (crystal, erlang,
-# elixir) are gated out of conf.d/personal.toml on Windows, so a clean install is
-# expected here.
+# first pass. The configs gate the Mac's dev runtimes out on Windows, including
+# the ones that can't build there (crystal, erlang, elixir), so a clean install
+# is expected here.
 $mise = Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\jdx.mise_*\mise\bin\mise.exe" -ErrorAction SilentlyContinue |
   Sort-Object FullName | Select-Object -Last 1 -ExpandProperty FullName
 if (-not $mise) { $mise = (Get-Command mise -ErrorAction SilentlyContinue).Source }

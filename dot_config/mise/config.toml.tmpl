@@ -1,6 +1,12 @@
 [tools]
+
+# Windows is for gaming and AI tooling, so it gets only the coding agents and
+# the runtimes something there runs: node for npx and the npm: tools, uv for
+# the steam skill.
+{{- if ne .chezmoi.os "windows" }}
 bitwarden = "latest"
 ghq = "latest"
+{{- end }}
 node = "latest"
 
 # Coding-agent harnesses. Homebrew owns the ones with a formula (pi-coding-agent,
@@ -15,12 +21,17 @@ node = "latest"
 # version alone. On a jump into a new minor, re-check `opencode debug config`.
 opencode = "1"
 
+{{- if ne .chezmoi.os "windows" }}
+
 usage = "latest"
+{{- end }}
 
 # Runs pipx: backend tools via uvx, so no pipx install is needed.
 uv = "latest"
+{{- if ne .chezmoi.os "windows" }}
 
 "npm:@biomejs/biome" = "latest"
+{{- end }}
 "npm:codeburn" = "latest"
 
 # npm-only harnesses, so mise is their installer. Codex CLI is here rather than on

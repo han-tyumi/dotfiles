@@ -70,7 +70,7 @@
       # Coding-agent harnesses with a formula: the `pi` formula is Raspberry Pi's
       # C compiler and the npm names (`@earendil-works/pi-coding-agent`,
       # `@qwen-code/qwen-code`) differ from the CLIs. opencode is the exception —
-      # also a formula, but mise owns it (see dot_config/mise/config.toml).
+      # also a formula, but mise owns it (see dot_config/mise/config.toml.tmpl).
       "pi-coding-agent"
       "qwen-code"
       "rtk"

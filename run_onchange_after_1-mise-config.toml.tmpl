@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# {{ include "dot_config/mise/config.toml" | sha256sum }}
+# {{ include "dot_config/mise/config.toml.tmpl" | sha256sum }}
 {{- range .layerList }}
 {{- $fragment := printf "dot_config/mise/conf.d/%s.toml" . }}
 {{- $fragmentTmpl := printf "dot_config/mise/conf.d/%s.toml.tmpl" . }}

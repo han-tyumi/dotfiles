@@ -1,10 +1,10 @@
 [tools]
-bun = "latest"
-deno = "latest"
 
-# Windows is for gaming and AI tooling, so only the JS runtimes go there.
+# Windows gets only bun, which the Claude desktop app's MCP servers run.
+bun = "latest"
 {{- if ne .chezmoi.os "windows" }}
 crystal = "latest"
+deno = "latest"
 dotnet = ["latest", "9"]
 elixir = "1.18"
 erlang = "latest"
