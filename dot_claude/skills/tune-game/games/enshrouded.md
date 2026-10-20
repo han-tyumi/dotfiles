@@ -138,8 +138,22 @@ cap follow the GPU present at logon:
   No 890M benchmark exists; a 780M runs under 30 fps at 720p and a Steam Deck
   about 30 at 800p on Lowest, so this is a starting point. Capture a session
   on it and tune from there; on battery the TDP drops, so test on AC first.
+- **890m-session (2026-10-19, AC, 108 min, mostly paused at the base):** two
+  phases. From 5 to 70 min, about 17 fps: median frame 33.5 ms (on the cap)
+  but about 30% of frames over 40 ms, P95 frame and GPU busy both about 120 ms,
+  so GPU-limited. From 70 to 110 min, a locked 30 with GPU busy median 25 /
+  P95 27 ms, about 20% headroom. What changed at 70 min is unknown (paused or
+  not, menu or world); the user saw about 15 fps in the main menu on the
+  first launch. Repeated ~120 ms GPU frames look like VRAM oversubscription
+  (8 GB UMA) or first-run shader builds. The busiest CPU was on Zen 5 in 88%
+  of 6,184 s. Analyze with `-RefreshHz 60`; held counts there count every
+  30 fps frame, so read frame times instead.
 
 ## Next steps
+
+On the 890M: capture an active session (moving, not paused) and check
+whether the ~120 ms frames come back; if they do, drop `textureAnisotropy`
+and `models` and watch dedicated GPU memory against the 8 GB budget.
 
 Capture a later session at a large base with many lights or deep in the Shroud,
 both heavier than what session2 covered.
