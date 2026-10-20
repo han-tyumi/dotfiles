@@ -11,6 +11,8 @@
         "rx-9070-xt": {
           "rtssLimit": 60,
           "settings": {
+            "graphics.forceFullscreenResolution.x": 0,
+            "graphics.forceFullscreenResolution.y": 0,
             "graphics.vsync": false,
             "graphics.render.preset": "Custom",
             "graphics.render.antiAliasing": "Fsr3",
@@ -35,10 +37,12 @@
         "890m": {
           "rtssLimit": 30,
           "settings": {
+            "graphics.forceFullscreenResolution.x": 1920,
+            "graphics.forceFullscreenResolution.y": 1200,
             "graphics.vsync": false,
             "graphics.render.preset": "Custom",
             "graphics.render.antiAliasing": "Fsr3",
-            "graphics.render.fsr3": "Performance",
+            "graphics.render.fsr3": "Quality",
             "graphics.render.shadows": "Low",
             "graphics.render.contactShadows": "Disabled",
             "graphics.render.dynamicGi": "Performance",
