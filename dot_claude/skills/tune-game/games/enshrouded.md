@@ -8,7 +8,8 @@
   world, was `Steady` throughout (0.06% held), and so were a 4.1-hour one
   on 2026-10-18 (0.08% held) and a 9-hour one on 2026-10-19 (0.09% held).
   Big bases and the Shroud past the starting area are untested. The 890M
-  profile (see [Per-GPU profiles](#per-gpu-profiles)) is set but untested.
+  profile (see [Per-GPU profiles](#per-gpu-profiles)) holds 30 at the base at
+  35 W but hitches on 2–3% of frames over a whole session (2026-10-20).
 - **Steam app id:** 1203620
 - **Executable:** `D:\SteamLibrary\steamapps\common\Enshrouded\enshrouded.exe`
   (renders on the 9070 XT: its dedicated memory sits on the 9070 XT's LUID)
@@ -150,13 +151,29 @@ cap follow the GPU present at logon:
   first-run shader builds). The busiest CPU was on Zen 5 in 88%
   of 6,184 s. Analyze with `-RefreshHz 60`; held counts there count every
   30 fps frame, so read frame times instead.
+- **890m-session2 (2026-10-20, AC, 42 min, hard surface):** no throttling;
+  the ~120 ms frames did not return. Two 60 s spot captures at the base:
+  - **30 W:** GPU busy median 28.0 / P95 32.1 ms, 3.6% of frames late
+    (P99 displayed 50 ms).
+  - **35 W:** GPU busy median 28.3 / P95 31.0 ms, 0.2% late, P99 displayed
+    34 ms, `Steady` at `-RefreshHz 30`.
+
+  Over the whole session, still 1.8–4.1% of frames per 5-minute window were
+  shown for 50 ms (three 60 Hz refreshes) instead of 33, both before and after
+  the switch to 35 W, mostly GPU-limited. FSR Balanced won't fit: P95 31 ms
+  leaves no room under 33.3. The busiest CPU was on Zen 5 in 92% of 2,399 s.
+  The session capture reported GPU busy 33.3 ms at the median in every window,
+  while the spot capture recording the same minute alongside it read 28.3 ms
+  with identical displayed times. Trust a spot capture's GPU busy over a
+  long session's.
 
 ## Next steps
 
-On the 890M: capture an active session (moving, not paused) and check
-whether the ~120 ms frames come back with the laptop on a hard surface; if
-they do, drop `textureAnisotropy`
-and `models` and watch dedicated GPU memory against the 8 GB budget.
+On the 890M, every setting is already at its floor, so the remaining lever
+is the output resolution: try 1920x1200 with FSR 3 Quality (the same 1280x800
+internal resolution as Performance at 2560x1600, with cheaper post-processing
+and upscaling) and capture the base and an active stretch. Watch dedicated
+GPU memory against the 8 GB budget.
 
 Capture a later session at a large base with many lights or deep in the Shroud,
 both heavier than what session2 covered.

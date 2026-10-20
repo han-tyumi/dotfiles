@@ -77,7 +77,9 @@
   package power runs above the TDP + 2 W (about every 2 s) or between 10 W and
   the TDP − 5 W (about every minute), so a TDP another tool sets doesn't stick.
 - Target 28–30 W on AC. Go to 35 W when captures are CPU-bound and temperatures
-  stay in range. During a drop, CPU package power well below the target (HWiNFO)
+  stay in range. On the 890M, run 35 W: the iGPU shares the package budget
+  with the CPU, and the extra 5 W is what holds a GPU-bound 30 fps cap. The
+  profile is global, so it stays at 35 W with the eGPU too. During a drop, CPU package power well below the target (HWiNFO)
   means the TDP isn't applied.
 - PCIe ASPM is off on AC and DC (the user set both with powercfg), which keeps
   the OCuLink link out of low-power link states and their wake-up latency, also
