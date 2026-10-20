@@ -11,7 +11,7 @@
 param([switch]$Apply)
 
 $ErrorActionPreference = 'Stop'
-$PinnedVersion = '26.09.29'
+$PinnedVersion = '26.10.07'
 $configPath = Join-Path $PSScriptRoot 'config.json'
 
 function Get-LatestWinUtilTag {
@@ -57,19 +57,10 @@ if ($Apply) {
     exit 1
   }
 
-  # Invoke-WinUtilTweaks catches a missing service as
-  # [System.ServiceProcess.ServiceNotFoundException], a type .NET does not have, so
-  # any listed service absent from this edition (CscService on Home) throws
-  # "Unable to find type" and aborts every tweak after it. Catch the exception
-  # Get-Service really throws; Set-WinUtilService already warns and skips a missing
-  # service. A build without the bad type runs unpatched.
-  $badServiceCatch = 'catch [System.ServiceProcess.ServiceNotFoundException]'
-  $runSource = $source.Replace($badServiceCatch, 'catch [Microsoft.PowerShell.Commands.ServiceCommandException]')
-
   # The release ships as UTF-8 without a BOM, which Windows PowerShell reads as the
   # ANSI code page, mangling its non-ASCII text; the copy it runs carries a BOM.
   $winutil = Join-Path $winutilDir "release-$PinnedVersion-run.ps1"
-  [System.IO.File]::WriteAllText($winutil, $runSource, (New-Object System.Text.UTF8Encoding($true)))
+  [System.IO.File]::WriteAllText($winutil, $source, (New-Object System.Text.UTF8Encoding($true)))
 
   Write-Host "Applying config.json headless with WinUtil $PinnedVersion..."
   $global:LASTEXITCODE = 0
