@@ -10,7 +10,7 @@
   Big bases and the Shroud past the starting area are untested. The 890M
   profile (see [Per-GPU profiles](#per-gpu-profiles)) holds 40 at 1920x1200
   with the panel at 40 Hz: 0% late frames in most 5-minute windows of a
-  2.3-hour session, apart from two heavy stretches (2026-10-20).
+  2.3-hour session, apart from slowdowns after long pauses (2026-10-20).
 - **Steam app id:** 1203620
 - **Executable:** `D:\SteamLibrary\steamapps\common\Enshrouded\enshrouded.exe`
   (renders on the 9070 XT: its dedicated memory sits on the 9070 XT's LUID)
@@ -199,17 +199,21 @@ cap follow the GPU present at logon:
 
   At 40 the session held 0–0.1% late in most 5-minute windows (P99 frame
   26.5–27.4 ms, GPU busy P95 about 22 ms). Two stretches fell apart, about
-  23:03–23:17 (14–36% late) and 23:53–23:58 (7%), with GPU busy P95 near
-  75 ms and frames around 13 fps; what was on screen is unrecorded. The 30 fps
-  part of the same session had a matching stretch at 21:38–21:47. The busiest
-  CPU was on Zen 5 in 81% of 3,943 s.
+  23:02–23:15 and 23:56–23:57, plus 21:38–21:47 in the 30 fps part. Each came
+  right after the user left the game paused for a while: the core log shows
+  the pause at 23:53–23:55 (Zen 5 load 4%, still 40 fps at 18 ms GPU busy),
+  and the drop begins on resume. During a stretch the median GPU busy stays
+  about 20 ms, but a third of frames take 70–76 ms, so the frame rate sits
+  near 23. It cleared by itself after 2–13 minutes. The busiest CPU was on
+  Zen 5 in 81% of 3,943 s.
 
 ## Next steps
 
-On the 890M, find out what was on screen during the heavy stretches (GPU busy
-P95 about 75 ms, 4x normal): a biome, a weather effect, a crowded fight or the
-map. If it recurs in one place, capture it there. Watch dedicated GPU memory
-against the 8 GB budget, since a spill to shared memory would look like this.
+On the 890M, find what makes a third of frames take about 75 ms of GPU time
+after a long pause. When it next happens, read the game's dedicated and
+shared GPU memory (a demoted allocation paging back in would look like this),
+then try opening and closing the map, or reloading the save, to see whether
+either clears it sooner.
 
 Capture a later session at a large base with many lights or deep in the Shroud,
 both heavier than what session2 covered.
