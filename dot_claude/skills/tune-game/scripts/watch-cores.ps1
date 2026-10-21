@@ -39,13 +39,16 @@ $secondsLogged = 0
 $secondsOnZen5 = 0
 $previousThreadMs = @{}
 $previousStamp = [Diagnostics.Stopwatch]::GetTimestamp()
-Get-Counter -Counter '\Processor(*)\% Processor Time' -SampleInterval 1 -Continuous | ForEach-Object {
+while ($true) {
   if ($gameProcess.HasExited) {
     if ($secondsLogged -gt 0) {
       '{0} s logged; busiest CPU on Zen 5 in {1:N0}% of them.' -f $secondsLogged, (100 * $secondsOnZen5 / $secondsLogged)
     }
     exit
   }
+
+  # A counter that wraps between two samples reports a negative denominator; skip that second.
+  try { $counterSet = Get-Counter -Counter '\Processor(*)\% Processor Time' -SampleInterval 1 -MaxSamples 1 } catch { continue }
   $gameProcess.Refresh()
   $nowStamp = [Diagnostics.Stopwatch]::GetTimestamp()
   $elapsedMs = ($nowStamp - $previousStamp) * 1000 / [Diagnostics.Stopwatch]::Frequency
@@ -62,7 +65,7 @@ Get-Counter -Counter '\Processor(*)\% Processor Time' -SampleInterval 1 -Continu
   $topThreads = @($threadPercents | Sort-Object -Descending | Select-Object -First 2) + @(0, 0)
 
   $busyByLogical = @{}
-  foreach ($counterSample in $_.CounterSamples) {
+  foreach ($counterSample in $counterSet.CounterSamples) {
     if ($counterSample.InstanceName -match '^\d+$') { $busyByLogical[[int] $counterSample.InstanceName] = $counterSample.CookedValue }
   }
   $zen5Average = ($busyByLogical.GetEnumerator() | Where-Object Key -LT $zen5LogicalCount | Measure-Object -Property Value -Average).Average
@@ -73,6 +76,6 @@ Get-Counter -Counter '\Processor(*)\% Processor Time' -SampleInterval 1 -Continu
 
   $secondsLogged++
   $secondsOnZen5 += $busiestOnZen5
-  '{0:yyyy-MM-dd HH:mm:ss},{1:N0},{2:N0},{3},{4},{5:N0},{6:N0}' -f $_.Timestamp, $zen5Average, $zen5cAverage, $busiestDescription, $busiestOnZen5, $topThreads[0], $topThreads[1] |
+  '{0:yyyy-MM-dd HH:mm:ss},{1:N0},{2:N0},{3},{4},{5:N0},{6:N0}' -f $counterSet.Timestamp, $zen5Average, $zen5cAverage, $busiestDescription, $busiestOnZen5, $topThreads[0], $topThreads[1] |
     Add-Content -LiteralPath $outputPath
 }

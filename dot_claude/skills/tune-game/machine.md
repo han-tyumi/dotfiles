@@ -38,6 +38,12 @@
   monitor, never on the internal panel.
 - Fallback when 60 can't hold: the panel's 40 Hz mode with a 40 fps cap. It's
   smoother than a 60 cap that misses.
+- A 30 cap on the 60 Hz panel paces badly unless the GPU has margin: when a
+  frame's GPU time (busy plus gaps) nears 33 ms, the moment it finishes drifts
+  across a refresh and frames alternate 50 and 17 ms on screen. On the 890M,
+  aim for 40 at 40 Hz first; a 30 cap also clocks the iGPU down, so capped
+  GPU busy overstates a frame's cost (see
+  [Enshrouded](games/enshrouded.md#per-gpu-profiles)).
 
 ## Power
 

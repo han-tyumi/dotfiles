@@ -8,8 +8,9 @@
   world, was `Steady` throughout (0.06% held), and so were a 4.1-hour one
   on 2026-10-18 (0.08% held) and a 9-hour one on 2026-10-19 (0.09% held).
   Big bases and the Shroud past the starting area are untested. The 890M
-  profile (see [Per-GPU profiles](#per-gpu-profiles)) holds 30 at the base at
-  35 W but hitches on 2–3% of frames over a whole session (2026-10-20).
+  profile (see [Per-GPU profiles](#per-gpu-profiles)) holds 40 at 1920x1200
+  with the panel at 40 Hz: 0% late frames in most 5-minute windows of a
+  2.3-hour session, apart from two heavy stretches (2026-10-20).
 - **Steam app id:** 1203620
 - **Executable:** `D:\SteamLibrary\steamapps\common\Enshrouded\enshrouded.exe`
   (renders on the 9070 XT: its dedicated memory sits on the 9070 XT's LUID)
@@ -25,7 +26,7 @@
   game's Ultra defaults). The install folder's `enshrouded_local.json` was
   written during tuning and is unused.
 - **Frame cap:** `C:\Program Files (x86)\RivaTuner Statistics Server\Profiles\enshrouded.exe.cfg`
-  (`[Framerate]` `Limit=60`, or 30 on the 890M). The game has no frame limiter.
+  (`[Framerate]` `Limit=60`, or 40 on the 890M). The game has no frame limiter.
 - **Target:** a locked 60 on the internal panel.
 
 ## Settings
@@ -130,9 +131,12 @@ The game is in `~/.config/gpu-profiles/gpu-profiles.json` (see
 [machine.md](../machine.md#per-gpu-profiles)), so its settings file and RTSS
 cap follow the GPU present at logon:
 
-- **rx-9070-xt:** the settings above, RTSS 60.
-- **890m:** RTSS 30 (even pacing at 60 Hz without changing the panel rate),
-  FSR 3 Performance, `shadows`, `fog`, `ssao`, `distantObjects`, `decoObjects`,
+- **rx-9070-xt:** the settings above, RTSS 60, native output pinned
+  (`forceFullscreenResolution` 0,0) so a reseed never inherits the 890M's.
+- **890m:** RTSS 40 with the panel switched to 40 Hz by hand (the switcher
+  doesn't change the refresh rate; switch back to 60 Hz for the eGPU), RTSS
+  scanline sync off, vsync off, 1920x1200 output (`forceFullscreenResolution`
+  1920,1200), FSR 3 Performance (960x600 internal), `shadows`, `fog`, `ssao`, `distantObjects`, `decoObjects`,
   `detailScattering`, `voxelMeshQuality` and `pointLightShadows` Low,
   `dynamicGi`, `reflections`, `water` and `models` Performance,
   `contactShadows` and `tessellation` Disabled, `textureAnisotropy` Medium.
@@ -166,14 +170,46 @@ cap follow the GPU present at logon:
   while the spot capture recording the same minute alongside it read 28.3 ms
   with identical displayed times. Trust a spot capture's GPU busy over a
   long session's.
+- **890m-session3 (2026-10-20, AC, 35 W, 171 min, questing):** a series of
+  60 s spot captures, all at 1920x1200, each one change from the last:
+
+  | Setup | Late | 1% low | GPU busy med / P95 |
+  |---|---|---|---|
+  | 30 cap, FSR 3 Quality | 2.2% | 28.3 | 26.1 / 28.1 ms |
+  | + in-game vsync (at the base) | 7.0% | 18.8 | 24.5 / 30.1 ms |
+  | scanline sync x/2 instead of vsync | 3.6% | 29.4 | 25.9 / 29.4 ms |
+  | + FSR 3 Balance | 0.9% | 29.7 | 23.1 / 24.9 ms |
+  | + FSR 3 Performance | 0.3% | 29.7 | 21.5 / 22.9 ms |
+  | 40 Hz panel, RTSS 40, scanline sync off | 0.08%, `Steady` | 38.2 | 18.5 / 20.3 ms |
+
+  - At a 30 cap on the 60 Hz panel, the late frames took a normal 32–34 ms
+    to make. Each frame occupied about 30.5 ms of GPU time (busy plus gaps)
+    of the 33.3 available, so when a frame finished drifted across a 60 Hz
+    refresh, showing one frame for 50 ms and the next for 17. More GPU headroom
+    fixed it; the cap and vsync did not.
+  - On the iGPU the game's vsync with the RTSS 30 cap alternated 17 and 50 ms
+    frames, worse than vsync off.
+  - RTSS scanline sync x/2 (`SyncScanline0=800`, `SyncPeriods=1`) tightened
+    frame times (P99 34.1 ms) but kept the late frames; it may need exclusive
+    fullscreen, and the game presents `Composed: Flip`.
+  - GPU busy fell at 40 fps compared with 30: at a 30 cap the 890M clocks
+    itself down, so capped GPU busy overstates a frame's cost.
+  - The user felt no difference among the 30 fps setups and found 40
+    smoother.
+
+  At 40 the session held 0–0.1% late in most 5-minute windows (P99 frame
+  26.5–27.4 ms, GPU busy P95 about 22 ms). Two stretches fell apart, about
+  23:03–23:17 (14–36% late) and 23:53–23:58 (7%), with GPU busy P95 near
+  75 ms and frames around 13 fps; what was on screen is unrecorded. The 30 fps
+  part of the same session had a matching stretch at 21:38–21:47. The busiest
+  CPU was on Zen 5 in 81% of 3,943 s.
 
 ## Next steps
 
-On the 890M, every setting is already at its floor, so the remaining lever
-is the output resolution: try 1920x1200 with FSR 3 Quality (the same 1280x800
-internal resolution as Performance at 2560x1600, with cheaper post-processing
-and upscaling) and capture the base and an active stretch. Watch dedicated
-GPU memory against the 8 GB budget.
+On the 890M, find out what was on screen during the heavy stretches (GPU busy
+P95 about 75 ms, 4x normal): a biome, a weather effect, a crowded fight or the
+map. If it recurs in one place, capture it there. Watch dedicated GPU memory
+against the 8 GB budget, since a spill to shared memory would look like this.
 
 Capture a later session at a large base with many lights or deep in the Shroud,
 both heavier than what session2 covered.

@@ -35,14 +35,14 @@
           }
         },
         "890m": {
-          "rtssLimit": 30,
+          "rtssLimit": 40,
           "settings": {
             "graphics.forceFullscreenResolution.x": 1920,
             "graphics.forceFullscreenResolution.y": 1200,
             "graphics.vsync": false,
             "graphics.render.preset": "Custom",
             "graphics.render.antiAliasing": "Fsr3",
-            "graphics.render.fsr3": "Quality",
+            "graphics.render.fsr3": "Performance",
             "graphics.render.shadows": "Low",
             "graphics.render.contactShadows": "Disabled",
             "graphics.render.dynamicGi": "Performance",
