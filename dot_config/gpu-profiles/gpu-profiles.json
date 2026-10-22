@@ -1,7 +1,8 @@
 {
+  "panelAdapter": "*890M*",
   "gpus": [
-    { "name": "rx-9070-xt", "match": "*RX 9070 XT*" },
-    { "name": "890m", "match": "*890M*" }
+    { "name": "rx-9070-xt", "match": "*RX 9070 XT*", "panelHz": 60 },
+    { "name": "890m", "match": "*890M*", "panelHz": 40 }
   ],
   "games": {
     "enshrouded": {

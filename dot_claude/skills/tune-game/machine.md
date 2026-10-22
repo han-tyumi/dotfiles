@@ -253,7 +253,10 @@ Without the eGPU the 890M renders, and a game tuned for the 9070 XT won't hold
 on it. `~/.config/gpu-profiles/gpu-profiles.json` (chezmoi source
 `dot_config/gpu-profiles/`) lists the GPUs by adapter-name pattern and, per
 game, its settings file and a profile per GPU: an RTSS `rtssLimit` and
-dotted-path `settings` for a JSON settings file. The `GpuProfiles` logon task
+dotted-path `settings` for a JSON settings file. Each GPU's `panelHz` sets
+the internal panel's refresh rate (the display on the `panelAdapter` adapter,
+saved per user, no admin): 60 on the 9070 XT, 40 on the 890M. The
+`GpuProfiles` logon task
 (registered unelevated by `run_onchange_after_45-gpu-profiles.ps1`) runs
 `switch-gpu-profile.ps1`, which picks the first GPU in the list that is working.
 The eGPU can't change while the machine is on, so once per logon is enough.

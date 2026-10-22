@@ -133,9 +133,9 @@ cap follow the GPU present at logon:
 
 - **rx-9070-xt:** the settings above, RTSS 60, native output pinned
   (`forceFullscreenResolution` 0,0) so a reseed never inherits the 890M's.
-- **890m:** RTSS 40 with the panel switched to 40 Hz by hand (the switcher
-  doesn't change the refresh rate; switch back to 60 Hz for the eGPU), RTSS
-  scanline sync off, vsync off, 1920x1200 output (`forceFullscreenResolution`
+- **890m:** RTSS 40 with the panel at 40 Hz (the switcher sets each GPU's
+  `panelHz`: 40 on the 890M, 60 on the eGPU), RTSS scanline sync off, vsync
+  off, 1920x1200 output (`forceFullscreenResolution`
   1920,1200), FSR 3 Performance (960x600 internal), `shadows`, `fog`, `ssao`, `distantObjects`, `decoObjects`,
   `detailScattering`, `voxelMeshQuality` and `pointLightShadows` Low,
   `dynamicGi`, `reflections`, `water` and `models` Performance,
