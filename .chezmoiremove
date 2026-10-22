@@ -9,3 +9,6 @@
 .config/opencode/plugins/deny-destructive.js
 # Conductor was retired 2026-10 for Orca; drop its managed settings everywhere.
 .conductor
+# Enshrouded's RTSS cap comes from the gpu-profiles switcher; a declared copy
+# would put 60 back on the 890M at every apply.
+.config/rtss/profiles/enshrouded.exe.cfg

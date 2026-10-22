@@ -1,12 +1,13 @@
-{{ range glob (joinPath .chezmoi.sourceDir "dot_config/rtss/profiles/*.cfg") -}}
+{{ range glob (joinPath .chezmoi.sourceDir "dot_config/rtss/profiles/*") -}}
 # rtss profile {{ base . }} hash: {{ include . | sha256sum }}
 {{ end -}}
 #
 # Converge RivaTuner Statistics Server (installed by the gpd-win-max-2 layer's
 # winget manifest) to the declared state: the user can write its Profiles folder,
-# it starts with Windows, and each per-game profile under ~/.config/rtss/profiles
-# has its keys merged into RTSS's copy of that profile. Merging keeps keys RTSS's
-# own UI added; RTSS reads a profile when the game starts. The ACL grant and the
+# it starts with Windows, its window scales with the display, and each profile
+# under ~/.config/rtss/profiles (Global for the on-screen display, <exe>.cfg per
+# game) has its keys merged into RTSS's copy of that profile. Merging keeps keys
+# RTSS's own UI added; RTSS reads a profile when the game starts. The ACL grant and the
 # autostart task need admin, so the script self-elevates once, only when either is
 # missing. Kept PowerShell 5.1-safe, like the other provisioners.
 param([string]$ElevatedPassFor)
@@ -113,8 +114,14 @@ if (Test-Path -LiteralPath $configPath) {
   Merge-RtssProfile $configPath @(@{ Section = 'Settings'; Key = 'StartWithWindows'; Value = '1' })
 }
 
+# RTSS's skin is drawn at a fixed size, so on the 200% panel its window is tiny.
+# The per-user "System" DPI override has Windows scale it up instead.
+$compatLayersKey = 'HKCU:\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers'
+if (-not (Test-Path $compatLayersKey)) { New-Item -Path $compatLayersKey -Force | Out-Null }
+New-ItemProperty -Path $compatLayersKey -Name $rtssExe -Value '~ DPIUNAWARE' -PropertyType String -Force | Out-Null
+
 $sourceDir = Join-Path $env:USERPROFILE '.config\rtss\profiles'
-foreach ($sourceProfile in Get-ChildItem -Path $sourceDir -Filter '*.cfg' -ErrorAction SilentlyContinue) {
+foreach ($sourceProfile in Get-ChildItem -Path $sourceDir -File -ErrorAction SilentlyContinue) {
   Merge-RtssProfile (Join-Path $profilesDir $sourceProfile.Name) @(Read-ProfileUpdates $sourceProfile.FullName)
 }
 exit 0

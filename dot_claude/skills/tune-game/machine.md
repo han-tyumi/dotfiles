@@ -246,6 +246,12 @@ machine gets them back:
   or its next start overwrites the cap.
 - On Enshrouded, RTSS at 60 held 1 frame in 30 s where Radeon Chill at 60/60
   held 11.
+- The on-screen display is declared the same way, in
+  `dot_config/rtss/profiles/Global`: RTSS's own statistics (frame rate) with
+  its frame-time history graph, in every hooked game. `40-rtss` also sets a
+  per-user "System" DPI override on `RTSS.exe`, since its skin otherwise draws
+  at a fixed size and is tiny at 200% scaling; both take effect when RTSS
+  next starts.
 
 ### Per-GPU profiles
 
@@ -271,8 +277,9 @@ The eGPU can't change while the machine is on, so once per logon is enough.
 - `-GpuProfile <name>` forces a profile, e.g. to test one. A running game is
   skipped. `switch.log` and `state.json` (the active profile per game) sit in
   the same folder.
-- The rtssLimit overrides the `dot_config/rtss/profiles` cap at each logon;
-  until then, a `40-rtss` run puts that cap back.
+- A game in the manifest has no `dot_config/rtss/profiles/<exe>.cfg`: its cap
+  is the rtssLimit, which the switcher writes at each logon and on its own
+  apply. A declared `.cfg` cap would win at every `40-rtss` run instead.
 
 ## Tools
 
