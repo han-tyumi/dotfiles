@@ -207,6 +207,12 @@ cap follow the GPU present at logon:
   near 23. It cleared by itself after 2–13 minutes. The busiest CPU was on
   Zen 5 in 81% of 3,943 s.
 
+- **890m-session4** (2026-10-21, 65 min at 40 fps, 40 Hz, no long pause):
+  `Steady`, 0.07% held, 1% low 36.8 fps, GPU busy median 20.2 ms and P95
+  23.0 ms. The one blip was 21:39:40-21:40:00 (77 late frames, GPU busy P95
+  31.5 ms). The busiest CPU was on Zen 5 in 97% of 3,822 s. The post-pause
+  slowdown did not come up, since the game was never left paused.
+
 ## Next steps
 
 On the 890M, find what makes a third of frames take about 75 ms of GPU time
