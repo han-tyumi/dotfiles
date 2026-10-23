@@ -273,7 +273,7 @@ provisioned with **winget** and **mise** instead of Nix.
   `*.sh`/`*.toml` run scripts), and the Mac shell/editor targets (`.config/zed`,
   `.config/nvim`, `.config/ghostty`, `.local`, `Library`) are skipped; on
   macOS the Windows targets (`AppData`, `Documents`, `.config/winget`, `.gitconfig`,
-  the `*.ps1` provisioners) are skipped. Root run-scripts are ignored by their
+  `.ssh/config`, the `*.ps1` provisioners) are skipped. Root run-scripts are ignored by their
   attribute-stripped name (e.g. `1-mise-config.toml`, `10-winget-packages.ps1`).
 - `bootstrap.ps1` (flash-drive or `irm https://raw.githubusercontent.com/han-tyumi/dotfiles/main/bootstrap.ps1 | iex`)
   installs Git + chezmoi via winget, then `chezmoi init` + `chezmoi apply` (a re-run
@@ -283,7 +283,9 @@ provisioned with **winget** and **mise** instead of Nix.
   non-interactive run with neither fails fast instead of hanging on the prompt. It
   also generates a per-machine ed25519 key (`git_han-tyumi`, `$env:DOTFILES_SSH_KEY="none"`
   to skip) and prints the public key to register on GitHub as both an Authentication
-  and a Signing key — enabling SSH commit signing (see the git identity note below).
+  and a Signing key — enabling SSH commit signing (see the git identity note below)
+  and SSH remotes: `private_dot_ssh/config.tmpl` offers that key for github.com and
+  checks GitHub against the host keys pinned in `known_hosts.github`.
 - Provisioning is hash-gated `run_onchange` PowerShell, kept PowerShell 5.1-safe
   since pwsh 7 isn't present on the first apply: `10-winget-packages` imports
   `dot_config/winget/packages.json` plus each enabled layer's

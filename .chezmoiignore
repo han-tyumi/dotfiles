@@ -29,6 +29,8 @@ Documents
 .config/winutil
 .config/windows
 .gitconfig
+.ssh/config
+.ssh/known_hosts.github
 10-winget-packages.ps1
 20-mise-install.ps1
 25-orca-skills.ps1

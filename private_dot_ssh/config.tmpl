@@ -1,0 +1,11 @@
+{{- /* Windows SSH config — managed by chezmoi; ignored on macOS (see .chezmoiignore). */ -}}
+{{- if has "personal" .layerList -}}
+# GitHub's host keys are pinned in known_hosts.github (from `gh api meta`), and the
+# per-machine key bootstrap.ps1 generates is offered by name, since ssh only tries
+# id_* keys on its own.
+Host github.com
+	User git
+	IdentityFile ~/.ssh/git_han-tyumi
+	IdentitiesOnly yes
+	UserKnownHostsFile ~/.ssh/known_hosts.github ~/.ssh/known_hosts
+{{- end }}
