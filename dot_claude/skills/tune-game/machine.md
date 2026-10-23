@@ -61,6 +61,10 @@
   match `Get-Process`'s `ProcessName` exactly (case-sensitive, no `.exe`). Files
   are edited (by the user, elevated) only while Motion Assistant is closed, never
   with a UTF-8 BOM; adding or deleting a profile in its UI rescans the folder.
+  It holds its settings in memory and writes them back to the files on its own
+  (about 20 s and 2 min after a logon start, with nobody touching it), so an
+  edit made while it runs is overwritten, and one made while it's closed takes
+  effect at its next start.
   Read them unelevated to check:
   ```powershell
   $profiles = 'C:\Program Files\Motion Assistant\Profiles'
