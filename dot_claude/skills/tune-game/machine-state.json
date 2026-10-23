@@ -68,7 +68,8 @@
     "D:\\SteamLibrary\\steamapps\\common\\PowerWash Simulator\\PowerWashSimulator.exe": 1,
     "D:\\SteamLibrary\\steamapps\\common\\Ravenswatch\\Ravenswatch.exe": 1,
     "D:\\SteamLibrary\\steamapps\\common\\Risk of Rain Returns\\Risk of Rain Returns.exe": 1,
-    "D:\\SteamLibrary\\steamapps\\common\\Skul\\Skul.exe": 1
+    "D:\\SteamLibrary\\steamapps\\common\\Skul\\Skul.exe": 1,
+    "D:\\SteamLibrary\\steamapps\\common\\Super Fantasy Kingdom\\Super Fantasy Kingdom.exe": 1
   },
   "registry": [
     { "path": "HKCU:\\Software\\Microsoft\\GameBar", "name": "AutoGameModeEnabled", "value": 0 },
