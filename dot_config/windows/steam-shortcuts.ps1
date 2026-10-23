@@ -16,9 +16,8 @@
     image yet gets SteamGridDB's top-scored image for the game named by
     `steam.steamGridDb` (a game id, or a name to search), and the URL is printed
     so it can be pinned. Art set by hand in Steam fills a slot too, so it is
-    left alone. The lookup needs a SteamGridDB API key in the credential store:
-
-        uvx --from keyring==25.7.0 keyring set steamgriddb api-key
+    left alone. The lookup needs a SteamGridDB API key in the credential store,
+    which -Setup stores.
 
     Steam rewrites shortcuts.vdf when it exits, so shortcuts are only written
     while Steam is closed. Artwork is written either way and shows once Steam
@@ -29,11 +28,17 @@
 
 .EXAMPLE
     pwsh -NoProfile -File steam-shortcuts.ps1 -Game clone-hero
+
+.EXAMPLE
+    pwsh -NoProfile -File steam-shortcuts.ps1 -Setup
 #>
 
 param(
     [string]$Game,
-    [string]$AccountId
+    [string]$AccountId,
+
+    # Prompts for a SteamGridDB API key and stores it in the credential store.
+    [switch]$Setup
 )
 
 $ErrorActionPreference = 'Stop'
@@ -44,6 +49,19 @@ $artStatePath = Join-Path $env:LOCALAPPDATA 'steam-shortcuts\art.json'
 $steamGridDbApi = 'https://www.steamgriddb.com/api/v2'
 $keyringArguments = @('--quiet', '--from', 'keyring==25.7.0', 'keyring')
 $steamId64Base = 76561197960265728
+
+if ($Setup) {
+    Write-Host 'Get an API key at https://www.steamgriddb.com/profile/preferences/api.'
+    $secureKey = Read-Host -AsSecureString -Prompt 'SteamGridDB API key (input is hidden)'
+    $plainKey = [Net.NetworkCredential]::new('', $secureKey).Password.Trim()
+    if (-not $plainKey) { throw 'No key entered; nothing stored.' }
+
+    # Piped on stdin, so keyring stores it without its own password prompt.
+    $plainKey | & uvx @keyringArguments set steamgriddb api-key
+    if ($LASTEXITCODE) { throw 'keyring could not store the key.' }
+    Write-Host 'Stored the SteamGridDB API key.'
+    return
+}
 
 # Steam's grid file suffix for each artwork slot, and where SteamGridDB serves it.
 $artSlots = [ordered]@{

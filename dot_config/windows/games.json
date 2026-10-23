@@ -26,7 +26,14 @@
       "process": "WowB",
       "steam": {
         "name": "World of Warcraft: Forever",
-        "steamGridDb": "World of Warcraft Classic"
+        "steamGridDb": 5246530,
+        "art": {
+          "portrait": "https://cdn2.steamgriddb.com/grid/578a92be24dca5c93924c0d912eb46d5.png",
+          "wide": "https://cdn2.steamgriddb.com/grid/f288c59d6f743a188d83de19a4463173.png",
+          "hero": "https://cdn2.steamgriddb.com/hero/a34bacf839b923770b2c360eefa26748.jpg",
+          "logo": "https://cdn2.steamgriddb.com/logo/cf4298addd63275b043eb83dc27f0ed3.png",
+          "icon": "https://cdn2.steamgriddb.com/icon/5fe9896d59ff844e46258c4c82130d54.png"
+        }
       }
     },
     "clone-hero": {
@@ -34,7 +41,14 @@
       "exe": "%LOCALAPPDATA%\\Microsoft\\WinGet\\Packages\\CloneHeroTeam.CloneHero_Microsoft.Winget.Source_8wekyb3d8bbwe\\Standalone\\Clone Hero.exe",
       "steam": {
         "name": "Clone Hero",
-        "steamGridDb": "Clone Hero"
+        "steamGridDb": 5245291,
+        "art": {
+          "portrait": "https://cdn2.steamgriddb.com/grid/e0b38e685d845490eaef37517c9a8dbe.jpg",
+          "wide": "https://cdn2.steamgriddb.com/grid/65b15d7b1dbbaaecb9e2b33d681c5497.png",
+          "hero": "https://cdn2.steamgriddb.com/hero/4764f37856fc727f70b666b8d0c4ab7a.png",
+          "logo": "https://cdn2.steamgriddb.com/logo/577ef1154f3240ad5b9b413aa7346a1e.png",
+          "icon": "https://cdn2.steamgriddb.com/icon/5dbc8390f17e019d300d5a162c3ce3bc.ico"
+        }
       }
     }
   }

@@ -355,10 +355,10 @@ duplicates.
   pin so every machine shows the same art. A slot that already has a file, such as
   art set by hand in Steam, is left alone.
 - The SteamGridDB lookup needs a free API key (steamgriddb.com, Preferences → API),
-  stored once per machine. Fully pinned games need no key.
+  stored once per machine with a hidden prompt. Fully pinned games need no key.
 
   ```bash
-  uvx --from keyring==25.7.0 keyring set steamgriddb api-key
+  pwsh -NoProfile -File ~/.config/windows/steam-shortcuts.ps1 -Setup
   ```
 - Steam rewrites `shortcuts.vdf` when it exits, so the script writes it only while
   Steam is closed, keeping the previous copy as `shortcuts.vdf.bak`. Artwork is
