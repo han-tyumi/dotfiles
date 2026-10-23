@@ -38,7 +38,7 @@ working tree (mid-edit) skips the pull; a dirty submodule does not.
 | Trigger | Scripts |
 |---|---|
 | `run_onchange` (re-runs when *its content* changes) | `10-winget` (install apps) · `20-mise` (runtimes, and mise's shims on the User PATH) · `30-nushell` (shell activations) · `35-registry-tweaks` (dev/privacy registry — self-elevates for the HKLM bits) |
-| `run_once` (once, then recorded) | `25-orca-skills` · `60-nerdfont` · `70-psfzf` |
+| `run_once` (once, then recorded) | `25-orca-skills` · `50-clone-hero-launcher` (personal layer) · `60-nerdfont` · `70-psfzf` |
 
 `35-registry-tweaks` pops a single UAC prompt, but only when its HKLM keys have
 drifted. Windows features are **not** in this table — they're the opt-in
@@ -57,12 +57,6 @@ goes through `upgrade.ps1`, which upgrades without anyone closing apps first:
   an upgrade pending are moved into `%TEMP%\winget-inuse` first. The old process
   keeps running from there; the new version starts next launch. A failed upgrade
   gets its files moved back.
-- **Portable game data**: an upgrade replaces a portable's whole install directory,
-  and Clone Hero keeps its settings and scores (`PlayerData`, `GameData`) beside its
-  exe. `upgrade.ps1` copies those folders to `%LOCALAPPDATA%\winget-preserved\<id>`
-  before the upgrade and back next to the new exe when the upgrade removed them, so
-  a layout change between versions doesn't strand them. Another such game gets an
-  entry in `$preservedFolders`.
 - **Git** refuses to upgrade while any Git Bash runs — and an agent session nearly
   always has one. It is pinned and upgraded on its own with `/SKIPIFINUSE`, which
   turns the refusal into a clean skip; `apploi` reports it deferred and it lands on
@@ -95,6 +89,16 @@ skills once with `npx skills add`, as the Mac activation does; Orca's updater ow
 them after that. `~/.orca/keybindings.json` is shared with the Mac. The Orca CLI is
 bundled but not on PATH until registered once from **Settings → Orca CLI**. App
 settings live in `%APPDATA%\Orca`.
+
+With the `personal` layer on, `50-clone-hero-launcher` installs the Clone Hero
+Launcher, which installs the game and updates both itself and the game. It isn't in
+winget, and its download URL is a moving tag, so the script checks the installer
+against the SHA-256 clonehero.net lists. The installer has no per-user mode, so the
+run asks for one elevation, but it installs under `%LOCALAPPDATA%\Programs` so the
+launcher can update itself without one. Installing the game is a one-time click in
+the launcher (its default, `%LOCALAPPDATA%\Clone Hero`, is the path `games.json`
+expects). Settings and scores live in `Documents\Clone Hero`, outside the game
+folder, so game updates leave them alone.
 
 ## WinUtil tweaks
 
@@ -344,7 +348,7 @@ duplicates.
 ```json
 "clone-hero": {
   "launcher": "standalone",
-  "exe": "%LOCALAPPDATA%\\Microsoft\\WinGet\\Packages\\...\\Clone Hero.exe",
+  "exe": "%LOCALAPPDATA%\\Clone Hero\\Clone Hero.exe",
   "steam": {
     "name": "Clone Hero",
     "steamGridDb": "Clone Hero",

@@ -300,7 +300,10 @@ provisioned with **winget** and **mise** instead of Nix.
   modules. `run_once_after_60-nerdfont.ps1` installs Iosevka Nerd Font (Mono)
   per-user; it fails loudly so a transient error re-fires on the next apply instead
   of recording the run_once done with nothing done. `run_once_after_25-orca-skills.ps1`
-  installs Orca's global skills the same way, mirroring the Mac `orcaSkills`.
+  installs Orca's global skills the same way, mirroring the Mac `orcaSkills`, and
+  the personal layer's `run_once_after_50-clone-hero-launcher.ps1` installs the
+  self-updating Clone Hero Launcher (hash-checked against clonehero.net, one
+  elevation prompt) under `%LOCALAPPDATA%\Programs`.
 - One-command sync mirrors the Mac `apploi` (plain = do everything): `apploi`
   (defined in the PowerShell profile and the Windows nushell config) does an
   `--ff-only` pull, `chezmoi apply`, then `dot_config/winget/upgrade.ps1` + `mise plugins

@@ -38,6 +38,7 @@ Documents
 35-registry-tweaks.ps1
 40-rtss.ps1
 45-gpu-profiles.ps1
+50-clone-hero-launcher.ps1
 60-nerdfont.ps1
 70-psfzf.ps1
 {{ end -}}
