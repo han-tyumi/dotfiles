@@ -23,7 +23,19 @@
       "launcher": "battlenet",
       "id": "wow_classic_beta",
       "productMatch": "Forever",
-      "process": "WowB"
+      "process": "WowB",
+      "steam": {
+        "name": "World of Warcraft: Forever",
+        "steamGridDb": "World of Warcraft Classic"
+      }
+    },
+    "clone-hero": {
+      "launcher": "standalone",
+      "exe": "%LOCALAPPDATA%\\Microsoft\\WinGet\\Packages\\CloneHeroTeam.CloneHero_Microsoft.Winget.Source_8wekyb3d8bbwe\\Standalone\\Clone Hero.exe",
+      "steam": {
+        "name": "Clone Hero",
+        "steamGridDb": "Clone Hero"
+      }
     }
   }
 }

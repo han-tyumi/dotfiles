@@ -171,15 +171,17 @@ in for it: start the game, find its process, block until it exits. Steam reports
 shortcut as running for exactly as long as that script lives, which is what makes the
 game show on the friends list.
 
-Three files in `~/.config/windows/`, all owned by the `personal` layer:
+Four files in `~/.config/windows/`, all owned by the `personal` layer:
 
 | File | Role |
 |---|---|
 | `games.json` | registry — launchers, and the games that use them |
 | `game-launch.ps1` | the runner (needs PowerShell 7) |
 | `game-launch.vbs` | wscript front so no console flashes; takes the game key |
+| `steam-shortcuts.ps1` | writes the Steam shortcuts and their artwork from the registry |
 
-Steam shortcut fields, where `<key>` is a `games` key from the registry:
+Steam shortcut fields, where `<key>` is a `games` key from the registry. They are
+written by `steam-shortcuts.ps1` (see [Shortcuts do not travel](#shortcuts-do-not-travel)):
 
 | Field | Value |
 |---|---|
@@ -327,10 +329,44 @@ handoff is invisible — point `process` at the final binary.
 ### Shortcuts do not travel
 
 Steam Cloud syncs neither `shortcuts.vdf` nor the `config/grid/` artwork beside it;
-both are per-machine. `chezmoi apply` brings the scripts, but each machine needs its
-Steam shortcut added by hand. Non-Steam games appearing on another device is Remote
-Play advertising from a running host rather than sync — they vanish when that host's
-Steam closes.
+both are per-machine. Non-Steam games appearing on another device is Remote Play
+advertising from a running host rather than sync — they vanish when that host's Steam
+closes. `steam-shortcuts.ps1` rebuilds them from `games.json` instead: every game with
+a `steam` block gets a shortcut, matched by name, so a rerun updates rather than
+duplicates.
+
+```json
+"clone-hero": {
+  "launcher": "standalone",
+  "exe": "%LOCALAPPDATA%\\Microsoft\\WinGet\\Packages\\...\\Clone Hero.exe",
+  "steam": {
+    "name": "Clone Hero",
+    "steamGridDb": "Clone Hero",
+    "art": { "portrait": "https://cdn2.steamgriddb.com/grid/....png" }
+  }
+}
+```
+
+- A game behind a `uri` or `cdp` launcher gets the wscript shortcut from the table
+  above. A game with no launcher, or a `direct` one, gets its `exe` as the target.
+- Artwork slots are `portrait`, `wide`, `hero`, `logo` and `icon`. A URL pinned under
+  `art` always wins. An empty slot is filled with SteamGridDB's top-scored image for
+  `steamGridDb` (a game id, or a name to search), and the script prints the URLs to
+  pin so every machine shows the same art. A slot that already has a file, such as
+  art set by hand in Steam, is left alone.
+- The SteamGridDB lookup needs a free API key (steamgriddb.com, Preferences → API),
+  stored once per machine. Fully pinned games need no key.
+
+  ```bash
+  uvx --from keyring==25.7.0 keyring set steamgriddb api-key
+  ```
+- Steam rewrites `shortcuts.vdf` when it exits, so the script writes it only while
+  Steam is closed, keeping the previous copy as `shortcuts.vdf.bak`. Artwork is
+  written either way.
+
+```bash
+pwsh -NoProfile -File ~/.config/windows/steam-shortcuts.ps1
+```
 
 ## Device layer: `gpd-win-max-2`
 

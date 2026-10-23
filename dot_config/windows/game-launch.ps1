@@ -260,7 +260,7 @@ if (-not $gameProcess) {
         }
 
         'direct' {
-            $executable = Expand-Placeholder -Text $entry.exe -Values $placeholders
+            $executable = [Environment]::ExpandEnvironmentVariables((Expand-Placeholder -Text $entry.exe -Values $placeholders))
             Write-Log "running $executable"
             Start-Process $executable -WorkingDirectory (Split-Path $executable)
         }

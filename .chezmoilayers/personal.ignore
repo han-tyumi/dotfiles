@@ -7,3 +7,4 @@ v
 .config/windows/games.json
 .claude/skills/steam
 .config/winget/layers/personal.json
+.config/windows/steam-shortcuts.ps1
