@@ -2,8 +2,9 @@
 
 - **Status:** applied 2026-10-22 on the Radeon 890M alone (no eGPU attached).
   Not steady: a 79-minute session held 60 for its first 30 minutes, then held
-  frames climbed to about 6%. Shelved 2026-10-23: the user only wanted to try
-  it, so the next steps below are untried.
+  frames climbed to about 6%. Shelved 2026-10-23 until the game leaves Early
+  Access; recapture then, since the full release may change its performance.
+  The next steps below are untried.
 - **Steam app id:** 2289750
 - **Executable:** `D:\SteamLibrary\steamapps\common\Super Fantasy Kingdom\Super Fantasy Kingdom.exe`
   (GPU preference `GpuPreference=1;`, the 890M; the minimum spec is a GeForce
