@@ -57,6 +57,12 @@ goes through `upgrade.ps1`, which upgrades without anyone closing apps first:
   an upgrade pending are moved into `%TEMP%\winget-inuse` first. The old process
   keeps running from there; the new version starts next launch. A failed upgrade
   gets its files moved back.
+- **Portable game data**: an upgrade replaces a portable's whole install directory,
+  and Clone Hero keeps its settings and scores (`PlayerData`, `GameData`) beside its
+  exe. `upgrade.ps1` copies those folders to `%LOCALAPPDATA%\winget-preserved\<id>`
+  before the upgrade and back next to the new exe when the upgrade removed them, so
+  a layout change between versions doesn't strand them. Another such game gets an
+  entry in `$preservedFolders`.
 - **Git** refuses to upgrade while any Git Bash runs — and an agent session nearly
   always has one. It is pinned and upgraded on its own with `/SKIPIFINUSE`, which
   turns the refusal into a clean skip; `apploi` reports it deferred and it lands on
