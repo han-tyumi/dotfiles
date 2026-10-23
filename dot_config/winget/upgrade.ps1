@@ -9,6 +9,10 @@
 #   running image to be moved. Locked files of packages with an upgrade pending
 #   are moved into a stash first, then moved back if the upgrade failed to
 #   replace them; the stash is emptied on a later run once nothing holds them.
+# - A portable game that keeps its settings and scores beside its exe loses them
+#   when winget replaces the install directory. Those folders are copied out
+#   before the upgrade and copied back into the new exe's directory when the
+#   upgrade removed them.
 # - Git for Windows refuses to upgrade while any Git Bash runs, and an agent
 #   session almost always has one. /SKIPIFINUSE turns that refusal into a clean
 #   skip, so the upgrade lands on the first run with no Git Bash open.
@@ -36,6 +40,10 @@ $packageRoot = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages'
 $linkDir = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Links'
 $stashDir = Join-Path $env:TEMP 'winget-inuse'
 $sourceSuffix = '_Microsoft.Winget.Source_8wekyb3d8bbwe'
+$preservedRoot = Join-Path $env:LOCALAPPDATA 'winget-preserved'
+$preservedFolders = [ordered]@{
+  'CloneHeroTeam.CloneHero' = @{ Exe = 'Clone Hero.exe'; Folders = @('PlayerData', 'GameData') }
+}
 
 function Test-FileLocked {
   param([string] $Path)
@@ -52,6 +60,13 @@ function Test-UpgradeListed {
   return $UpgradeList -match ('(?m)\s' + [regex]::Escape($PackageId) + '\s')
 }
 
+function Find-PackageExe {
+  param([string] $PackageId, [string] $ExeName)
+  Get-ChildItem $packageRoot -Directory -Filter "$($PackageId)_*" |
+    ForEach-Object { Get-ChildItem $_.FullName -Recurse -File -Filter $ExeName } |
+    Select-Object -First 1
+}
+
 if (Test-Path $stashDir) {
   Get-ChildItem $stashDir -File | Remove-Item -ErrorAction SilentlyContinue
 } else {
@@ -59,6 +74,21 @@ if (Test-Path $stashDir) {
 }
 
 $upgradeList = & $winget upgrade --include-pinned --accept-source-agreements --disable-interactivity | Out-String
+
+$preservedPackages = @()
+foreach ($packageId in $preservedFolders.Keys) {
+  if (-not (Test-UpgradeListed $upgradeList $packageId)) { continue }
+  $packageExe = Find-PackageExe $packageId $preservedFolders[$packageId].Exe
+  if (-not $packageExe) { continue }
+  $backupDir = Join-Path $preservedRoot $packageId
+  if (Test-Path -LiteralPath $backupDir) { Remove-Item -LiteralPath $backupDir -Recurse -Force }
+  New-Item -ItemType Directory -Path $backupDir | Out-Null
+  foreach ($folder in $preservedFolders[$packageId].Folders) {
+    $folderPath = Join-Path $packageExe.DirectoryName $folder
+    if (Test-Path -LiteralPath $folderPath) { Copy-Item -LiteralPath $folderPath -Destination $backupDir -Recurse }
+  }
+  $preservedPackages += $packageId
+}
 
 $stashedFiles = @()
 Get-ChildItem $packageRoot -Directory -Filter "*$sourceSuffix" | ForEach-Object {
@@ -98,6 +128,22 @@ foreach ($stashedFile in $stashedFiles) {
     New-Item -ItemType Directory -Force -Path (Split-Path $stashedFile.Original) | Out-Null
     Move-Item -LiteralPath $stashedFile.Stashed -Destination $stashedFile.Original
     Write-Warning "Upgrade did not replace $($stashedFile.Original); restored the previous file."
+  }
+}
+
+foreach ($packageId in $preservedPackages) {
+  $packageExe = Find-PackageExe $packageId $preservedFolders[$packageId].Exe
+  if (-not $packageExe) {
+    Write-Warning "$packageId has no $($preservedFolders[$packageId].Exe) after the upgrade; its data stays in $preservedRoot\$packageId."
+    continue
+  }
+  foreach ($folder in $preservedFolders[$packageId].Folders) {
+    $backupPath = Join-Path (Join-Path $preservedRoot $packageId) $folder
+    $folderPath = Join-Path $packageExe.DirectoryName $folder
+    if ((Test-Path -LiteralPath $backupPath) -and -not (Test-Path -LiteralPath $folderPath)) {
+      Copy-Item -LiteralPath $backupPath -Destination $packageExe.DirectoryName -Recurse
+      Write-Host "apploi: restored $packageId's $folder after the upgrade" -ForegroundColor DarkGray
+    }
   }
 }
 

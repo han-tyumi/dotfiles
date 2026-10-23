@@ -38,7 +38,7 @@
     },
     "clone-hero": {
       "launcher": "standalone",
-      "exe": "%LOCALAPPDATA%\\Microsoft\\WinGet\\Packages\\CloneHeroTeam.CloneHero_Microsoft.Winget.Source_8wekyb3d8bbwe\\Standalone\\Clone Hero.exe",
+      "exe": "%LOCALAPPDATA%\\Microsoft\\WinGet\\Packages\\CloneHeroTeam.CloneHero__DefaultSource\\Windows - Standalone\\Clone Hero.exe",
       "steam": {
         "name": "Clone Hero",
         "steamGridDb": 5245291,
