@@ -70,7 +70,8 @@
     "D:\\SteamLibrary\\steamapps\\common\\Ravenswatch\\Ravenswatch.exe": 1,
     "D:\\SteamLibrary\\steamapps\\common\\Risk of Rain Returns\\Risk of Rain Returns.exe": 1,
     "D:\\SteamLibrary\\steamapps\\common\\Skul\\Skul.exe": 1,
-    "D:\\SteamLibrary\\steamapps\\common\\Super Fantasy Kingdom\\Super Fantasy Kingdom.exe": 1
+    "D:\\SteamLibrary\\steamapps\\common\\Super Fantasy Kingdom\\Super Fantasy Kingdom.exe": 1,
+    "C:\\Users\\mmcha\\AppData\\Local\\Microsoft\\WinGet\\Packages\\CloneHeroTeam.CloneHero_Microsoft.Winget.Source_8wekyb3d8bbwe\\Standalone\\Clone Hero.exe": 1
   },
   "registry": [
     { "path": "HKCU:\\Software\\Microsoft\\GameBar", "name": "AutoGameModeEnabled", "value": 0 },

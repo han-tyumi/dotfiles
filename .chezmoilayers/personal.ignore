@@ -6,3 +6,4 @@ v
 .config/windows/game-launch.vbs
 .config/windows/games.json
 .claude/skills/steam
+.config/winget/layers/personal.json
