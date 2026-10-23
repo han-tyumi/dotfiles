@@ -259,13 +259,19 @@ Without the eGPU the 890M renders, and a game tuned for the 9070 XT won't hold
 on it. `~/.config/gpu-profiles/gpu-profiles.json` (chezmoi source
 `dot_config/gpu-profiles/`) lists the GPUs by adapter-name pattern and, per
 game, its settings file and a profile per GPU: an RTSS `rtssLimit` and
-dotted-path `settings` for a JSON settings file. Each GPU's `panelHz` sets
-the internal panel's refresh rate (the display on the `panelAdapter` adapter,
-saved per user, no admin): 60 on the 9070 XT, 40 on the 890M. The
-`GpuProfiles` logon task
+dotted-path `settings` for a JSON settings file (both optional, as is
+`settingsFile`). The `GpuProfiles` logon task
 (registered unelevated by `run_onchange_after_45-gpu-profiles.ps1`) runs
 `switch-gpu-profile.ps1`, which picks the first GPU in the list that is working.
 The eGPU can't change while the machine is on, so once per logon is enough.
+
+The internal panel (the display on `panelAdapter`) sits at the manifest's
+top-level `panelHz`, 60. A game's profile can set its own `panelHz` (Enshrouded
+on the 890M: 40); the `GameWatcher` logon task (`watch-games.ps1`, same
+provisioner) polls every 3 s, applies it while the game runs, and returns the
+panel to the default when the game exits, with no session needed. The mode is
+saved per user, no admin. A manual rate change holds until the next game starts
+or exits. Transitions go to `watch.log` beside `switch.log`.
 
 - Switching saves the live settings file as the outgoing GPU's copy under
   `%LOCALAPPDATA%gpu-profiles<game><gpu>` and restores the incoming GPU's

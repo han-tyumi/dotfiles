@@ -12,8 +12,8 @@ restores the incoming GPU's saved copy, so changes made in the game's menus
 stay with the GPU they were made on. A GPU with no saved copy yet gets the
 manifest's settings applied to the live file. -Reseed applies the manifest's
 settings to the current GPU's file again, after the manifest changes. Each
-profile's rtssLimit sets the game's RTSS frame cap, and each GPU's panelHz sets
-the refresh rate of the internal panel (the display on panelAdapter).
+profile's rtssLimit sets the game's RTSS frame cap; watch-games.ps1 applies its
+panelHz while the game runs.
 
 A running game is left alone. Saved copies, the active profile per game and a
 log live under %LOCALAPPDATA%\gpu-profiles.
@@ -107,102 +107,11 @@ function Set-RtssLimit([string] $exeName, [int] $limit) {
   if ($updated -ne $original) { [IO.File]::WriteAllText($profilePath, "$updated`r`n", [Text.Encoding]::ASCII) }
 }
 
-Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-
-public static class DisplayModes {
-  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-  public struct DisplayDevice {
-    public int cb;
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string DeviceName;
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceString;
-    public int StateFlags;
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceID;
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
-  }
-
-  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-  public struct DevMode {
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmDeviceName;
-    public short dmSpecVersion;
-    public short dmDriverVersion;
-    public short dmSize;
-    public short dmDriverExtra;
-    public int dmFields;
-    public int dmPositionX;
-    public int dmPositionY;
-    public int dmDisplayOrientation;
-    public int dmDisplayFixedOutput;
-    public short dmColor;
-    public short dmDuplex;
-    public short dmYResolution;
-    public short dmTTOption;
-    public short dmCollate;
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmFormName;
-    public short dmLogPixels;
-    public int dmBitsPerPel;
-    public int dmPelsWidth;
-    public int dmPelsHeight;
-    public int dmDisplayFlags;
-    public int dmDisplayFrequency;
-    public int dmICMMethod;
-    public int dmICMIntent;
-    public int dmMediaType;
-    public int dmDitherType;
-    public int dmReserved1;
-    public int dmReserved2;
-    public int dmPanningWidth;
-    public int dmPanningHeight;
-  }
-
-  [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-  public static extern bool EnumDisplayDevices(string device, int index, ref DisplayDevice displayDevice, int flags);
-
-  [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-  public static extern bool EnumDisplaySettings(string device, int modeIndex, ref DevMode mode);
-
-  [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-  public static extern int ChangeDisplaySettingsEx(string device, ref DevMode mode, IntPtr window, int flags, IntPtr parameter);
-}
-'@
-
-# Sets the refresh rate of each desktop display on the adapter matching
-# $adapterMatch, keeping its resolution. Without CDS_GLOBAL the mode is saved
-# for the current user only, which needs no admin.
-function Set-PanelRefreshRate([string] $adapterMatch, [int] $refreshHz) {
-  $attachedToDesktop = 0x1
-  $currentSettings = -1
-  $displayFrequencyField = 0x400000
-  $updateRegistry = 0x1
-
-  $displayDevice = [DisplayModes+DisplayDevice]::new()
-  $displayDevice.cb = [Runtime.InteropServices.Marshal]::SizeOf($displayDevice)
-  for ($deviceIndex = 0; [DisplayModes]::EnumDisplayDevices([NullString]::Value, $deviceIndex, [ref] $displayDevice, 0); $deviceIndex++) {
-    if (-not ($displayDevice.StateFlags -band $attachedToDesktop) -or $displayDevice.DeviceString -notlike $adapterMatch) { continue }
-
-    $mode = [DisplayModes+DevMode]::new()
-    $mode.dmSize = [Runtime.InteropServices.Marshal]::SizeOf($mode)
-    if (-not [DisplayModes]::EnumDisplaySettings($displayDevice.DeviceName, $currentSettings, [ref] $mode)) { continue }
-    $previousHz = $mode.dmDisplayFrequency
-    if ($previousHz -eq $refreshHz) { continue }
-
-    $mode.dmDisplayFrequency = $refreshHz
-    $mode.dmFields = $displayFrequencyField
-    $result = [DisplayModes]::ChangeDisplaySettingsEx($displayDevice.DeviceName, [ref] $mode, [IntPtr]::Zero, $updateRegistry, [IntPtr]::Zero)
-    $outcome = if ($result -eq 0) { 'set' } else { "not set (ChangeDisplaySettingsEx returned $result)" }
-    Write-SwitchLog "Panel $($displayDevice.DeviceName): $previousHz Hz -> $refreshHz Hz $outcome."
-  }
-}
-
 $targetGpu = if ($GpuProfile) { $GpuProfile } else { Get-PresentGpuProfile }
 if (-not $targetGpu) {
   Write-SwitchLog 'No GPU in the manifest is present; nothing switched.'
   exit 1
 }
-
-$targetPanelHz = ($manifest.gpus | Where-Object { $_.name -eq $targetGpu }).panelHz
-if ($manifest.panelAdapter -and $targetPanelHz) { Set-PanelRefreshRate $manifest.panelAdapter $targetPanelHz }
 
 $state = if (Test-Path -LiteralPath $statePath) { Get-Content -Raw -LiteralPath $statePath | ConvertFrom-Json -AsHashtable } else { @{} }
 
@@ -217,7 +126,7 @@ foreach ($gameKey in $manifest.games.Keys) {
     continue
   }
   if ($targetProfile.rtssLimit) { Set-RtssLimit $game.exe $targetProfile.rtssLimit }
-  if ($activeGpu -eq $targetGpu -and -not $Reseed) { continue }
+  if (-not $game.settingsFile -or ($activeGpu -eq $targetGpu -and -not $Reseed)) { continue }
 
   $settingsPath = [Environment]::ExpandEnvironmentVariables($game.settingsFile)
   if (-not (Test-Path -LiteralPath $settingsPath)) {

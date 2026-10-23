@@ -1,8 +1,9 @@
 {
   "panelAdapter": "*890M*",
+  "panelHz": 60,
   "gpus": [
-    { "name": "rx-9070-xt", "match": "*RX 9070 XT*", "panelHz": 60 },
-    { "name": "890m", "match": "*890M*", "panelHz": 40 }
+    { "name": "rx-9070-xt", "match": "*RX 9070 XT*" },
+    { "name": "890m", "match": "*890M*" }
   ],
   "games": {
     "enshrouded": {
@@ -37,6 +38,7 @@
         },
         "890m": {
           "rtssLimit": 40,
+          "panelHz": 40,
           "settings": {
             "graphics.forceFullscreenResolution.x": 1920,
             "graphics.forceFullscreenResolution.y": 1200,

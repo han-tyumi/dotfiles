@@ -203,9 +203,9 @@ demanding spots are `Steady` with `P95GpuBusyMs` under ~14 ms; then spend any
 remaining headroom on the next quality setting and recheck.
 
 If 60 can't hold without cutting quality the user cares about, fall back to 40:
-the panel goes to 40 Hz (for a GPU in the per-GPU profiles, its `panelHz`
-in [machine.md](machine.md#per-gpu-profiles); otherwise the user sets it in
-Settings > System > Display > Advanced display), and the game's limiter goes to
+the panel goes to 40 Hz while the game runs (its profile's `panelHz` in the
+per-GPU profiles, see [machine.md](machine.md#per-gpu-profiles); a game not in
+the manifest gets an entry for it), and the game's limiter goes to
 40 with vsync kept on. Captures pick up
 40 Hz on their own; at 40 the targets are `P95GpuBusyMs` under ~21 ms and
 `OnePercentLowFps` of at least ~37. Record which rate the settings were tuned

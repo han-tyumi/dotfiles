@@ -1,13 +1,19 @@
 # gpu-profiles manifest hash: {{ include "dot_config/gpu-profiles/gpu-profiles.json" | sha256sum }}
 # gpu-profiles switcher hash: {{ include "dot_config/gpu-profiles/switch-gpu-profile.ps1" | sha256sum }}
+# gpu-profiles watcher hash: {{ include "dot_config/gpu-profiles/watch-games.ps1" | sha256sum }}
 #
-# Register the logon task that switches games to the settings for the GPU
-# present (see ~/.config/gpu-profiles), then run the switch once. The eGPU can
-# only change while the machine is off, so once per logon is enough. The task
-# runs unelevated as the current user, so this needs no admin. Kept PowerShell
-# 5.1-safe, like the other provisioners.
+# Register the logon tasks for ~/.config/gpu-profiles: GpuProfiles switches games
+# to the settings for the GPU present, and GameWatcher keeps the panel at the
+# refresh rate of the game running, returning it to the default afterwards. The
+# eGPU can only change while the machine is off, so the switch runs once per
+# logon; the watcher runs for the whole session. Both run unelevated as the
+# current user, so this needs no admin. The switch runs once now and the
+# watcher restarts, so a changed manifest or script takes effect without a
+# logon. Kept PowerShell 5.1-safe, like the other provisioners.
 
-$switcher = Join-Path $env:USERPROFILE '.config\gpu-profiles\switch-gpu-profile.ps1'
+$profilesDir = Join-Path $env:USERPROFILE '.config\gpu-profiles'
+$switcher = Join-Path $profilesDir 'switch-gpu-profile.ps1'
+$watcher = Join-Path $profilesDir 'watch-games.ps1'
 $pwshCommand = Get-Command pwsh.exe -ErrorAction SilentlyContinue
 if (-not $pwshCommand) {
   Write-Warning 'pwsh not found; re-run the apply once the winget layer has installed it.'
@@ -16,11 +22,23 @@ if (-not $pwshCommand) {
 $pwsh = $pwshCommand.Source
 
 $userId = "$env:USERDOMAIN\$env:USERNAME"
-$action = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless `"$pwsh`" -NoProfile -File `"$switcher`""
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $userId
 $principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType Interactive -RunLevel Limited
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
-Register-ScheduledTask -TaskName 'GpuProfiles' -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+
+$switchAction = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless `"$pwsh`" -NoProfile -File `"$switcher`""
+$switchSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+Register-ScheduledTask -TaskName 'GpuProfiles' -Action $switchAction -Trigger $trigger -Principal $principal -Settings $switchSettings -Force | Out-Null
 
 & $pwsh -NoProfile -File $switcher
+
+$watchAction = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless `"$pwsh`" -NoProfile -File `"$watcher`""
+$watchSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit ([TimeSpan]::Zero) -MultipleInstances IgnoreNew -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
+
+# Stopping the task ends only its conhost, so end the watcher's pwsh too.
+Stop-ScheduledTask -TaskName 'GameWatcher' -ErrorAction SilentlyContinue
+Get-CimInstance Win32_Process -Filter "Name = 'pwsh.exe' OR Name = 'conhost.exe'" |
+  Where-Object { $_.CommandLine -like '*watch-games.ps1*' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+Register-ScheduledTask -TaskName 'GameWatcher' -Action $watchAction -Trigger $trigger -Principal $principal -Settings $watchSettings -Force | Out-Null
+Start-ScheduledTask -TaskName 'GameWatcher'
 exit 0
