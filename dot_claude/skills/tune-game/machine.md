@@ -105,11 +105,12 @@ plan stop the steering: with them it was 3% in one session and 61-85% of each
 minute in the next. Motion Assistant writes these on every start (at logon, or
 a relaunch from the tray) from the core dropdown on its TDP tab, for the active
 power source only. "All Cores Auto", its default when the profile has no
-`ACCoreSet`, writes 0, 0, 0; none of its options gives Windows' 5, 5, 4. Since
-2026-10-16 the default profile has `ACCoreSet=AllCoresPrefPCore` ("Prefer
-P-Cores"), which writes `SCHEDPOLICY` 2, `SHORTSCHEDPOLICY` 2 and `HETEROPOLICY`
-1 on AC; DC keeps 5, 5, 4. A per-game profile replaces the default, so it needs
-the same dropdown setting. They're hidden settings, so `/query`
+`ACCoreSet`, writes 0, 0, 0; none of its options gives Windows' 5, 5, 4. The
+default profile has "Prefer P-Cores" on both rows (`ACCoreSet` since 2026-10-16,
+`DCCoreSet` since 2026-10-23), which writes `SCHEDPOLICY` 2, `SHORTSCHEDPOLICY`
+2 and `HETEROPOLICY` 1. Clicking a row's Apply writes only the active source's
+values, so DC changes land at the next start on battery. A per-game profile
+replaces the default, so it needs the same dropdown settings. They're hidden settings, so `/query`
 prints nothing for them; read them unelevated with `/qh`:
 
 ```powershell
@@ -118,7 +119,7 @@ powercfg /qh SCHEME_CURRENT SUB_PROCESSOR SHORTSCHEDPOLICY
 powercfg /qh SCHEME_CURRENT SUB_PROCESSOR HETEROPOLICY
 ```
 
-If AC reads 0, 0, 0, the user sets the dropdown back to "Prefer P-Cores" and
+If either source reads 0, 0, 0, the user sets that row's dropdown back to "Prefer P-Cores" and
 clicks that row's Apply, then restarts the game. Running powercfg by hand holds
 only until Motion Assistant's next start (elevated; the same line with 0, 0, 0
 undoes it):
@@ -158,9 +159,10 @@ settings chezmoi already provisions (GameDVR and the driver-update policy in
 
 ## Drivers
 
-- AMD Adrenalin 26.9.2 (driver 32.0.32015.2008) on both GPUs. Windows Update can
-  replace it with an older WHQL package: after a Windows feature update, confirm
-  both adapters still report this version
+- Driver 32.0.32015.7029 (dated 2026-10-17, from Windows Update) on the 890M;
+  it replaced Adrenalin 26.9.2's 32.0.32015.2008. Windows Update delivers drivers
+  here by design, and can also deliver an older WHQL package: after a Windows
+  update, confirm both adapters report the same version
   (`Get-CimInstance Win32_VideoController | Select Name, DriverVersion`).
 - A driver install can bugcheck mid-swap on this machine (2026-10-05: 0x7E in
   `dxgmms2!VIDMM_GLOBAL::InitPagingProcessVaSpace` right after an `amdkmdag.sys`

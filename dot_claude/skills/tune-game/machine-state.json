@@ -77,18 +77,18 @@
   ],
   "absentStartupEntries": ["AMDNoiseSuppression"],
   "powerSettings": [
-    { "subgroup": "SUB_PROCESSOR", "setting": "SCHEDPOLICY", "ac": 2, "dc": 5 },
-    { "subgroup": "SUB_PROCESSOR", "setting": "SHORTSCHEDPOLICY", "ac": 2, "dc": 5 },
-    { "subgroup": "SUB_PROCESSOR", "setting": "HETEROPOLICY", "ac": 1, "dc": 4 },
+    { "subgroup": "SUB_PROCESSOR", "setting": "SCHEDPOLICY", "ac": 2, "dc": 2 },
+    { "subgroup": "SUB_PROCESSOR", "setting": "SHORTSCHEDPOLICY", "ac": 2, "dc": 2 },
+    { "subgroup": "SUB_PROCESSOR", "setting": "HETEROPOLICY", "ac": 1, "dc": 1 },
     { "subgroup": "SUB_PCIEXPRESS", "setting": "ASPM", "ac": 0, "dc": 0 },
     { "subgroup": "SUB_SLEEP", "setting": "STANDBYIDLE", "ac": 1800, "dc": 1800 }
   ],
   "motionAssistant": {
     "profile": "C:\\Program Files\\Motion Assistant\\Profiles\\General\\default.ini",
-    "keys": { "AutoSetTDP": "True", "ACRTSS": "0", "ACCoreSet": "AllCoresPrefPCore" },
+    "keys": { "AutoSetTDP": "True", "ACRTSS": "0", "ACCoreSet": "AllCoresPrefPCore", "DCCoreSet": "AllCoresPrefPCore" },
     "acTdpRange": [28, 35]
   },
   "runningProcesses": ["MotionAssistant", "RTSS"],
   "scheduledTasks": ["MotionAssistant", "RTSS"],
-  "amdDriverVersion": "32.0.32015.2008"
+  "amdDriverVersion": "32.0.32015.7029"
 }

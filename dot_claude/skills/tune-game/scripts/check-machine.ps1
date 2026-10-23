@@ -170,7 +170,7 @@ foreach ($powerSetting in $desiredState.powerSettings) {
   $actual = '{0}/{1}' -f [Convert]::ToInt32($acIndex, 16), [Convert]::ToInt32($dcIndex, 16)
   $expected = '{0}/{1}' -f $powerSetting.ac, $powerSetting.dc
   $note = switch ($powerSetting.subgroup) {
-    'SUB_PROCESSOR' { "Motion Assistant's core dropdown writes it: set Prefer P-Cores and click Apply." }
+    'SUB_PROCESSOR' { "Motion Assistant's core dropdowns write it for the active power source only: set Prefer P-Cores on both rows and click Apply; a DC value lands at its next start on battery." }
     'SUB_SLEEP' { "powercfg /change standby-timeout-ac $($powerSetting.ac / 60) (and -dc); the Claude app keeps the machine awake while a session works." }
     default { 'Needs admin: powercfg /setacvalueindex and /setdcvalueindex.' }
   }
