@@ -59,7 +59,8 @@ Documents
 # .claude applies on Windows too (settings + CLAUDE.md + portable skills); only
 # these Mac-only pieces are skipped: the bash statusline, the agent-browser
 # symlink into /opt/homebrew, and skills whose CLI only the Mac profile provides
-# (the gh stack extension, wt, sandbox-browser, plus its ~/.agents link for Codex).
+# (the gh stack extension, wt, sandbox-browser). The whole ~/.agents tree (skill links and
+# AGENTS.md) is Mac-only; Windows renders the conventions into CLAUDE.md instead.
 .claude/statusline.sh
 .claude/skills/agent-browser
 .claude/skills/gh-stack
