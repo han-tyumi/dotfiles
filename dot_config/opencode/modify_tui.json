@@ -6,7 +6,7 @@
 # which OpenCode reads fine.
 #
 # The theme is Catppuccin Mocha to match Ghostty's `theme = Catppuccin Mocha` and the
-# shared delta/Pi palettes. OpenCode keeps TUI settings here rather than in opencode.json,
+# shared delta palette. OpenCode keeps TUI settings here rather than in opencode.json,
 # whose schema rejects unknown keys.
 import json
 import re

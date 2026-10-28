@@ -67,11 +67,9 @@
       "mise"
       "poppler"
 
-      # Coding-agent harnesses with a formula: the `pi` formula is Raspberry Pi's
-      # C compiler and the npm names (`@earendil-works/pi-coding-agent`,
-      # `@qwen-code/qwen-code`) differ from the CLIs. opencode is the exception —
-      # also a formula, but mise owns it (see dot_config/mise/config.toml.tmpl).
-      "pi-coding-agent"
+      # Coding-agent harnesses with a formula: the npm name (`@qwen-code/qwen-code`)
+      # differs from the CLI. opencode is the exception — also a formula, but mise
+      # owns it (see dot_config/mise/config.toml.tmpl).
       "qwen-code"
       "rtk"
       "zlib"

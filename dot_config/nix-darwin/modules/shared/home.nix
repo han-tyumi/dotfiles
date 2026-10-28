@@ -191,29 +191,6 @@ in
       fi
     '';
 
-    # Pi's default theme, shared because darwin.nix installs Pi on every machine.
-    # Pi rewrites settings.json itself, so a symlink would be dropped on its first
-    # write — jq-merge instead (only `theme` is set here; Pi's own keys and a layer's
-    # provider/model all survive). It runs after the work overlay's workPiSettings,
-    # so the shared (personal) theme wins that one's keys on every switch — a work
-    # overlay rebuild can't clobber it. On machines without the work overlay this is
-    # the only settings.json writer, and the unresolvable name is a no-op edge.
-    activation.sharedPiTheme = lib.hm.dag.entryAfter [ "workPiSettings" ] ''
-      themeJson="${./pi-theme-mocha.json}"
-      liveSettings="${config.home.homeDirectory}/.pi/agent/settings.json"
-      if [ -f "$themeJson" ]; then
-        mkdir -p "$(dirname "$liveSettings")"
-        [ -s "$liveSettings" ] || printf '{}' > "$liveSettings"
-        if ${pkgs.jq}/bin/jq -s --arg t catppuccin-mocha '.[0] * .[1] | .theme = $t' \
-            "$liveSettings" "$themeJson" > "$liveSettings.new"; then
-          mv "$liveSettings.new" "$liveSettings"
-        else
-          rm -f "$liveSettings.new"
-          echo "sharedPiTheme: $liveSettings is not valid JSON, left unchanged" >&2
-        fi
-      fi
-    '';
-
     enableNixpkgsReleaseCheck = false;
 
     # home-manager renders shellAliases into config.nu, which nushell parses before
@@ -239,11 +216,17 @@ in
       "$HOME/.local/bin"
     ];
 
-    # Catppuccin Mocha palette. Pi ships only dark/light themes but auto-discovers
-    # user themes from <agent-dir>/themes/*.json, so this one file makes it selectable
-    # (sharedPiTheme names it in settings.json). Read-only for Pi — it writes
-    # settings.json, never a theme file — so a plain store symlink.
-    file.".pi/agent/themes/catppuccin-mocha.json".source = ./pi-theme-mocha.json;
+    # ~/.agents/AGENTS.md is rendered by chezmoi (shared conventions plus each layer's
+    # agents.md.tmpl). OMP and Claude Code read it from there (Claude through an @ import
+    # in ~/.claude/CLAUDE.md); Codex, OpenCode and Qwen Code each read one fixed global
+    # path of their own, so those are links to it. Out of store so the chezmoi-rendered
+    # file is what each harness sees.
+    file.".codex/AGENTS.md".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.agents/AGENTS.md";
+    file.".qwen/AGENTS.md".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.agents/AGENTS.md";
+    file.".config/opencode/AGENTS.md".source =
+      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.agents/AGENTS.md";
 
     # mise's shims and ~/.local/bin (the nu CLIs — apploi, wt, onboard) have to
     # reach shells that read no rc file: a GUI orchestrator (Orca) is a

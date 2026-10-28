@@ -18,6 +18,8 @@ docs/**
 # .chezmoitemplates/claude-settings.json; they are never targets themselves.
 .config/nix-darwin/modules/*/claude-settings.json
 .config/nix-darwin/modules/*/claude-permissions.json
+# Likewise the in-repo layers' AGENTS.md fragments, spliced into ~/.agents/AGENTS.md.
+.config/nix-darwin/modules/*/agents.md
 {{ if ne .chezmoi.os "windows" -}}
 # Windows-only targets — skipped on macOS/Linux.
 AppData

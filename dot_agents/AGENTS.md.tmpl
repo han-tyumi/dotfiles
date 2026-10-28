@@ -1,0 +1,24 @@
+{{- /* The one user-level instructions file every coding agent reads: OMP loads it from
+       here, and Codex, OpenCode and Qwen Code each link their own global path to it
+       (Claude Code imports it from ~/.claude/CLAUDE.md). None of those can include
+       another file, so layer-specific rules are spliced in here at apply time.
+
+       The shared conventions come first, then each layer's agents.md.tmpl. In-repo
+       layers are read from the source tree and overlays from their clones, as for the
+       Claude Code settings fragments. */ -}}
+{{- $sections := list (includeTemplate "agent-conventions.md" . | trim) -}}
+{{- $layerDirs := list -}}
+{{- range $layer := .layerList -}}
+{{-   $layerDirs = append $layerDirs (joinPath $.chezmoi.sourceDir "dot_config/nix-darwin/modules" $layer) -}}
+{{- end -}}
+{{- range $layer := .layerList -}}
+{{-   $layerDirs = append $layerDirs (joinPath $.chezmoi.homeDir ".config/nix-darwin/overlays" $layer) -}}
+{{- end -}}
+{{- range $layerDir := $layerDirs -}}
+{{-   $fragment := joinPath $layerDir "agents.md.tmpl" -}}
+{{-   if stat $fragment -}}
+{{-     $rendered := output "chezmoi" "execute-template" (include $fragment) | trim -}}
+{{-     if $rendered -}}{{- $sections = append $sections $rendered -}}{{- end -}}
+{{-   end -}}
+{{- end -}}
+{{ join "\n\n" $sections }}

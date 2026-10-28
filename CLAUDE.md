@@ -29,10 +29,21 @@ Configuration is composed from **layers**, selected per machine by chezmoi data:
   chezmoi data and cloned by a chezmoi external next to the flake. Their
   `darwin.nix`/`home.nix` are imported when the layer is enabled, and chezmoi
   templates splice optional fragments from them (e.g. `claude-permissions.json.tmpl`
-  into the Claude Code allow list). Home Manager symlinks an overlay's `skills/` into
+  into the Claude Code allow list, `agents.md.tmpl` into `~/.agents/AGENTS.md`). Home
+  Manager symlinks an overlay's `skills/` into both `~/.agents/skills/` and
   `~/.claude/skills/` via `mkOutOfStoreSymlink`, so the clone stays the live,
   editable copy. Shared skills differ: they are chezmoi-managed copies under
   `dot_claude/skills/`, so you edit the source and `chezmoi apply`.
+
+**Agent instructions** are written once, for every harness. `dot_agents/AGENTS.md.tmpl`
+renders `~/.agents/AGENTS.md` from `.chezmoitemplates/agent-conventions.md` plus each
+layer's `agents.md.tmpl` fragment (in-repo `modules/<name>/` first, then overlays). OMP
+reads that path itself; Codex, OpenCode and Qwen Code read one fixed global path each, which
+`modules/shared/home.nix` links to it; Claude Code gets it through an `@` import in
+`dot_claude/CLAUDE.md.tmpl` (Claude is the second-class citizen here: the template also
+carries the RTK import). Windows does not apply `~/.agents`, so there `CLAUDE.md` renders
+the conventions inline. Put a rule in `agent-conventions.md` if it applies everywhere and in
+a layer's fragment if it does not; never edit the rendered files.
 
 A layer may exist in-repo, as an overlay, or both; any combination of layers works.
 Selection flows from chezmoi data into the flake through the generated `machine.nix`:
@@ -438,8 +449,8 @@ pins `AGENT_BROWSER_SOCKET_DIR` to `~/.cache/sandbox-browser` (kept apart from
 client) and derives the session from the worktree (`agent-browser session id --scope
 worktree`), so each workspace gets its own browser. The `sandbox-browser` skill is a
 chezmoi copy under `dot_claude/skills/`; `dot_agents/skills/` links it into
-`~/.agents/skills`, the directory Codex reads (Claude Code and OpenCode read
-`~/.claude/skills`). All three are macOS-only. The unsandboxed browser is a hole in
+`~/.agents/skills`, the directory Codex, OMP, OpenCode and Qwen Code read (Claude Code
+and OpenCode read `~/.claude/skills`). All three are macOS-only. The unsandboxed browser is a hole in
 the sandbox by construction: left alone it reads `file://` URLs and writes
 screenshots and downloads anywhere the user can. `start` therefore requires
 `--allowed-domains` (or an explicit `--unrestricted`), so the approver sees the scope,
