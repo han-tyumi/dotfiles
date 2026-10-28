@@ -135,8 +135,10 @@ in
         # A machine with no recorded telemetry consent gets an interactive prompt,
         # and activation has no one to answer it: rtk skips the prompt when stdin
         # is not a terminal.
-        run rtk init --global --no-patch < /dev/null \
-          || echo "rtk init failed; re-run 'rtk init --global --no-patch' by hand" >&2
+        # --opencode also installs RTK's OpenCode plugin (a single file in the
+        # plugins directory, beside Orca's status plugin).
+        run rtk init --global --opencode --no-patch < /dev/null \
+          || echo "rtk init failed; re-run 'rtk init --global --opencode --no-patch' by hand" >&2
 
         # Buffer rtk's output first so `grep -q`'s early exit can't SIGPIPE rtk
         # under pipefail. Drift warns rather than fails: a stale hook is a source
