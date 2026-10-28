@@ -35,6 +35,12 @@ Configuration is composed from **layers**, selected per machine by chezmoi data:
   editable copy. Shared skills differ: they are chezmoi-managed copies under
   `dot_claude/skills/`, so you edit the source and `chezmoi apply`.
 
+**Shared skills** are real copies under `dot_claude/skills/` (Windows applies `.claude` but
+not `.agents`), and `dot_agents/skills/` holds one `symlink_<name>.tmpl` per skill pointing
+back at `~/.claude/skills/<name>`, gated like the skill itself (a layer's `.ignore` file lists
+both paths). OMP, Codex, OpenCode and Qwen Code read `~/.agents/skills`; Claude Code reads
+`~/.claude/skills`. A new shared skill needs both entries.
+
 **Agent instructions** are written once, for every harness. `dot_agents/AGENTS.md.tmpl`
 renders `~/.agents/AGENTS.md` from `.chezmoitemplates/agent-conventions.md` plus each
 layer's `agents.md.tmpl` fragment (in-repo `modules/<name>/` first, then overlays). OMP

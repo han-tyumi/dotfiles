@@ -275,6 +275,11 @@
     # 1.18 knob is this env var — there is no config key for it.
     variables.OPENCODE_DISABLE_MODELS_FETCH = "1";
 
+    # OpenCode reads both ~/.claude/skills and ~/.agents/skills, and every skill is
+    # linked into both, so each one logs a duplicate-name warning at startup. The
+    # .agents copy is the one every other harness reads, so skip the .claude one.
+    variables.OPENCODE_DISABLE_CLAUDE_CODE_SKILLS = "1";
+
     etc = {
       "sudoers.d/nix-darwin".text = ''
         Defaults timestamp_timeout=360
