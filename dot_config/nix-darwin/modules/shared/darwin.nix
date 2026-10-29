@@ -85,6 +85,11 @@
       # Blocks keyboard + Touch Bar input (trackpad stays live) so the laptop
       # can be wiped down without stray keystrokes; quit the app to re-enable.
       "keyboardcleantool"
+
+      # Daemon-first orchestration control plane for coding agents: desktop,
+      # mobile, web, and CLI clients over one daemon; provider CLIs are
+      # bring-your-own. The work overlay enables its omp provider.
+      "paseo"
       "postgres-app"
       "raycast"
 
