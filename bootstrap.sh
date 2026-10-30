@@ -38,7 +38,7 @@ fi
 if [ -n "${DOTFILES_SSH_KEYS+set}" ]; then
   ssh_keys="$DOTFILES_SSH_KEYS"
 else
-  prompt ">> SSH identity keys to generate (space-separated, e.g. 'git_han-tyumi git_chmmpagne'; empty to skip): " ssh_keys
+  prompt ">> SSH identity keys to generate (space-separated, e.g. 'git_han-tyumi git_work'; empty to skip): " ssh_keys
 fi
 mkdir -p "$HOME/.ssh"
 chmod 700 "$HOME/.ssh"
