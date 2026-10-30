@@ -1,7 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to coding agents (OMP, Claude Code, Codex, OpenCode,
-Qwen Code) when working with code in this repository.
+This file provides guidance to coding agents working in this repository.
 
 ## Repository Overview
 
@@ -47,8 +46,8 @@ renders `~/.agents/AGENTS.md` from `.chezmoitemplates/agent-conventions.md` plus
 layer's `agents.md.tmpl` fragment (in-repo `modules/<name>/` first, then overlays). OMP
 reads that path itself; Codex, OpenCode and Qwen Code read one fixed global path each, which
 `modules/shared/home.nix` links to it; Claude Code gets it through an `@` import in
-`dot_claude/CLAUDE.md.tmpl` (that user-level memory file is still `CLAUDE.md`, hence
-the import; the template also carries the RTK import). Windows does not apply
+`dot_claude/CLAUDE.md.tmpl` (the destination file is still `~/.claude/CLAUDE.md`,
+hence the import; the template also carries the RTK import). Windows does not apply
 `~/.agents`, so there `CLAUDE.md` renders
 the conventions inline. Put a rule in `agent-conventions.md` if it applies everywhere and in
 a layer's fragment if it does not; never edit the rendered files.
