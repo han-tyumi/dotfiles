@@ -33,9 +33,8 @@ measurement, not by benchmarks or list price.
 ## Process
 
 - Keep a dated evidence log (one section per eval: date, harness, sample,
-  verdict). On a work machine this lives in the private overlay
-  (`work-model-eval.md` in the `work` layer) because it cites internal
-  tickets, gateways, and spend.
+  verdict). On a work machine it lives inside that machine's private overlay —
+  not published here — because it cites internal tickets, gateways, and spend.
 - When pruning the picker, check every consumer first: roles, presets,
   fallback chains, and any per-model thresholds are all coupled — remove them
   in the same commit.

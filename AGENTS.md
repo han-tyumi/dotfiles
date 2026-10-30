@@ -528,6 +528,10 @@ Neovim config is managed as an external git submodule (`dot_config/external_nvim
 
 ## Important Notes
 
+- Coding-agent model pickers are evidence-based, not benchmark-based: the
+  methodology (measured cost per solve, caching dominance, keep-one-row-per-lane)
+  is in `docs/model-selection.md`; the measurements themselves live in each
+  machine's private overlay, never here
 - The flake's machine attr is generated per host from `scutil --get LocalHostName`
   (via `machine.nix`), so `darwin-rebuild switch --flake ~/.config/nix-darwin` needs
   no explicit attribute
