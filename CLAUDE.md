@@ -98,6 +98,33 @@ Caveats:
   (the flake just builds without the layer until the clone lands); each overlay
   repo's README documents its exact clone command.
 
+### Where a change goes
+
+When adding or moving config, decide its owner in this order:
+
+1. **Work-account data, internal tooling, secrets** → the overlay's clone, not
+   this repo. This repo only wires generic machinery (the external clone, the
+   fragment splices, `machine.nix`'s layer list) — never an overlay's URL,
+   hostnames, or target names.
+2. **Hobby/personal-machine things** (games, the personal git identity, V/Roc,
+   Steam) → an in-repo layer: `modules/<name>/`, `.chezmoiscripts/<name>/`, a
+   `conf.d/<name>.toml` fragment, gated by `.chezmoilayers/<name>.ignore`.
+3. **Every machine, Windows included** → `modules/shared/` and the shared
+   targets — provided the target is Windows-safe; anything the `.chezmoiignore`
+   Windows block skips is Mac-profile work.
+4. **Unsure between shared and a layer** → put the *mechanism* in shared and
+   the *content* in the layer: Nix options claimed with `lib.mkIf` on
+   `machine.layers` membership, chezmoi templates that splice per-layer
+   fragments (`claude-*.json.tmpl`, `agents.md.tmpl`), mise `conf.d` fragments.
+   A layer then adds content without shared ever naming it, and demoting
+   shared→layer later is just moving the fragment.
+
+Ask chezmoi for the selection instead of trusting memory: `chezmoi data`
+(`layerList`, `enabledOverlays`). An overlay clone carries its own README and
+`agents.md.tmpl`, so an agent started inside one has the map back to this
+checkout; an agent started here finds the clones under
+`~/.config/nix-darwin/overlays/`.
+
 ### Configuration Hierarchy
 
 1. **Chezmoi Layer** (root level): Manages all dotfiles with templating support
