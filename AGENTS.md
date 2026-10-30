@@ -1,6 +1,7 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents (OMP, Claude Code, Codex, OpenCode,
+Qwen Code) when working with code in this repository.
 
 ## Repository Overview
 
@@ -120,8 +121,8 @@ When adding or moving config, decide its owner in this order:
    shared→layer later is just moving the fragment.
 
 Ask chezmoi for the selection instead of trusting memory: `chezmoi data`
-(`layerList`, `enabledOverlays`). An overlay clone carries its own README and
-`agents.md.tmpl`, so an agent started inside one has the map back to this
+(`layerList`, `enabledOverlays`). An overlay clone carries its own `AGENTS.md`
+and README, so an agent started inside one has the map back to this
 checkout; an agent started here finds the clones under
 `~/.config/nix-darwin/overlays/`.
 

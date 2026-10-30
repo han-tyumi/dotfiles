@@ -1,6 +1,6 @@
 <!--
   Windows Sandbox harness to smoke-test the Windows bootstrap — the counterpart to
-  the Mac tart recipe in CLAUDE.md. Enable Windows Sandbox first (Windows Features
+  the Mac tart recipe in AGENTS.md. Enable Windows Sandbox first (Windows Features
   -> "Windows Sandbox"), then double-click this file to get a throwaway VM with
   this checkout mapped read-only at C:\dotfiles.
 

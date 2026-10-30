@@ -23,7 +23,7 @@ irm https://raw.githubusercontent.com/han-tyumi/dotfiles/main/bootstrap.ps1 | ie
 
 Installs Git + chezmoi via winget, then `chezmoi init --apply` — which imports the winget
 package set and installs mise runtimes. The Nix/Homebrew tree is skipped on
-Windows; `apploi` (or `apploi -u`) syncs afterward. See [CLAUDE.md](CLAUDE.md#bootstrap-on-windows).
+Windows; `apploi` (or `apploi -u`) syncs afterward. See [AGENTS.md](AGENTS.md#bootstrap-on-windows).
 
 ## How it's organized
 
@@ -31,5 +31,5 @@ Configuration is composed from **layers** chosen per machine: an always-on `shar
 in-repo layers such as `personal`, and private `overlays` cloned per machine. A layer can
 contribute system config (`darwin.nix`), user config (`home.nix`), or both.
 
-See **[CLAUDE.md](CLAUDE.md)** for the full architecture, the layer model, common commands,
+See **[AGENTS.md](AGENTS.md)** for the full architecture, the layer model, common commands,
 and the conventions this repo follows.
