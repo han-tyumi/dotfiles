@@ -33,3 +33,6 @@ contribute system config (`darwin.nix`), user config (`home.nix`), or both.
 
 See **[AGENTS.md](AGENTS.md)** for the full architecture, the layer model, common commands,
 and the conventions this repo follows.
+
+For how the coding-agent model lists stay small and evidence-based, see
+**[docs/model-selection.md](docs/model-selection.md)**.
