@@ -3,6 +3,7 @@ README.md
 bootstrap.sh
 bootstrap.ps1
 windows-sandbox.wsb
+paseo.json
 docs/**
 # Reserved DOS device names. A tool running `> NUL` (or `2> NUL`, `*> NUL`) in any
 # source dir under a POSIX shell writes a literal file by that name instead of

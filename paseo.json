@@ -1,0 +1,13 @@
+{
+  "metadataGeneration": {
+    "branchName": {
+      "instructions": "Solo-contributor repo: the default is committing straight to `main`, no PR ceremony. Branch only for large or risky work; name it after the change's scope (e.g. bump-nixpkgs, agents-restructure) and land it on `main`."
+    },
+    "commitMessage": {
+      "instructions": "`<area>: <imperative summary>` — e.g. \"bootstrap.sh: use a generic example key name in the SSH prompt\". Plain sentences, not Conventional Commits; no feat:/fix: prefixes or parenthesized scopes."
+    },
+    "pullRequest": {
+      "instructions": "This repo does not use pull requests; changes land directly on `main`. If a description is ever needed, keep it to one paragraph: what changed and why."
+    }
+  }
+}
