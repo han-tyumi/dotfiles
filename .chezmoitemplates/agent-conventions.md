@@ -28,3 +28,37 @@
 - `.scratch/` is for transient files that stay close to me and to the directory we're working in — notes, logs, throwaway analysis, intermediate output. It's gitignored globally (`~/.config/git/ignore`), so it's local-only and never committed or shared. Create it in the directory we're actually working in, not a global location. Don't put durable or shared artifacts there; if something needs to outlive the session or reach teammates, commit it somewhere tracked instead.
 - For mise, always use `mise outdated --bump` (or `-l`) to check for tool upgrades. Default `mise outdated` only reports updates *within* the configured version constraint, which means exact pins (e.g. `rclone 1.73.3`) always appear up to date even when newer versions exist.
 - Don't prefix shell commands with `mise exec --`. mise installs shims on `PATH`, so `pnpm`, `node`, etc. resolve directly to the version pinned in `.tool-versions` / `mise.toml`. Using `mise exec` is redundant noise.
+
+## Agent attribution
+
+Agent-assisted work carries one trailer, copied from Apache magpie's convention:
+
+    Assisted-by: <agent>:<model>
+
+Use it where the commit survives to `main`: direct-push repos. In squash-merged
+repos the trailer dies on the branch, so put the same line in the PR description
+instead — that becomes the squash commit body.
+
+A review, comment or issue body an agent wrote ends with the same line behind
+a 🤖.
+
+It labels the tool; it does not attest authorship, and nothing verifies it. The
+commit still authors as the person accountable for the change, and
+`Co-authored-by:` stays reserved for a human co-author. Recommending it is the
+whole of the requirement — an agent that omits it is not blocked.
+
+An agent never submits an `APPROVE` review: a ruleset counts an approval the
+moment it lands, and a later comment cannot undo it.
+
+Never write to a remote under an identity you have not confirmed. One call per
+session, before the first write:
+
+    gh api user --jq .login
+
+If that is not the account you expect — a bot session that should be acting as
+`some-agent[bot]`, or a personal session that should not — stop and report it
+instead of writing. The failure it catches is a missing token: `gh` then uses
+whatever credentials are stored and exits successfully, so the write lands as
+that account with nothing in the output to say the token was never used. An
+expired or malformed token fails on its own with a 401.
+
