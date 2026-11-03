@@ -21,9 +21,15 @@ case "${1:-}" in
     ;;
 esac
 
+# An explicit token in the environment is the caller's choice — agent sessions
+# and CI set one to act as a bot or service account. Never replace it.
+if [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}${GH_ENTERPRISE_TOKEN:-}${GITHUB_ENTERPRISE_TOKEN:-}" ]; then
+  exec "$real_gh" "$@"
+fi
+
 want="$(git config --get github.user 2>/dev/null || true)"
 if [ -n "$want" ]; then
-  token="$(GH_TOKEN= "$real_gh" auth token --user "$want" 2>/dev/null || true)"
+  token="$(GH_TOKEN= GITHUB_TOKEN= "$real_gh" auth token --user "$want" 2>/dev/null || true)"
   if [ -n "$token" ]; then
     GH_TOKEN="$token" exec "$real_gh" "$@"
   fi
