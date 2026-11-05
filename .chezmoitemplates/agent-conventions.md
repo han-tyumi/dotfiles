@@ -40,13 +40,17 @@ Put it on the commit where that commit survives to `main`. In squash-merged
 repos the branch commit is discarded, so put it in the PR description instead —
 that becomes the squash commit body.
 
-On a review, comment or issue body it is the last line, behind a 🤖.
+On a review, comment or issue body it is the last line, behind a 🤖, followed by
+the harness and model that wrote it:
 
-The trailer is required, not a suggestion, and no tool enforces it: nothing
-rejects a commit or a comment that omits it, so the agent is the only thing
-standing between a write and an unmarked one. Add it as you write, not when
-reminded — an edit to add it afterwards leaves the unmarked version in the
-mail notifications and in anyone who read it first.
+    🤖 Assisted-by: omp:deepseek-v4.1-flash
+
+The trailer is required, not a suggestion. Where a harness can check the write
+it may refuse one that omits the line, but that safety net exists in some
+harnesses and not others, so the agent is what stands between a write and an
+unmarked one. Add it as you write, not when reminded — an edit to add it
+afterwards leaves the unmarked version in the mail notifications and in anyone
+who read it first.
 
 It labels the tool; it does not attest authorship. The commit still authors as
 the person accountable for the change, and `Co-authored-by:` stays reserved for
