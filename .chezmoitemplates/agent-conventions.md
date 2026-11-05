@@ -45,12 +45,13 @@ the harness and model that wrote it:
 
     🤖 Assisted-by: omp:deepseek-v4.1-flash
 
-The trailer is required, not a suggestion. Where a harness can check the write
-it may refuse one that omits the line, but that safety net exists in some
-harnesses and not others, so the agent is what stands between a write and an
-unmarked one. Add it as you write, not when reminded — an edit to add it
-afterwards leaves the unmarked version in the mail notifications and in anyone
-who read it first.
+The trailer is required, not a suggestion, and a harness may handle it for you:
+an agent commit is stamped by git's `prepare-commit-msg` hook wherever the
+repository is scoped for it, while a review, comment or issue body is refused
+outright by a harness that checks it. Neither check reaches every harness, so
+write the line as you go rather than relying on one. An edit added afterwards
+leaves the unmarked version in the mail notifications and in anyone who read it
+first.
 
 It labels the tool; it does not attest authorship. The commit still authors as
 the person accountable for the change, and `Co-authored-by:` stays reserved for
