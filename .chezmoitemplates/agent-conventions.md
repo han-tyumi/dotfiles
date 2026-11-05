@@ -31,27 +31,32 @@
 
 ## Agent attribution
 
-Every commit, PR body, review, comment and issue body the agent writes carries
-one trailer, copied from Apache magpie's convention:
+Agent-assisted work is marked so a reader can tell the tool from the person. The
+marker is one trailer, copied from Apache magpie's convention:
 
     Assisted-by: <agent>:<model>
 
-Put it on the commit where that commit survives to `main`. In squash-merged
-repos the branch commit is discarded, so put it in the PR description instead —
-that becomes the squash commit body.
+**Commits are stamped for you.** `git` runs a `prepare-commit-msg` hook that
+appends the line wherever the repository is scoped for it, so an agent authoring
+a commit message does not add it and must not duplicate it. That hook sees the
+message however it was supplied, including `-F`, `--amend --no-edit` and an
+editor.
 
-On a review, comment or issue body it is the last line, behind a 🤖, followed by
-the harness and model that wrote it:
+**Bodies are yours to write.** A PR description, review, comment or issue body
+carries the same line as its last line, behind a 🤖, followed by the harness and
+model:
 
     🤖 Assisted-by: omp:deepseek-v4.1-flash
 
-The trailer is required, not a suggestion, and a harness may handle it for you:
-an agent commit is stamped by git's `prepare-commit-msg` hook wherever the
-repository is scoped for it, while a review, comment or issue body is refused
-outright by a harness that checks it. Neither check reaches every harness, so
-write the line as you go rather than relying on one. An edit added afterwards
+A harness that checks bodies refuses one that omits the line, and none of those
+checks reaches every harness. Write it as you go: an edit added afterwards
 leaves the unmarked version in the mail notifications and in anyone who read it
 first.
+
+In a squash-merged repo the branch commit is discarded, so the PR description
+carries the record — it becomes the squash commit body. That is the one place a
+commit trailer cannot survive, which is why the description states it
+explicitly.
 
 It labels the tool; it does not attest authorship. The commit still authors as
 the person accountable for the change, and `Co-authored-by:` stays reserved for
