@@ -80,6 +80,9 @@
       "bitwarden"
       "docker-desktop"
       "ghostty"
+
+      # Minimal Chromium for DevTools and as a backup to Safari.
+      "helium-browser"
       "keepingyouawake"
 
       # Blocks keyboard + Touch Bar input (trackpad stays live) so the laptop
@@ -103,7 +106,6 @@
       # anywhere, without exposing anything to the public internet.
       "tailscale-app"
       "the-unarchiver"
-      "vivaldi"
       "zed"
     ];
     onActivation = {
