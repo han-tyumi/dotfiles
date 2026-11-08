@@ -114,9 +114,10 @@ in
     # daemon's Chrome for Testing build is fetched here rather than on a later
     # apply. The download is idempotent (skipped when already present) and
     # non-fatal so a flaky network can't block activation; the brew's node
-    # dependency also resolves from /opt/homebrew/bin.
+    # dependency also resolves from /opt/homebrew/bin, and its OS check runs
+    # sw_vers from /usr/bin.
     activation.agentBrowserChrome = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      export PATH="/opt/homebrew/bin:$PATH"
+      export PATH="/opt/homebrew/bin:$PATH:/usr/bin"
       if command -v agent-browser > /dev/null; then
         run agent-browser install \
           || echo "agent-browser install failed; run it manually to fetch Chrome for Testing" >&2
