@@ -366,7 +366,7 @@ provisioned with **winget** and **mise** instead of Nix.
   key). `.claude`
   applies on Windows too — settings.json (with the rtk hook, unix statusline, and
   `/tmp` gated to macOS), the global CLAUDE.md, the portable `create-skill` skill,
-  (with the `personal` layer on) the `steam` skill, and (with the `gpd-win-max-2`
+  (with the `personal` layer on) the `steam` and `character` skills, and (with the `gpd-win-max-2`
   layer on) the `tune-game` skill;
   the bash statusline, the agent-browser symlink, and the skills whose CLI only the
   Mac profile provides (the `gh stack` extension, `wt`) stay Mac-only via

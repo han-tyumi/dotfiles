@@ -7,5 +7,7 @@ v
 .config/windows/games.json
 .claude/skills/steam
 .agents/skills/steam
+.claude/skills/character
+.agents/skills/character
 .config/windows/steam-shortcuts.ps1
 50-clone-hero-launcher.ps1
