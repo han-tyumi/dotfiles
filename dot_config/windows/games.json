@@ -21,9 +21,9 @@
   "games": {
     "wow-forever": {
       "launcher": "battlenet",
-      "id": "wow_classic_beta",
+      "id": "wowf",
       "productMatch": "Forever",
-      "process": "WowB",
+      "process": "Wow",
       "steam": {
         "name": "World of Warcraft: Forever",
         "steamGridDb": 5246530,

@@ -309,7 +309,7 @@ pass.
 |---|---|---|---|
 | WoW retail | `wow` | `Wow` | version |
 | WoW Classic Era | `wow_classic_era` | `WowClassic` | version |
-| WoW Forever beta | `wow_classic_beta` | `WowB` | version |
+| WoW Forever | `wowf` | `Wow` | version |
 | Overwatch 2 | `pro` | `Overwatch` | none |
 | Diablo IV | `fenris` | `Diablo IV` | none |
 | Diablo II: Resurrected | `osi` | `D2R` | none |
@@ -329,12 +329,14 @@ handoff is invisible — point `process` at the final binary.
   `content-ui.battle.net` and appear in no installed file, so they can change with no
   client update. That is why they sit in `games.json` — a break is a config edit, not
   a code change.
-- **Executable names are shared.** `WowClassic.exe` covers four WoW products and
-  `WowB.exe` two, so the process name alone cannot tell flavors apart when several are
-  installed.
+- **Executable names are shared.** `WowClassic.exe` covers four WoW products, `WowB.exe`
+  two, and `Wow.exe` both retail and Forever, so the process name alone cannot tell
+  flavors apart when several are installed.
 - **Call of Duty is a poor fit**: `cod.exe` is a shared shell across several titles.
-- **A uid can expire.** `wow_classic_beta` belongs to the Forever beta, which ends
-  2026-10-21; re-read the uid after the 2026-11-04 release.
+- **A uid can expire.** A beta has its own uid, executable and flavor folder, none of
+  which carry over to the release. The symptom is a shortcut that opens the client and
+  stops with `wrong-product` in the log; re-read the uid and the executable name off the
+  machine.
 
 ### Shortcuts do not travel
 
