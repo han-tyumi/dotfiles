@@ -6,6 +6,13 @@
 .local/bin/sandbox-browser
 .claude/skills/sandbox-browser
 .agents/skills/sandbox-browser
+.agents/skills/agent-browser
+.agents/skills/character
+.agents/skills/create-skill
+.agents/skills/gh-stack
+.agents/skills/git-worktree
+.agents/skills/steam
+.agents/skills/tune-game
 # The deny-destructive guard was retired 2026-09-30; drop the applied copy everywhere.
 .claude/hooks/deny-destructive.py
 # Conductor was retired 2026-10 for Orca; drop its managed settings everywhere.

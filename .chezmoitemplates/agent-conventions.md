@@ -46,7 +46,7 @@ editor.
 carries the same line as its last line, behind a 🤖, followed by the harness and
 model:
 
-    🤖 Assisted-by: omp:deepseek-v4.1-flash
+    🤖 Assisted-by: claude-code:claude-opus-5-5
 
 A harness that checks bodies refuses one that omits the line, and none of those
 checks reaches every harness. Write it as you go: an edit added afterwards

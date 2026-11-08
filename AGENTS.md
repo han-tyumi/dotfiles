@@ -35,16 +35,13 @@ Configuration is composed from **layers**, selected per machine by chezmoi data:
   editable copy. Shared skills differ: they are chezmoi-managed copies under
   `dot_claude/skills/`, so you edit the source and `chezmoi apply`.
 
-**Shared skills** are real copies under `dot_claude/skills/` (Windows applies `.claude` but
-not `.agents`), and `dot_agents/skills/` holds one `symlink_<name>.tmpl` per skill pointing
-back at `~/.claude/skills/<name>`, gated like the skill itself (a layer's `.ignore` file lists
-both paths). OMP reads `~/.agents/skills`; Claude Code reads
-`~/.claude/skills`. A new shared skill needs both entries.
+**Shared skills** are real copies under `dot_claude/skills/`, which Claude Code reads as
+`~/.claude/skills`; a layer's `.ignore` file lists the ones it owns.
 
-**Agent instructions** are written once, for every harness. `dot_agents/AGENTS.md.tmpl`
+**Agent instructions** are written once. `dot_agents/AGENTS.md.tmpl`
 renders `~/.agents/AGENTS.md` from `.chezmoitemplates/agent-conventions.md` plus each
-layer's `agents.md.tmpl` fragment (in-repo `modules/<name>/` first, then overlays). OMP
-reads that path itself; Claude Code gets it through an `@` import in
+layer's `agents.md.tmpl` fragment (in-repo `modules/<name>/` first, then overlays).
+Claude Code gets it through an `@` import in
 `dot_claude/CLAUDE.md.tmpl` (the destination file is still `~/.claude/CLAUDE.md`,
 hence the import; the template also carries the RTK import). Windows does not apply
 `~/.agents`, so there `CLAUDE.md` renders
@@ -505,10 +502,6 @@ Neovim config is managed as an external git submodule (`dot_config/external_nvim
 
 ## Important Notes
 
-- Coding-agent model pickers are evidence-based, not benchmark-based: the
-  methodology (measured cost per solve, caching dominance, keep-one-row-per-lane)
-  is in `docs/model-selection.md`; the measurements themselves live in each
-  machine's private overlay, never here
 - The flake's machine attr is generated per host from `scutil --get LocalHostName`
   (via `machine.nix`), so `darwin-rebuild switch --flake ~/.config/nix-darwin` needs
   no explicit attribute

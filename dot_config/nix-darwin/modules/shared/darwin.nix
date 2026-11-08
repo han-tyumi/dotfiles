@@ -86,7 +86,7 @@
 
       # Daemon-first orchestration control plane for coding agents: desktop,
       # mobile, web, and CLI clients over one daemon; provider CLIs are
-      # bring-your-own. The work overlay enables its omp provider.
+      # bring-your-own.
       "paseo"
       "postgres-app"
 
