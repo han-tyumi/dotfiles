@@ -128,7 +128,12 @@ export def main [
     # `brew bundle` only upgrades declared formulae; their dependencies go stale without this.
     # --no-ask skips Homebrew's confirmation prompt so the unattended run doesn't block.
     step "\nUpgrading Homebrew dependency formulae\n\n"
-    ^brew upgrade --formula --no-ask
+    HOMEBREW_NO_INSTALL_CLEANUP=1 ^brew upgrade --formula --no-ask
+
+    # Homebrew's automatic cleanup is disabled above and during activation, so
+    # it runs here under its own heading instead of as a silent pause mid-bundle.
+    step "\nCleaning up Homebrew\n\n"
+    ^brew cleanup
   }
 
   if $clean {

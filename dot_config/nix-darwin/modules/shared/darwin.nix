@@ -120,6 +120,9 @@
       # Every activation reprints brew's "hide these hints" advice otherwise.
       # The sudo/launchctl domain warning stays: it reports real behavior.
       extraEnv.HOMEBREW_NO_ENV_HINTS = "1";
+
+      # apploi runs `brew cleanup` as its own labeled step after activation.
+      extraEnv.HOMEBREW_NO_INSTALL_CLEANUP = "1";
     };
 
     # An unsigned mas hangs activation waiting on the sign-in dialog, so
