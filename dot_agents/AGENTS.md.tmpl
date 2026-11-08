@@ -1,7 +1,6 @@
 {{- /* The one user-level instructions file every coding agent reads: OMP loads it from
-       here, and Codex, OpenCode and Qwen Code each link their own global path to it
-       (Claude Code imports it from ~/.claude/CLAUDE.md). None of those can include
-       another file, so layer-specific rules are spliced in here at apply time.
+       here, and Claude Code imports it from ~/.claude/CLAUDE.md. Layer-specific rules are
+       spliced in here at apply time.
 
        The shared conventions come first, then each layer's agents.md.tmpl. In-repo
        layers are read from the source tree and overlays from their clones, as for the

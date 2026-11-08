@@ -136,10 +136,8 @@ in
         # A machine with no recorded telemetry consent gets an interactive prompt,
         # and activation has no one to answer it: rtk skips the prompt when stdin
         # is not a terminal.
-        # --opencode also installs RTK's OpenCode plugin (a single file in the
-        # plugins directory, beside Orca's status plugin).
-        run rtk init --global --opencode --no-patch < /dev/null \
-          || echo "rtk init failed; re-run 'rtk init --global --opencode --no-patch' by hand" >&2
+        run rtk init --global --no-patch < /dev/null \
+          || echo "rtk init failed; re-run 'rtk init --global --no-patch' by hand" >&2
 
         # Buffer rtk's output first so `grep -q`'s early exit can't SIGPIPE rtk
         # under pipefail. Drift warns rather than fails: a stale hook is a source
@@ -219,18 +217,6 @@ in
       "$HOME/.local/bin"
     ];
 
-    # ~/.agents/AGENTS.md is rendered by chezmoi (shared conventions plus each layer's
-    # agents.md.tmpl). OMP and Claude Code read it from there (Claude through an @ import
-    # in ~/.claude/CLAUDE.md); Codex, OpenCode and Qwen Code each read one fixed global
-    # path of their own, so those are links to it. Out of store so the chezmoi-rendered
-    # file is what each harness sees.
-    file.".codex/AGENTS.md".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.agents/AGENTS.md";
-    file.".qwen/AGENTS.md".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.agents/AGENTS.md";
-    file.".config/opencode/AGENTS.md".source =
-      config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.agents/AGENTS.md";
-
     # mise's shims and ~/.local/bin (the nu CLIs — apploi, wt, onboard) have to
     # reach shells that read no rc file: a GUI orchestrator (Orca) is a
     # plain .app, so it inherits launchd's PATH, and it launches harnesses in
@@ -264,12 +250,6 @@ in
       p = "pnpm";
       y = "yarn";
       znu = "zsh -lc nu";
-
-      # `opencode --auto` auto-approves every permission not explicitly denied —
-      # the work config's denies (sudo, diskutil, ...) still gate it, but every
-      # ask in between passes unattended. Meant for sandboxed/benchmark folders
-      # under git, never for a tree holding uncommitted work.
-      oca = "opencode --auto";
     };
     stateVersion = "25.11";
   };

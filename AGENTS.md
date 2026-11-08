@@ -38,14 +38,13 @@ Configuration is composed from **layers**, selected per machine by chezmoi data:
 **Shared skills** are real copies under `dot_claude/skills/` (Windows applies `.claude` but
 not `.agents`), and `dot_agents/skills/` holds one `symlink_<name>.tmpl` per skill pointing
 back at `~/.claude/skills/<name>`, gated like the skill itself (a layer's `.ignore` file lists
-both paths). OMP, Codex, OpenCode and Qwen Code read `~/.agents/skills`; Claude Code reads
+both paths). OMP reads `~/.agents/skills`; Claude Code reads
 `~/.claude/skills`. A new shared skill needs both entries.
 
 **Agent instructions** are written once, for every harness. `dot_agents/AGENTS.md.tmpl`
 renders `~/.agents/AGENTS.md` from `.chezmoitemplates/agent-conventions.md` plus each
 layer's `agents.md.tmpl` fragment (in-repo `modules/<name>/` first, then overlays). OMP
-reads that path itself; Codex, OpenCode and Qwen Code read one fixed global path each, which
-`modules/shared/home.nix` links to it; Claude Code gets it through an `@` import in
+reads that path itself; Claude Code gets it through an `@` import in
 `dot_claude/CLAUDE.md.tmpl` (the destination file is still `~/.claude/CLAUDE.md`,
 hence the import; the template also carries the RTK import). Windows does not apply
 `~/.agents`, so there `CLAUDE.md` renders
@@ -473,28 +472,6 @@ as a completable nu command via a `symlink_<name>.nu.tmpl` in the nushell
 `commands/` dir plus an `export use` line in its `mod.nu` (a shebang parses as
 a comment, so the one source serves both). Such scripts must stay module-clean:
 consts and defs only, no top-level statements.
-
-`sandbox-browser` (`~/.local/bin`, a bash wrapper) lets an agent inside a filesystem
-sandbox drive a browser. Chromium can't launch under Codex's Seatbelt profile, so
-the browser runs outside the sandbox (`sandbox-browser start`, an unsandboxed or
-approved run) and the sandboxed client only connects to its unix socket. The wrapper
-pins `AGENT_BROWSER_SOCKET_DIR` to `~/.cache/sandbox-browser` (kept apart from
-`~/.agent-browser`, which holds the Chrome binaries and stays read-only to the
-client) and derives the session from the worktree (`agent-browser session id --scope
-worktree`), so each workspace gets its own browser. The `sandbox-browser` skill is a
-chezmoi copy under `dot_claude/skills/`; `dot_agents/skills/` links it into
-`~/.agents/skills`, the directory Codex, OMP, OpenCode and Qwen Code read (Claude Code
-and OpenCode read `~/.claude/skills`). All three are macOS-only. The unsandboxed browser is a hole in
-the sandbox by construction: left alone it reads `file://` URLs and writes
-screenshots and downloads anywhere the user can. `start` therefore requires
-`--allowed-domains` (or an explicit `--unrestricted`), so the approver sees the scope,
-and records the list plus an allow-list action policy next to the socket; the
-wrapper reapplies both to every command. That blocks other domains, `file://` and
-`data:`, and denies download, upload, state save, pdf, trace and recording. It is a
-guard against mistakes and prompt injection, not a boundary: agent-browser takes its
-limits from whichever client command launches the browser, so a client that calls
-`agent-browser` directly on the socket relaunches it unrestricted, and a screenshot
-can still be written to any path.
 
 All shells integrate:
 - Homebrew environment via `/opt/homebrew/bin/brew shellenv`

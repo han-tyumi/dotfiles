@@ -11,29 +11,8 @@ bitwarden = "latest"
 ghq = "latest"
 usage = "latest"
 
-# Coding-agent harnesses. Homebrew owns the ones with a formula (qwen-code —
-# see modules/shared/darwin.nix); mise owns the npm-only ones plus
-# opencode, so the pin stays explicit.
-# Orca discovers harnesses on PATH, so the shims go on a GUI launch's PATH too —
-# see the .zshenv entry in modules/shared/home.nix.
-# Major-version range, not "latest": 2.x moved compaction, TUI settings, and
-# the permission engine, and the configs' keys are verified against 1.x only.
-# Within 1.x, mise's minimum_release_age and provenance checks are the gate,
-# and opencode's own autoupdate stays off (work config), so mise manages the
-# version alone. On a jump into a new minor, re-check `opencode debug config`.
-opencode = "1"
-
 "npm:@biomejs/biome" = "latest"
 "npm:codeburn" = "latest"
-
-# npm-only harnesses, so mise is their installer. Codex CLI is here rather than on
-# the `codex` cask because that cask isn't marked auto_updates, so brew's upgrade
-# would fight the CLI's own `codex update`.
-#
-# GitHub Copilot CLI (the cask of that name is the GUI app) reaches its model
-# through the `gh auth login` account — no gateway config, a known-good baseline.
-"npm:@openai/codex" = "latest"
-"npm:@github/copilot" = "latest"
 {{- end }}
 
 [settings]

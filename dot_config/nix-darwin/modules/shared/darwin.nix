@@ -66,11 +66,6 @@
       "mas"
       "mise"
       "poppler"
-
-      # Coding-agent harnesses with a formula: the npm name (`@qwen-code/qwen-code`)
-      # differs from the CLI. opencode is the exception — also a formula, but mise
-      # owns it (see dot_config/mise/config.toml.tmpl).
-      "qwen-code"
       "rtk"
       "zlib"
       "zstd"
@@ -272,22 +267,6 @@
     # UTF-8 (em-dashes, curly quotes, emoji). LANG alone covers every LC_*
     # category; a forcible LC_ALL would stomp individually-set ones.
     variables.LANG = "en_US.UTF-8";
-
-    # OpenCode's built-in LSP servers may otherwise npm-install or curl a
-    # language server (jdtls, yaml-ls, ...) into ~/.cache/opencode on first
-    # touch. mise owns the toolchain here, so servers must come from it:
-    # one without a local binary stays off instead of self-installing.
-    variables.OPENCODE_DISABLE_LSP_DOWNLOAD = "true";
-
-    # models.dev cannot know the pod's real limits (the in-repo per-model
-    # limits are measured), and its fetch costs startup latency. The only
-    # 1.18 knob is this env var — there is no config key for it.
-    variables.OPENCODE_DISABLE_MODELS_FETCH = "1";
-
-    # OpenCode reads both ~/.claude/skills and ~/.agents/skills, and every skill is
-    # linked into both, so each one logs a duplicate-name warning at startup. The
-    # .agents copy is the one every other harness reads, so skip the .claude one.
-    variables.OPENCODE_DISABLE_CLAUDE_CODE_SKILLS = "1";
 
     etc = {
       "sudoers.d/nix-darwin".text = ''

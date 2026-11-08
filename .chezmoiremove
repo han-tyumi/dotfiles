@@ -3,10 +3,11 @@
 # must not survive on a machine is listed here.
 .claude/skills/git-spice
 .local/bin/github-mcp-server
-# The deny-destructive guard (hook + OpenCode plugin) was retired 2026-09-30;
-# drop the applied copies everywhere.
+.local/bin/sandbox-browser
+.claude/skills/sandbox-browser
+.agents/skills/sandbox-browser
+# The deny-destructive guard was retired 2026-09-30; drop the applied copy everywhere.
 .claude/hooks/deny-destructive.py
-.config/opencode/plugins/deny-destructive.js
 # Conductor was retired 2026-10 for Orca; drop its managed settings everywhere.
 .conductor
 # Enshrouded's RTSS cap comes from the gpu-profiles switcher; a declared copy
