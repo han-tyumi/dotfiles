@@ -31,4 +31,23 @@
   };
 
   users.users.${machine.username}.description = "Han-Tyumi";
+
+  system.defaults.dock = {
+    # Grouped by purpose, with the most used apps toward the center.
+    persistent-apps = [
+      { app = "/System/Applications/Apps.app"; }
+      { app = "/System/Applications/Reminders.app"; }
+      { app = "/System/Applications/Notes.app"; }
+      { app = "/System/Applications/Calendar.app"; }
+      { app = "/System/Cryptexes/App/System/Applications/Safari.app"; }
+      { app = "/Applications/Ghostty.app"; }
+      { app = "/Applications/Zed.app"; }
+      { app = "/Applications/Claude.app"; }
+      { app = "/System/Applications/Messages.app"; }
+      { app = "/System/Applications/Maps.app"; }
+      { app = "/Applications/Bitwarden.app"; }
+      { app = "/System/Applications/System Settings.app"; }
+    ];
+    persistent-others = [ "/Users/${machine.username}/Downloads" ];
+  };
 }
