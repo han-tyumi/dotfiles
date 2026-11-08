@@ -94,7 +94,6 @@
       # bring-your-own. The work overlay enables its omp provider.
       "paseo"
       "postgres-app"
-      "raycast"
 
       # GUI for orchestrating parallel agent sessions in per-worktree
       # workspaces with per-session diff review. Vendor-neutral (any CLI

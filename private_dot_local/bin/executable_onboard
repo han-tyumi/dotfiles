@@ -9,15 +9,6 @@ const STATE_DIR = '~/.local/state/onboard'
 
 const APPS = [
   {
-    bundle: "Raycast"
-    tips: [
-      "Import a raycast.rayconfig export (Settings > Advanced > Import) or sign in for Cloud Sync"
-      "Grant Accessibility when prompted"
-      "For cmd+space: disable Spotlight's shortcut first (System Settings > Keyboard > Keyboard Shortcuts > Spotlight)"
-      "Enable Launch at Login (Settings > General)"
-    ]
-  }
-  {
     bundle: "Bitwarden"
     tips: [
       "Sign in: master password + second factor"
