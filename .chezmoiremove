@@ -3,6 +3,12 @@
 # must not survive on a machine is listed here.
 .claude/skills/git-spice
 .local/bin/github-mcp-server
+# The sandbox-browser wrapper and its skill are claimed by the work layer, which
+# installs the sandboxed harness that needs them; a machine without that layer
+# must not keep a copy. The same gate covers the ~/.agents/skills links shared
+# skills used to get from dot_agents/: the work layer's OMP reads that directory
+# and mirrors the skills itself.
+{{ if not (has "work" .layerList) }}
 .local/bin/sandbox-browser
 .claude/skills/sandbox-browser
 .agents/skills/sandbox-browser
@@ -13,6 +19,7 @@
 .agents/skills/git-worktree
 .agents/skills/steam
 .agents/skills/tune-game
+{{ end }}
 # The deny-destructive guard was retired 2026-09-30; drop the applied copy everywhere.
 .claude/hooks/deny-destructive.py
 # Conductor was retired 2026-10 for Orca; drop its managed settings everywhere.
