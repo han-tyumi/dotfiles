@@ -1,10 +1,16 @@
 # chezmoi:modify-template
 {{- /* Merge the managed Claude settings over the live file so Claude Code's own
        writes (any keys it adds) survive, while the managed config wins for the
-       keys it defines (model pin, permissions, hooks, statusLine, toggles). This
+       keys it defines (model pin, permissions, statusLine, toggles). This
        runs in-process (Go template), so it works on macOS and Windows without an
        external interpreter. The managed config lives in
        .chezmoitemplates/claude-settings.json.
+
+       `hooks` is the one exception: mergeOverwrite replaces arrays whole, so a
+       managed hook list would delete every hook another tool registered for the
+       same event — an orchestrator that installs its own per-event hooks loses
+       them on every apply. Managed entries are therefore appended to the live
+       event arrays, skipping an event whose entry is already present.
 
        If the live file is ever corrupt (hand-edit, partial write), fromJson errors
        and apply stops on this target; recover with:
@@ -16,4 +22,26 @@
 {{- $in := trimPrefix "﻿" .chezmoi.stdin -}}
 {{- if trim $in -}}{{- $live = $in | fromJson -}}{{- end -}}
 {{- $managed := includeTemplate "claude-settings.json" . | fromJson -}}
-{{- mergeOverwrite $live $managed | toPrettyJson -}}
+{{- $managedHooks := $managed | dig "hooks" dict -}}
+{{- if $managedHooks -}}{{- $_ := unset $managed "hooks" -}}{{- end -}}
+{{- $out := mergeOverwrite $live $managed -}}
+{{- if $managedHooks -}}
+  {{- $liveHooks := dig "hooks" dict $out -}}
+  {{- $merged := dict -}}
+  {{- range $event, $entries := $liveHooks -}}{{- $_ := set $merged $event $entries -}}{{- end -}}
+  {{- range $event, $entries := $managedHooks -}}
+    {{- $existing := dig $event list $merged -}}
+    {{- $kept := list -}}
+    {{- range $entries -}}
+      {{- $candidate := . -}}
+      {{- $dupe := false -}}
+      {{- range $existing -}}
+        {{- if eq (toJson .) (toJson $candidate) -}}{{- $dupe = true -}}{{- end -}}
+      {{- end -}}
+      {{- if not $dupe -}}{{- $kept = append $kept $candidate -}}{{- end -}}
+    {{- end -}}
+    {{- if $kept -}}{{- $_ := set $merged $event (concat $existing $kept) -}}{{- end -}}
+  {{- end -}}
+  {{- $_ := set $out "hooks" $merged -}}
+{{- end -}}
+{{- $out | toPrettyJson -}}
