@@ -3,20 +3,23 @@
 # must not survive on a machine is listed here.
 .claude/skills/git-spice
 .local/bin/github-mcp-server
-# The sandbox-browser wrapper and its skill are claimed by the work layer, which
-# installs the sandboxed harness that needs them; a machine without that layer
-# must not keep a copy. The same gate covers the ~/.agents/skills links shared
-# skills used to get from dot_agents/: the work layer's OMP reads that directory
-# and mirrors the skills itself.
-{{ if not (has "work" .layerList) }}
+# The sandbox-browser wrapper belonged to Codex's sandbox, which is no longer
+# installed anywhere.
 .local/bin/sandbox-browser
 .claude/skills/sandbox-browser
 .agents/skills/sandbox-browser
+# Links dot_agents/ used to make into ~/.agents/skills, now published by the work
+# layer's workAgentSkillMirror instead. Ungated this would delete exactly what
+# that activation recreates, so it is scoped to a machine without the layer.
+{{ if not (has "work" .layerList) }}
 .agents/skills/agent-browser
-.agents/skills/character
 .agents/skills/create-skill
 .agents/skills/gh-stack
 .agents/skills/git-worktree
+{{ end }}
+# Skills only the personal layer has a use for.
+{{ if not (has "personal" .layerList) }}
+.agents/skills/character
 .agents/skills/steam
 .agents/skills/tune-game
 {{ end }}
