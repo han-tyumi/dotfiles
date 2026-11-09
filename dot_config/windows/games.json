@@ -11,7 +11,7 @@
       "startArgs": ["--remote-debugging-port={port}", "--exec=\"launch_uid {id}\""],
       "targetUrlPattern": "resources://home*",
       "playSelector": "button.play-btn.play-action",
-      "productSelector": ".play-selector-button",
+      "productSelector": ".play-selector-button-wrapper .product-name",
       "playLabelPattern": "^play$"
     },
     "standalone": {
