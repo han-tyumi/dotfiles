@@ -27,17 +27,21 @@
 .claude/hooks/deny-destructive.py
 # Conductor was retired 2026-10 for Orca; drop its managed settings everywhere.
 .conductor
-# Codex, Qwen Code and CodeBurn rendered these as real files rather than links,
-# so removing their activations left the last copy behind with nothing to clean
-# it. Only the configs go: the neighbouring session state (Codex's sqlite
-# history, Qwen's transcripts) belongs to the user, not to this repo.
+# Codex, Qwen Code and CodeBurn were declared only by the work layer, and their
+# configs were rendered by activations, which write real files rather than links.
+# Retiring those activations left the last rendered copy behind with nothing to
+# remove it. The gate keeps a machine that later installs one of these tools from
+# losing a config this repo never wrote. Only the rendered configs are listed:
+# Codex's sqlite history and Qwen's transcripts belong to the user, as does
+# `~/.codex/hooks.json`, which Orca writes.
+{{ if has "work" .layerList }}
 .codex/config.toml
 .codex/config.toml.bak
-.codex/hooks.json
 .qwen/settings.json
 .qwen/settings.json.bak
 .qwen/settings.json.backup
 .config/codeburn/config.json
+{{ end }}
 # Enshrouded's RTSS cap comes from the gpu-profiles switcher; a declared copy
 # would put 60 back on the 890M at every apply.
 .config/rtss/profiles/enshrouded.exe.cfg
