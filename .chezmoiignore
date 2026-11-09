@@ -21,6 +21,10 @@ docs/**
 .config/nix-darwin/modules/*/claude-permissions.json
 # Likewise the in-repo layers' AGENTS.md fragments, spliced into ~/.agents/AGENTS.md.
 .config/nix-darwin/modules/*/agents.md
+# Paseo rewrites this file itself, migration flags and all, so a managed copy
+# would be reverted on every apply. Its declarative settings live in the work
+# layer, which jq-merges them into the same file for the same reason.
+Library/Application Support/Paseo/desktop-settings.json
 {{ if ne .chezmoi.os "windows" -}}
 # Windows-only targets — skipped on macOS/Linux.
 AppData
