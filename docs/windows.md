@@ -135,10 +135,11 @@ host: under pwsh 7 the AppX removals load through a proxy that WinUtil's own
 temp-file cleanup deletes mid-run. A config naming a tweak the pinned build lacks
 fails the whole run before anything is applied.
 
-WinUtil counts a missing target as an error, so a re-run usually ends "Finished
-with problems" over things already gone: the `BagMRU` key, the `wermgr` service,
-the `PeriodInNanoSeconds` value, a `FileCoAuth` process that isn't running, and
-`CscService`, which Home editions don't have. Anything else in the log is real. Run it on a fresh machine, after a Windows
+WinUtil counts some missing targets as errors, so a re-run can end "Finished with
+problems" over the `BagMRU` key once it's gone. `CscService` only warns, since Home
+editions don't have it. Any other error in the log is real. `config.json` leaves out
+`WPFTweaksDisableStoreSearch`: it targets `store.db`, which current Store builds name
+`store-<guid>.db`, so it can only fail. Run it on a fresh machine, after a Windows
 update resets tweaks, or after bumping the pinned version.
 
 **Update flow:** `apploi` prints a yellow notice when a newer WinUtil release exists.

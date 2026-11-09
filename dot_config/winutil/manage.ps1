@@ -11,7 +11,7 @@
 param([switch]$Apply)
 
 $ErrorActionPreference = 'Stop'
-$PinnedVersion = '26.10.07'
+$PinnedVersion = '26.10.28'
 $configPath = Join-Path $PSScriptRoot 'config.json'
 
 function Get-LatestWinUtilTag {
