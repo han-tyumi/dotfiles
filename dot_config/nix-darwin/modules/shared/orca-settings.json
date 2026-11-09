@@ -1,26 +1,45 @@
 {
-  "branchPrefix": "none",
-  "refreshLocalBaseRefOnWorktreeCreate": true,
-  "terminalThemeDark": "Catppuccin Mocha",
-  "appFontFamily": "PragmataPro",
-  "terminalFontFamily": "PragmataPro Mono",
-  "tabAutoGenerateTitle": true,
-  "keepComputerAwakeWhileAgentsRun": true,
-  "mobileEmulatorEnabled": false,
-  "openInApplications": [
-    {
-      "id": "zed",
-      "label": "Zed",
-      "command": "zed"
+  "chatUiLaunchTipAudience": {
+    "version": 1,
+    "membership": "excluded",
+    "basis": "new-profile"
+  },
+  "settings": {
+    "branchPrefix": "none",
+    "refreshLocalBaseRefOnWorktreeCreate": true,
+    "pluginAppThemeDark": "plugin:stablyai.orca-catppuccin-theme/catppuccin-mocha",
+    "pluginAppThemeLight": "plugin:stablyai.orca-catppuccin-theme/catppuccin-latte",
+    "terminalThemeDark": "Catppuccin Mocha",
+    "terminalThemeLight": "Catppuccin Latte",
+    "terminalDividerColorDark": "#45475a",
+    "appFontFamily": "PragmataPro VF",
+    "terminalFontFamily": "PragmataPro VF Mono Liga",
+    "terminalScrollOnUserInput": false,
+    "terminalClipboardOnSelect": true,
+    "editorFormatOnSave": true,
+    "editorInsertFinalNewline": true,
+    "tabAutoGenerateTitle": true,
+    "keepComputerAwakeWhileAgentsRun": true,
+    "defaultTuiAgent": "claude",
+    "agentDefaultSurface": "chat",
+    "agentYoloDefaultsMigrated": true,
+    "agentPermissionDefault": "auto",
+    "nativeChatPermissionMode": "auto",
+    "mobileEmulatorEnabled": false,
+    "showMobileButton": false,
+    "mobileAutoRestoreFitMs": 60000,
+    "visibleTaskProviders": ["github"],
+    "visibleTaskProvidersDefaultedForJira": true,
+    "nativeChatResumeWorkOnRestart": true,
+    "openInApplications": [
+      {
+        "id": "zed",
+        "label": "Zed",
+        "command": "zed"
+      }
+    ],
+    "notifications": {
+      "terminalBell": true
     }
-  ],
-  "notifications": {
-    "enabled": true,
-    "agentTaskComplete": true,
-    "terminalBell": true,
-    "suppressWhenFocused": true,
-    "customSoundId": "blip",
-    "customSoundPath": null,
-    "customSoundVolume": 100
   }
 }
