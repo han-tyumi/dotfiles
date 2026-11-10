@@ -6,6 +6,12 @@
     { "name": "890m", "match": "*890M*" }
   ],
   "games": {
+    "wow-forever": {
+      "exe": "Wow.exe",
+      "profiles": {
+        "890m": { "panelHz": 40 }
+      }
+    },
     "enshrouded": {
       "exe": "enshrouded.exe",
       "settingsFile": "%USERPROFILE%\\Saved Games\\keen games\\Enshrouded\\local_settings.json",

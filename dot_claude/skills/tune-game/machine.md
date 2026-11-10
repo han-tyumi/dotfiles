@@ -337,7 +337,9 @@ or HWiNFO yourself: both raise a UAC prompt.
   `presentmon` run stops with `presentmon --terminate_existing_session
   --session_name <name>`; exit 7 ("no existing sessions found") means it had
   already ended and the CSV is complete.
-- Killing `presentmon` with `Stop-Process` leaves its ETW session alive. The
+- Killing `presentmon` with `Stop-Process`, or killing the shell running
+  `capture-frames.ps1` (an agent's background task hitting its 2-hour limit
+  does this), leaves its ETW session alive. The
   next capture then reports "ETW events were lost" and records no frames.
   Before capturing again, run the `--terminate_existing_session` line above for
   each `tune-game-<label>` session left over.
