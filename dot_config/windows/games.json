@@ -26,13 +26,13 @@
       "process": "Wow",
       "steam": {
         "name": "World of Warcraft: Forever",
-        "steamGridDb": 5246530,
+        "steamGridDb": 5564172,
         "art": {
-          "portrait": "https://cdn2.steamgriddb.com/grid/578a92be24dca5c93924c0d912eb46d5.png",
-          "wide": "https://cdn2.steamgriddb.com/grid/f288c59d6f743a188d83de19a4463173.png",
-          "hero": "https://cdn2.steamgriddb.com/hero/a34bacf839b923770b2c360eefa26748.jpg",
-          "logo": "https://cdn2.steamgriddb.com/logo/cf4298addd63275b043eb83dc27f0ed3.png",
-          "icon": "https://cdn2.steamgriddb.com/icon/5fe9896d59ff844e46258c4c82130d54.png"
+          "portrait": "https://cdn2.steamgriddb.com/grid/a51bd6895bd8f4b811a4faf22be3634d.png",
+          "wide": "https://cdn2.steamgriddb.com/grid/51f5a053498b358317e0f22043ea735b.png",
+          "hero": "https://cdn2.steamgriddb.com/hero/d9a97a8f84b9a9e93b97df44b46fe9a1.jpg",
+          "logo": "https://cdn2.steamgriddb.com/logo/832a11a392ad8dfc4cc2f7f6a50647c1.png",
+          "icon": "https://cdn2.steamgriddb.com/icon/64f4c1e1c97147dfd33c91ce5704f71a.png"
         }
       }
     },
