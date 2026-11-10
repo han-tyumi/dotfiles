@@ -88,7 +88,13 @@ installer would close running agent sessions). `25-orca-skills` installs its glo
 skills once with `npx skills add`, as the Mac activation does; Orca's updater owns
 them after that. `~/.orca/keybindings.json` is shared with the Mac. The Orca CLI is
 bundled but not on PATH until registered once from **Settings → Orca CLI**. App
-settings live in `%APPDATA%\Orca`.
+settings live in `%APPDATA%\Orca`. To match the Mac on a profile with no
+`profile-state.db`, copy `dot_config/nix-darwin/modules/shared/orca-settings.json` from this repo to
+`profiles\local-default\orca-data.json` there before launching, then run
+`orca plugin install stablyai.orca-catppuccin-theme` for the theme it selects.
+
+Tailscale is a winget package, as on the Mac: it lets Orca Mobile reach this machine
+off-LAN through its 100.x address. Sign in once with `tailscale up`.
 
 With the `personal` layer on, `50-clone-hero-launcher` installs the Clone Hero
 Launcher, which installs the game and updates both itself and the game. It isn't in

@@ -24,6 +24,7 @@
         { "PackageIdentifier": "StablyAI.Orca" },
         { "PackageIdentifier": "Vivaldi.Vivaldi" },
         { "PackageIdentifier": "Bitwarden.Bitwarden" },
+        { "PackageIdentifier": "Tailscale.Tailscale" },
         { "PackageIdentifier": "kangyu-california.PersistentWindows" },
         { "PackageIdentifier": "Blizzard.BattleNet" }
       ],
