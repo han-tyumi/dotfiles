@@ -12,15 +12,25 @@
 # The same wrapper stamps the `Assisted-by:` line into a published body. An
 # agent cannot report which harness and model it runs as — it only knows what it
 # was told — so the line is written here from the harness's own session record,
-# and any attribution line the body already carries is replaced. The line is
-# then correct whether the agent wrote one, wrote a wrong one, or wrote none.
+# and a trailing attribution line the body already carries is replaced. The line
+# is then correct whether the agent wrote one, wrote a wrong one, or wrote none.
 # `agent-identity` is what reads that record; it exits non-zero for a human's
 # own shell, which is left alone.
 #
-# A body the wrapper cannot see — one gh fills from the commits (`--fill`) or
-# collects in an editor — is passed through unstamped. Both need no body on the
-# command line, so an agent publishing through this path is expected to supply
-# one.
+# Only a trailing attribution line is replaced. A body that quotes the
+# convention — documentation, a PR explaining this change — keeps its examples,
+# because anything above the final block is content.
+#
+# A body the wrapper cannot see — one gh fills from the commits (`--fill`), one
+# collected in an editor, one read from stdin — is passed through unstamped.
+# Those need no body on the command line, so an agent publishing through this
+# path is expected to supply one.
+#
+# This runs wherever `gh` resolves to it: on a machine where a version manager
+# installs its own `gh` ahead of `~/.local/bin` on PATH, that shim execs the
+# managed binary directly and both the identity selection and the stamping below
+# are skipped. No `gh` version is installed that way on this machine, so the
+# paths below are the ones in force.
 #
 # `gh auth`, completion, and bare invocations pass through untouched so account
 # management and shell completion see gh's real state.
@@ -28,7 +38,12 @@ set -euo pipefail
 
 real_gh="/etc/profiles/per-user/${USER:-$(id -un)}/bin/gh"
 work_dir=""
-trap '[ -n "$work_dir" ] && rm -rf "$work_dir"' EXIT
+
+cleanup() {
+  [ -n "$work_dir" ] && rm -rf "$work_dir"
+  return 0
+}
+trap cleanup EXIT
 
 case "${1:-}" in
   auth | completion | __complete | "")
@@ -39,57 +54,86 @@ esac
 attribution=""
 identity="$(dirname "${BASH_SOURCE[0]}")/agent-identity"
 if [ ! -x "$identity" ]; then
+  identity="$HOME/.local/bin/agent-identity"
+fi
+if [ ! -x "$identity" ]; then
   identity="$(command -v agent-identity 2>/dev/null || true)"
 fi
-if [ -n "$identity" ]; then
+if [ -n "$identity" ] && [ -x "$identity" ]; then
   marker="$("$identity" 2>/dev/null || true)"
   if [ -n "$marker" ]; then
     attribution="🤖 Assisted-by: $marker"
   fi
 fi
 
-# Print a fresh path inside the scratch directory. Each stamped body gets its
+# Reserve a fresh path inside the scratch directory. Each stamped body gets its
 # own file, so a command carrying two of them cannot have the second overwrite
-# the first.
-scratch_path() {
+# the first. The path lands in `scratch` rather than on stdout: these functions
+# are called directly so the variables they set reach the caller, and a
+# `$(…)` call would run them in a subshell whose `work_dir` the EXIT trap never
+# sees — leaking the published body text in a temp directory.
+#
+# `scratch` is a global for the same reason: bash 3.2 has no namerefs, and the
+# assignment has to survive the return.
+scratch=""
+stamp_path=""
+reserve_scratch() {
   if [ -z "$work_dir" ]; then
     work_dir="$(mktemp -d)"
   fi
   work_dir_counter=$((${work_dir_counter:-0} + 1))
-  printf '%s/%s' "$work_dir" "$work_dir_counter"
+  scratch="$work_dir/$work_dir_counter"
 }
 
-# Copy a body that came with an attribution line replaced by the stamp, and
-# print the copy's path. The old line is dropped along with the blank run it sat
-# behind, so re-stamping cannot stack two trailers and the stamp stays a single
-# blank line below the body, matching how a commit trailer is set off. A file
-# that cannot be read yields no path, leaving the caller to pass the original
-# argument through for gh to report.
+# Copy a body with its trailing attribution block replaced by the stamp, and set
+# `stamp_path` to the copy. A file that cannot be read, or stdin, returns
+# non-zero so the caller can pass the original argument through for gh to handle.
 stamp_file() {
   local source="$1" target
-  # `-` is stdin, and an unreadable file leaves gh to report it; neither can be
-  # stamped, so the caller passes the original command through untouched.
   [ -r "$source" ] && [ "$source" != "-" ] || return 1
-  target="$(scratch_path)"
+  reserve_scratch
+  target="$scratch"
 
-  grep -vi '^[[:space:]]*🤖\?[[:space:]]*Assisted-by:' "$source" > "$target" || true
-  printf '%s' "$(cat "$target")" > "$target"
-  printf '\n\n%s\n' "$attribution" >> "$target"
-  printf '%s' "$target"
+  # Drop the attribution block only where it sits at the end of the body: the
+  # last non-blank line is an attribution line, so it and the blank run above it
+  # go. An attribution line higher up is quoted content and stays.
+  awk '
+    { line[NR] = $0 }
+    END {
+      last = NR
+      while (last > 0 && line[last] ~ /^[[:space:]]*$/) last--
+      if (last > 0 && line[last] ~ /^[[:space:]]*(🤖[[:space:]]*)?Assisted-by:/) {
+        keep = last - 1
+        while (keep > 0 && (line[keep] ~ /^[[:space:]]*$/ ||
+               line[keep] ~ /^[[:space:]]*(🤖[[:space:]]*)?Assisted-by:/)) keep--
+        for (i = 1; i <= keep; i++) print line[i]
+      } else {
+        for (i = 1; i <= NR; i++) print line[i]
+      }
+    }
+  ' "$source" > "$target"
+
+  # `$(cat …)` strips the trailing newlines the block removal leaves behind, so
+  # the stamp lands exactly one blank line below the body.
+  printf '%s\n\n%s\n' "$(cat "$target")" "$attribution" > "$target"
+  stamp_path="$target"
+  return 0
 }
 
 # Stamp a body given literally on the command line.
 stamp_literal() {
   local raw
-  raw="$(scratch_path)"
+  reserve_scratch
+  raw="$scratch"
   printf '%s\n' "$1" > "$raw"
   stamp_file "$raw"
 }
 
-# Bodies reach gh three ways: `-b/--body` takes text, `-F/--body-file` takes a
-# path, and `gh api` takes a `body=…` field whose `@`-prefixed form names a path
-# that its `-F/--field` flag reads. Each is rewritten to a body-file pointing at
-# the stamped copy; an api field keeps `-F`, since `@` means nothing to `-f`.
+# Build the stamped argv in `dispatch` and return 0, or return 1 when this is not
+# a body-carrying invocation. A body reaches gh as `-b/--body` (text),
+# `-F/--body-file` (a path), or a `body=…` field for `gh api`. Which flag spells
+# which depends on the subcommand: `-F` is the body file for pr/issue and the
+# typed field for api.
 stamp_gh_body() {
   local verb="$1" action="$2"
   shift 2
@@ -105,37 +149,51 @@ stamp_gh_body() {
     esac
   fi
 
-  local args=() pending="" pending_field="" stamped
+  local args=() pending="" pending_field=""
   while [ "$#" -gt 0 ]; do
     local argument="$1"
     shift
 
     if [ -n "$pending" ]; then
       case "$pending" in
-        text) stamped="$(stamp_literal "$argument")" || return 1 ;;
-        path) stamped="$(stamp_file "$argument")" || return 1 ;;
+        text) stamp_literal "$argument" || return 1 ;;
+        path) stamp_file "$argument" || return 1 ;;
       esac
-      args+=("--body-file" "$stamped")
+      args+=("--body-file" "$stamp_path")
       pending=""
       continue
     fi
 
     if [ "$verb" = "api" ]; then
       if [ -n "$pending_field" ]; then
-        case "$argument" in
-          # stdin is a body this wrapper cannot read.
-          body=@-) args+=("$pending_field" "$argument") ;;
-          body=@*)
-            stamped="$(stamp_file "${argument#body=@}")" || return 1
-            args+=("-F" "body=@${stamped}")
-            ;;
-          body=*)
-            stamped="$(stamp_literal "${argument#body=}")" || return 1
-            args+=("-F" "body=@${stamped}")
-            ;;
-          *) args+=("$pending_field" "$argument") ;;
-        esac
+        local field_flag="$pending_field"
         pending_field=""
+        # `-F/--field` reads an `@path` value as a file and `-f/--raw-field` sends
+        # its value literally, so the two spellings are rewritten differently:
+        # the typed field names the stamped file, the raw field carries the
+        # stamped text inline because it would send a bare `@path` literally.
+        if [ "$field_flag" = "-F" ] || [ "$field_flag" = "--field" ]; then
+          case "$argument" in
+            body=@-) args+=("$field_flag" "$argument") ;;
+            body=@*)
+              stamp_file "${argument#body=@}" || return 1
+              args+=("$field_flag" "body=@${stamp_path}")
+              ;;
+            body=*)
+              stamp_literal "${argument#body=}" || return 1
+              args+=("$field_flag" "body=@${stamp_path}")
+              ;;
+            *) args+=("$field_flag" "$argument") ;;
+          esac
+        else
+          case "$argument" in
+            body=*)
+              stamp_literal "${argument#body=}" || return 1
+              args+=("$field_flag" "body=$(cat "$stamp_path")")
+              ;;
+            *) args+=("$field_flag" "$argument") ;;
+          esac
+        fi
         continue
       fi
 
@@ -148,14 +206,14 @@ stamp_gh_body() {
 
     case "$argument" in
       -b | --body) pending="text" ;;
-      --body-file) pending="path" ;;
+      -F | --body-file) pending="path" ;;
       --body=*)
-        stamped="$(stamp_literal "${argument#--body=}")" || return 1
-        args+=("--body-file" "$stamped")
+        stamp_literal "${argument#--body=}" || return 1
+        args+=("--body-file" "$stamp_path")
         ;;
       --body-file=*)
-        stamped="$(stamp_file "${argument#--body-file=}")" || return 1
-        args+=("--body-file" "$stamped")
+        stamp_file "${argument#--body-file=}" || return 1
+        args+=("--body-file" "$stamp_path")
         ;;
       *) args+=("$argument") ;;
     esac
@@ -167,13 +225,15 @@ stamp_gh_body() {
   fi
 
   if [ "$verb" = "api" ]; then
-    exec "$real_gh" api "${args[@]}"
+    dispatch=(api "${args[@]}")
+  else
+    dispatch=("$verb" "$action" "${args[@]}")
   fi
-  exec "$real_gh" "$verb" "$action" "${args[@]}"
 }
 
 # An explicit token in the environment is the caller's choice — agent sessions
-# and CI set one to act as a bot or service account. Never replace it.
+# and CI set one to act as a bot or service account. Never replace it. This runs
+# before dispatch so a stamped write acts as the repository's identity too.
 if [ -z "${GH_TOKEN:-}${GITHUB_TOKEN:-}${GH_ENTERPRISE_TOKEN:-}${GITHUB_ENTERPRISE_TOKEN:-}" ]; then
   want="$(git config --get github.user 2>/dev/null || true)"
   if [ -n "$want" ]; then
@@ -184,11 +244,16 @@ if [ -z "${GH_TOKEN:-}${GITHUB_TOKEN:-}${GH_ENTERPRISE_TOKEN:-}${GITHUB_ENTERPRI
   fi
 fi
 
-if [ -n "$attribution" ]; then
-  # On success the stamped command replaces this shell. Anything else — another
-  # subcommand, or a body the wrapper cannot read — falls through to the plain
-  # invocation below.
-  stamp_gh_body "${1:-}" "${2:-}" "${@:3}" || true
+dispatch=()
+if [ -n "$attribution" ] && stamp_gh_body "${1:-}" "${2:-}" "${@:3}"; then
+  # gh runs as a child rather than through `exec` so the scratch directory is
+  # removed: `exec` never runs an EXIT trap, and the scratch files hold the
+  # published body text.
+  status=0
+  "$real_gh" "${dispatch[@]}" || status=$?
+  cleanup
+  work_dir=""
+  exit "$status"
 fi
 
 exec "$real_gh" "$@"

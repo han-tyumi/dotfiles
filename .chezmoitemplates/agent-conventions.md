@@ -40,21 +40,26 @@ marker is one trailer, copied from Apache magpie's convention:
 writes the line wherever the repository is scoped for it, so an agent authoring a
 commit message does not add it. That hook sees the message however it was
 supplied — `-m`, `-F`, a heredoc, `--amend --no-edit`, an editor — and replaces a
-line already there, for the same reason.
+trailing line already there, for the same reason.
 
-**Bodies are stamped for you too.** A PR description, review, comment or issue
-body carries the same marker as its last line, behind a 🤖:
+**Bodies are stamped for you too, on macOS and Linux.** A PR description,
+review, comment or issue body carries the same marker as its last line, behind a
+🤖:
 
     🤖 Assisted-by: claude-code:claude-opus-5-5
 
 The `gh` on `PATH` adds that line to every body given on the command line —
-`--body`, `-b`, `--body-file`, or a `body=` field for `gh api` — and replaces one
-already there. Write the body without it: an agent does not know which model it
-resolved to, so a line it writes itself is a guess, and a wrong guess is worse
-than the stamp that overwrites it.
+`--body`, `-b`, `--body-file`, or a `body=` field for `gh api` — and replaces a
+trailing one already there. Write the body without it: an agent does not know
+which model it resolved to, so a line it writes itself is a guess, and a wrong
+guess is worse than the stamp that overwrites it.
 
 A body gh supplies itself, from `--fill` or from an editor, is published as it
 is. Pass a body when the write needs the marker.
+
+That wrapper is a shell script at `~/.local/bin/gh`, so it does not run on
+Windows. There the line is yours to write, and it must be the last line of the
+body.
 
 In a squash-merged repo the branch commit is discarded, so the PR description
 carries the record — it becomes the squash commit body. That is the one place a
