@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Print `<harness>:<model>` for the agent-attribution trailer.
+#
+# The harness comes from the markers each one exports into the shells it spawns,
+# and the model from that harness's own session record, so the trailer names what
+# actually ran instead of what the agent believes it is running as. Exits
+# non-zero with no output when no harness marker is present, which is how a
+# human's own shell is told apart from an agent's.
+set -uo pipefail
+
+# A harness can inherit another's markers through the shell that launched it,
+# and CLAUDECODE in particular reaches sessions that are not Claude Code, so the
+# most specific marker is tested first.
+if [ -n "${PI_SESSION_FILE:-}" ] || [ -n "${OMPCODE:-}" ]; then
+  harness="omp"
+elif [ -n "${CLAUDECODE:-}" ]; then
+  harness="claude-code"
+elif [ -n "${OPENCODE:-}" ]; then
+  harness="opencode"
+else
+  exit 1
+fi
+
+# Print the model named in the last line read from stdin that matches `$1`. The
+# model is the first `"model"` field in that record, because a record's metadata
+# precedes its content and content may quote a model name of its own. Reading
+# lines rather than matching fields directly keeps an unanchored `grep -o` from
+# picking the model out of whichever record happens to come last.
+record_model() {
+  local record
+  record="$(grep "$1" 2>/dev/null | tail -n 1)"
+  case "$record" in *'"model":"'*) ;; *) return 0 ;; esac
+  record="${record#*\"model\":\"}"
+  printf '%s' "${record%%\"*}"
+}
+
+# Oh-my-pi records every model switch in its session log, so the last such
+# record names the model in use now.
+omp_model() {
+  local sessionFile="${PI_SESSION_FILE:-}"
+  [ -n "$sessionFile" ] && [ -r "$sessionFile" ] || return 0
+  record_model '"type":"model_change"' < "$sessionFile"
+}
+
+# Claude Code keeps one transcript per session under a directory named for the
+# working directory with every non-alphanumeric character replaced. The session
+# id names the transcript exactly when it is exported; otherwise the newest
+# transcript for the directory is the conversation that is running this command.
+# A subdirectory without transcripts of its own falls back to the checkout root,
+# which is the directory a session launched at the repo level is filed under.
+claude_model() {
+  local projectRoot="$HOME/.claude/projects" directory transcript
+  for directory in "$PWD" "$(git rev-parse --show-toplevel 2>/dev/null || true)"; do
+    [ -n "$directory" ] || continue
+    directory="$projectRoot/$(printf '%s' "$directory" | sed 's#[^A-Za-z0-9]#-#g')"
+
+    if [ -n "${CLAUDE_SESSION_ID:-}" ] && [ -r "$directory/${CLAUDE_SESSION_ID}.jsonl" ]; then
+      transcript="$directory/${CLAUDE_SESSION_ID}.jsonl"
+    else
+      transcript="$(ls -t "$directory"/*.jsonl 2>/dev/null | head -n 1)"
+    fi
+    [ -n "$transcript" ] && [ -r "$transcript" ] || continue
+
+    record_model '"role":"assistant"' < "$transcript"
+    return 0
+  done
+}
+
+model=""
+case "$harness" in
+  omp) model="$(omp_model)" ;;
+  claude-code) model="$(claude_model)" ;;
+esac
+
+printf '%s:%s\n' "$harness" "${model:-unknown}"

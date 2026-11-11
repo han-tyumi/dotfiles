@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Make the GitHub CLI follow the repository's identity.
+# Make the GitHub CLI follow the repository's identity and stamp agent bodies.
 #
 # `git config github.user` resolves per-repo via git's conditional includes
 # (the personal account by default, the work account inside work repos/remotes).
@@ -9,11 +9,26 @@
 # in non-interactive shells too, where directory-triggered tools like direnv
 # never fire.
 #
+# The same wrapper stamps the `Assisted-by:` line into a published body. An
+# agent cannot report which harness and model it runs as — it only knows what it
+# was told — so the line is written here from the harness's own session record,
+# and any attribution line the body already carries is replaced. The line is
+# then correct whether the agent wrote one, wrote a wrong one, or wrote none.
+# `agent-identity` is what reads that record; it exits non-zero for a human's
+# own shell, which is left alone.
+#
+# A body the wrapper cannot see — one gh fills from the commits (`--fill`) or
+# collects in an editor — is passed through unstamped. Both need no body on the
+# command line, so an agent publishing through this path is expected to supply
+# one.
+#
 # `gh auth`, completion, and bare invocations pass through untouched so account
 # management and shell completion see gh's real state.
 set -euo pipefail
 
 real_gh="/etc/profiles/per-user/${USER:-$(id -un)}/bin/gh"
+work_dir=""
+trap '[ -n "$work_dir" ] && rm -rf "$work_dir"' EXIT
 
 case "${1:-}" in
   auth | completion | __complete | "")
@@ -21,18 +36,159 @@ case "${1:-}" in
     ;;
 esac
 
-# An explicit token in the environment is the caller's choice — agent sessions
-# and CI set one to act as a bot or service account. Never replace it.
-if [ -n "${GH_TOKEN:-}${GITHUB_TOKEN:-}${GH_ENTERPRISE_TOKEN:-}${GITHUB_ENTERPRISE_TOKEN:-}" ]; then
-  exec "$real_gh" "$@"
+attribution=""
+identity="$(dirname "${BASH_SOURCE[0]}")/agent-identity"
+if [ ! -x "$identity" ]; then
+  identity="$(command -v agent-identity 2>/dev/null || true)"
+fi
+if [ -n "$identity" ]; then
+  marker="$("$identity" 2>/dev/null || true)"
+  if [ -n "$marker" ]; then
+    attribution="🤖 Assisted-by: $marker"
+  fi
 fi
 
-want="$(git config --get github.user 2>/dev/null || true)"
-if [ -n "$want" ]; then
-  token="$(GH_TOKEN= GITHUB_TOKEN= "$real_gh" auth token --user "$want" 2>/dev/null || true)"
-  if [ -n "$token" ]; then
-    GH_TOKEN="$token" exec "$real_gh" "$@"
+# Print a fresh path inside the scratch directory. Each stamped body gets its
+# own file, so a command carrying two of them cannot have the second overwrite
+# the first.
+scratch_path() {
+  if [ -z "$work_dir" ]; then
+    work_dir="$(mktemp -d)"
   fi
+  work_dir_counter=$((${work_dir_counter:-0} + 1))
+  printf '%s/%s' "$work_dir" "$work_dir_counter"
+}
+
+# Copy a body that came with an attribution line replaced by the stamp, and
+# print the copy's path. The old line is dropped along with the blank run it sat
+# behind, so re-stamping cannot stack two trailers and the stamp stays a single
+# blank line below the body, matching how a commit trailer is set off. A file
+# that cannot be read yields no path, leaving the caller to pass the original
+# argument through for gh to report.
+stamp_file() {
+  local source="$1" target
+  # `-` is stdin, and an unreadable file leaves gh to report it; neither can be
+  # stamped, so the caller passes the original command through untouched.
+  [ -r "$source" ] && [ "$source" != "-" ] || return 1
+  target="$(scratch_path)"
+
+  grep -vi '^[[:space:]]*🤖\?[[:space:]]*Assisted-by:' "$source" > "$target" || true
+  printf '%s' "$(cat "$target")" > "$target"
+  printf '\n\n%s\n' "$attribution" >> "$target"
+  printf '%s' "$target"
+}
+
+# Stamp a body given literally on the command line.
+stamp_literal() {
+  local raw
+  raw="$(scratch_path)"
+  printf '%s\n' "$1" > "$raw"
+  stamp_file "$raw"
+}
+
+# Bodies reach gh three ways: `-b/--body` takes text, `-F/--body-file` takes a
+# path, and `gh api` takes a `body=…` field whose `@`-prefixed form names a path
+# that its `-F/--field` flag reads. Each is rewritten to a body-file pointing at
+# the stamped copy; an api field keeps `-F`, since `@` means nothing to `-f`.
+stamp_gh_body() {
+  local verb="$1" action="$2"
+  shift 2
+
+  # `gh api` has no action word: everything after the verb is a flag or the
+  # endpoint, so only the verb is consumed here.
+  if [ "$verb" = "api" ]; then
+    set -- "$action" "$@"
+  else
+    case "$verb:$action" in
+      pr:create | pr:edit | pr:comment | pr:review | issue:create | issue:edit | issue:comment) ;;
+      *) return 1 ;;
+    esac
+  fi
+
+  local args=() pending="" pending_field="" stamped
+  while [ "$#" -gt 0 ]; do
+    local argument="$1"
+    shift
+
+    if [ -n "$pending" ]; then
+      case "$pending" in
+        text) stamped="$(stamp_literal "$argument")" || return 1 ;;
+        path) stamped="$(stamp_file "$argument")" || return 1 ;;
+      esac
+      args+=("--body-file" "$stamped")
+      pending=""
+      continue
+    fi
+
+    if [ "$verb" = "api" ]; then
+      if [ -n "$pending_field" ]; then
+        case "$argument" in
+          # stdin is a body this wrapper cannot read.
+          body=@-) args+=("$pending_field" "$argument") ;;
+          body=@*)
+            stamped="$(stamp_file "${argument#body=@}")" || return 1
+            args+=("-F" "body=@${stamped}")
+            ;;
+          body=*)
+            stamped="$(stamp_literal "${argument#body=}")" || return 1
+            args+=("-F" "body=@${stamped}")
+            ;;
+          *) args+=("$pending_field" "$argument") ;;
+        esac
+        pending_field=""
+        continue
+      fi
+
+      case "$argument" in
+        -f | -F | --raw-field | --field) pending_field="$argument" ;;
+        *) args+=("$argument") ;;
+      esac
+      continue
+    fi
+
+    case "$argument" in
+      -b | --body) pending="text" ;;
+      --body-file) pending="path" ;;
+      --body=*)
+        stamped="$(stamp_literal "${argument#--body=}")" || return 1
+        args+=("--body-file" "$stamped")
+        ;;
+      --body-file=*)
+        stamped="$(stamp_file "${argument#--body-file=}")" || return 1
+        args+=("--body-file" "$stamped")
+        ;;
+      *) args+=("$argument") ;;
+    esac
+  done
+
+  # A flag left without a value is gh's own argument error to report.
+  if [ -n "$pending" ] || [ -n "$pending_field" ]; then
+    return 1
+  fi
+
+  if [ "$verb" = "api" ]; then
+    exec "$real_gh" api "${args[@]}"
+  fi
+  exec "$real_gh" "$verb" "$action" "${args[@]}"
+}
+
+# An explicit token in the environment is the caller's choice — agent sessions
+# and CI set one to act as a bot or service account. Never replace it.
+if [ -z "${GH_TOKEN:-}${GITHUB_TOKEN:-}${GH_ENTERPRISE_TOKEN:-}${GITHUB_ENTERPRISE_TOKEN:-}" ]; then
+  want="$(git config --get github.user 2>/dev/null || true)"
+  if [ -n "$want" ]; then
+    token="$(GH_TOKEN= GITHUB_TOKEN= "$real_gh" auth token --user "$want" 2>/dev/null || true)"
+    if [ -n "$token" ]; then
+      export GH_TOKEN="$token"
+    fi
+  fi
+fi
+
+if [ -n "$attribution" ]; then
+  # On success the stamped command replaces this shell. Anything else — another
+  # subcommand, or a body the wrapper cannot read — falls through to the plain
+  # invocation below.
+  stamp_gh_body "${1:-}" "${2:-}" "${@:3}" || true
 fi
 
 exec "$real_gh" "$@"
