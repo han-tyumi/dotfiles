@@ -26,11 +26,12 @@
 # Those need no body on the command line, so an agent publishing through this
 # path is expected to supply one.
 #
-# This runs wherever `gh` resolves to it: on a machine where a version manager
-# installs its own `gh` ahead of `~/.local/bin` on PATH, that shim execs the
-# managed binary directly and both the identity selection and the stamping below
-# are skipped. No `gh` version is installed that way on this machine, so the
-# paths below are the ones in force.
+# This runs wherever `gh` resolves to it. A version manager that installs its own
+# `gh` ahead of `~/.local/bin` on PATH would exec the managed binary directly and
+# skip both the identity selection and the stamping below, so the shared mise
+# config lists `gh` in `disable_tools`. mise then installs no `gh` and creates no
+# shim for one, in any repository, which leaves PATH to the profile's `gh` and
+# this wrapper.
 #
 # `gh auth`, completion, and bare invocations pass through untouched so account
 # management and shell completion see gh's real state.

@@ -18,6 +18,24 @@ usage = "latest"
 pin = true
 idiomatic_version_file_enable_tools = []
 
+{{- if eq .chezmoi.os "darwin" }}
+
+# `gh` on PATH must be the wrapper in ~/.local/bin, which selects the stored
+# account's token per repository and stamps the `Assisted-by:` line into a
+# published body. A repository that pins its own `gh` installs a mise shim ahead
+# of that wrapper, and the shim execs the managed binary directly, so both are
+# skipped. `disable_tools` makes mise ignore `gh` even when a config names it,
+# which leaves PATH to the profile's `gh` and that wrapper. The wrapper is
+# macOS-only (`~/.local` is ignored elsewhere), so this setting is too.
+#
+# The cost is that mise no longer manages `gh` at all: `mise use -g gh` records a
+# pin mise will not honour, a repository's own `gh` pin stops applying, and
+# `mise which gh` reports the tool as not installed. The binary a repository pin
+# fetched stays on disk but is unreachable, so the `gh` version running here is
+# the profile's rather than the version that repository's CI uses.
+disable_tools = ["gh"]
+{{- end }}
+
 # Auto-trust mise configs that live in the chezmoi source and the overlay
 # clones, so running a mise shim from those trees doesn't
 # nag for `mise trust` (and a non-interactive run doesn't hang on the prompt).
