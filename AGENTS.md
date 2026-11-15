@@ -312,7 +312,8 @@ provisioned with **winget** and **mise** instead of Nix.
 - `.chezmoiignore` splits targets by `.chezmoi.os`: on Windows the whole
   `dot_config/nix-darwin` tree, the Mac installers (`.chezmoiscripts/**`, the root
   `*.sh`/`*.toml` run scripts), and the Mac shell/editor targets (`.config/zed`,
-  `.config/nvim`, `.config/ghostty`, `.local`, `Library`) are skipped; on
+  `.config/nvim`, `.config/ghostty`, the `.local/bin` CLIs except `agent-identity`,
+  `Library`) are skipped; on
   macOS the Windows targets (`AppData`, `Documents`, `.config/winget`, `.gitconfig`,
   `.ssh/config`, the `*.ps1` provisioners) are skipped. Root run-scripts are ignored by their
   attribute-stripped name (e.g. `1-mise-config.toml`, `10-winget-packages.ps1`).
