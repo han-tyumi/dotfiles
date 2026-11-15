@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Stamp an agent's commit message with the `Assisted-by:` trailer.
+#
+# Wired as a config-defined `prepare-commit-msg` hook (`hook.<name>.command`), so
+# it runs beside a repository's own hooks instead of replacing its hooks
+# directory the way `core.hooksPath` would. Git passes the message file first.
+#
+# A human's shell carries no harness marker, so `agent-identity` fails and the
+# message is left as written. An existing `Assisted-by:` trailer is replaced
+# rather than kept, because an agent cannot know which model it resolved to and
+# the session record can.
+set -uo pipefail
+
+messageFile="${1:-}"
+[ -n "$messageFile" ] || exit 0
+
+identity="$("$HOME/.local/bin/agent-identity" 2>/dev/null)" || exit 0
+[ -n "$identity" ] || exit 0
+
+git interpret-trailers --in-place --if-exists replace \
+  --trailer "Assisted-by: $identity" "$messageFile"

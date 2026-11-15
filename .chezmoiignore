@@ -68,7 +68,10 @@ Documents
 .claude/skills/gh-stack
 .claude/skills/git-worktree
 .agents
-.local
+# The ~/.local/bin CLIs are bash and nu scripts for the Mac profile, except
+# agent-identity, which git's commit-attribution hook runs through Git Bash.
+.local/bin/*
+!.local/bin/agent-identity
 Library/**
 v
 roc

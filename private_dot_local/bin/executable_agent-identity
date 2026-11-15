@@ -43,22 +43,34 @@ omp_model() {
 }
 
 # Claude Code keeps one transcript per session under a directory named for the
-# working directory with every non-alphanumeric character replaced. The session
-# id names the transcript exactly when it is exported; otherwise the newest
-# transcript for the directory is the conversation that is running this command.
-# A subdirectory without transcripts of its own falls back to the checkout root,
-# which is the directory a session launched at the repo level is filed under.
+# directory the session launched in, with every non-alphanumeric character
+# replaced. An exported session id names the transcript exactly, wherever the
+# command runs from. Without one, the newest transcript for the working
+# directory is the conversation running this command, and a subdirectory
+# without transcripts of its own falls back to the checkout root, which is the
+# directory a session launched at the repo level is filed under. On Windows the
+# directory is named from the native path (`C:\Users\...`), not the
+# `/c/Users/...` form Git Bash reports, so the path is converted first.
 claude_model() {
   local projectRoot="$HOME/.claude/projects" directory transcript
+  local sessionId="${CLAUDE_SESSION_ID:-${CLAUDE_CODE_SESSION_ID:-}}"
+
+  if [ -n "$sessionId" ]; then
+    for transcript in "$projectRoot"/*/"${sessionId}.jsonl"; do
+      [ -r "$transcript" ] || continue
+      record_model '"role":"assistant"' < "$transcript"
+      return 0
+    done
+  fi
+
   for directory in "$PWD" "$(git rev-parse --show-toplevel 2>/dev/null || true)"; do
     [ -n "$directory" ] || continue
+    if command -v cygpath >/dev/null 2>&1; then
+      directory="$(cygpath -w "$directory")"
+    fi
     directory="$projectRoot/$(printf '%s' "$directory" | sed 's#[^A-Za-z0-9]#-#g')"
 
-    if [ -n "${CLAUDE_SESSION_ID:-}" ] && [ -r "$directory/${CLAUDE_SESSION_ID}.jsonl" ]; then
-      transcript="$directory/${CLAUDE_SESSION_ID}.jsonl"
-    else
-      transcript="$(ls -t "$directory"/*.jsonl 2>/dev/null | head -n 1)"
-    fi
+    transcript="$(ls -t "$directory"/*.jsonl 2>/dev/null | head -n 1)"
     [ -n "$transcript" ] && [ -r "$transcript" ] || continue
 
     record_model '"role":"assistant"' < "$transcript"

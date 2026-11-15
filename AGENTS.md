@@ -359,7 +359,9 @@ provisioned with **winget** and **mise** instead of Nix.
   `%APPDATA%\Zed`, not `~/.config/zed`), git identity in `dot_gitconfig` (single
   identity; the GitHub CLI is a winget package authed once via `gh auth login`, and
   SSH commit signing turns on when `dot_gitconfig`'s `stat` gate sees the bootstrap
-  key). `.claude`
+  key; a config-defined `prepare-commit-msg` hook runs `~/.config/git/stamp-attribution`,
+  which stamps an agent's commits with the `Assisted-by:` trailer from
+  `agent-identity` and runs beside each repository's own hooks). `.claude`
   applies on Windows too — settings.json (with the rtk hook, unix statusline, and
   `/tmp` gated to macOS), the global CLAUDE.md, the portable `create-skill` skill,
   (with the `personal` layer on) the `steam` and `character` skills, and (with the `gpd-win-max-2`

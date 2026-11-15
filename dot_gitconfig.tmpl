@@ -45,6 +45,10 @@
 	sort = -committerdate
 [alias]
 	pushf = push --force-with-lease --force-if-includes
+; Stamps an agent's commits with the Assisted-by trailer; a human's pass through.
+[hook "agent-attribution"]
+	event = prepare-commit-msg
+	command = ~/.config/git/stamp-attribution
 {{- if and (has "personal" .layerList) (stat (joinPath .chezmoi.homeDir ".ssh/git_han-tyumi.pub")) }}
 [gpg]
 	format = ssh
