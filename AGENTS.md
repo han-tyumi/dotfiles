@@ -391,6 +391,12 @@ Apply chezmoi changes:
 chezmoi apply
 ```
 
+`apploi` runs that apply with `--no-tty`, so a target edited or deleted since
+chezmoi last wrote it is reported and left alone rather than prompting — a
+prompt hangs a run whose terminal is attached and aborts one without. Everything
+else in the same apply still lands. Re-run with `apploi -f` to overwrite the
+listed targets.
+
 Update and apply chezmoi:
 ```bash
 chezmoi update

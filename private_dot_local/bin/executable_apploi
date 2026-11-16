@@ -19,6 +19,7 @@ export def main [
   --clean (-C)    # Clean the Nix store.
   --mise (-m)     # Upgrade mise plugins and tools.
   --refresh (-R)  # Force-refresh Chezmoi externals (overlays) before applying.
+  --force (-f)    # Overwrite drifted targets instead of stopping to report them.
 ]: nothing -> nothing {
   let all = $all or not ($chezmoi or $update or $switch or $clean or $mise)
   # Overlays refresh on their own once a day; --refresh forces it now (e.g.
@@ -70,11 +71,23 @@ export def main [
     # --init re-renders ~/.config/chezmoi/chezmoi.toml from the template first,
     # so a pulled change to .chezmoi.toml.tmpl takes effect in this same run
     # rather than warning on every apply until someone runs `chezmoi init`.
+    # --no-tty turns a drifted or hand-deleted target into a reported failure
+    # instead of an interactive prompt, which both hangs a run with a terminal
+    # attached and dies without one. Everything unattended still applies: the
+    # drifted target keeps its live contents, so an edit waiting to be adopted
+    # is listed for --force rather than silently overwritten.
     step $"\nApplying Chezmoi's state\n\n"
-    if $refresh {
-      ^chezmoi apply --keep-going --init --refresh-externals
-    } else {
-      ^chezmoi apply --keep-going --init
+    let force_flag = if $force { [--force] } else { [] }
+    let refresh_flag = if $refresh { [--refresh-externals] } else { [] }
+    let apply_result = (do {
+      ^chezmoi apply --keep-going --init --no-tty ...$force_flag ...$refresh_flag
+    } | complete)
+    print $apply_result.stdout
+    print $apply_result.stderr
+    if $apply_result.exit_code != 0 {
+      step "Targets left untouched — review each, then re-run with --force to overwrite:\n\n"
+      ^chezmoi status
+      exit 1
     }
     step ""
   }
