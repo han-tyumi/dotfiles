@@ -175,11 +175,9 @@
       dock = {
         autohide = true;
 
-        # Lists merge across modules: a layer's entries follow these, so a layer
-        # names only what it adds and never a duplicate of an app pinned here.
+        # Lists merge across modules, so pinning here puts the pair on every Mac;
+        # a layer's own list lands after these, so order them there if it matters.
         persistent-apps = [
-          # The browser, and the orchestration app every free desktop session
-          # starts from.
           { app = "/System/Cryptexes/App/System/Applications/Safari.app"; }
           { app = "/Applications/Orca.app"; }
         ];
