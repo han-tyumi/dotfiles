@@ -175,8 +175,9 @@
       dock = {
         autohide = true;
 
-        # Lists merge across modules, so pinning here puts the pair on every Mac;
-        # a layer's own list lands after these, so order them there if it matters.
+        # Lists merge across modules, so pinning here puts the pair on every Mac.
+        # They append after a layer's own list rather than leading it, so a layer
+        # that wants these earlier must pin them in its own list instead.
         persistent-apps = [
           { app = "/System/Cryptexes/App/System/Applications/Safari.app"; }
           { app = "/Applications/Orca.app"; }
