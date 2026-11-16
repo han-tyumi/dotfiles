@@ -455,6 +455,26 @@ the newest for this model.
   of about 75%, then warranty service through DroiX (2 years; no
   replacement module is sold). WinControls has only deadzone and centring offsets,
   no range scale.
+- **Stuck button after sleep**: on 2026-11-15 the pad resumed from hibernation
+  reporting RB held (XInput buttons `0x0200` in every sample, with reports
+  streaming at about 249/s while nothing changed). It moved an open game menu
+  one tab and blocked that game's tab clicks for hours. The user has seen stuck
+  buttons after sleep before. Pressing and releasing RB cleared it (`0x0000`,
+  0 reports/s at idle), and that press acts once in the game too. Sleep here is
+  always hibernation (`powercfg /a` lists only Hibernate, because
+  `HKLM\SYSTEM\CurrentControlSet\Control\Power\PlatformAoAcOverride` is 0, which
+  turns Modern Standby off), so the pad power-cycles and reconnects on every
+  wake. GPD has published nothing on it, and no firmware fixes it. Before
+  blaming synthetic input after a wake, read the pad with `XInputGetState`
+  (`xinput1_4.dll`, slot 0; no admin). The XInput pad is
+  `USB\VID_045E&PID_028E\7A8B644B` ("Xbox 360 Controller for Windows"); the
+  2F24 device carries the keyboard, mouse and a vendor interface. Next time,
+  before pressing RB, try an elevated `pnputil /restart-device` on that
+  instance ID, then the gamepad/mouse switch, sampling between steps: if the
+  restart clears it, a SYSTEM task on Power-Troubleshooter event 1 running that
+  command would fix it for good. If only RB clears it and the bumper also sticks
+  when awake, or sits lower than LB, it's mechanical: warranty service through
+  DroiX.
 - **GPD Tool 1.65** replaces Motion Assistant (TDP up to 40 W, vibration, back
   buttons). Don't run both at once.
 - **Charge limit**: on the 2025 the BIOS charge-limit option reportedly changes
