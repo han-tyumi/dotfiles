@@ -66,9 +66,11 @@ def apploi [--chezmoi (-c), --winget (-w), --mise (-m), --force (-f)] {
     print $apply_result.stdout
     print $apply_result.stderr
     if $apply_result.exit_code != 0 {
+      # return, not exit: apploi is a command in this shell's config, so exit
+      # would close the shell rather than just this command.
       print $"(ansi yellow)apploi(ansi reset): targets left untouched — review each, then re-run with -f to overwrite:"
       ^chezmoi status
-      exit 1
+      return
     }
   }
 

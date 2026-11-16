@@ -64,9 +64,11 @@ function apploi {
     if ($Force) { $applyArgs += '--force' }
     chezmoi @applyArgs
     if ($LASTEXITCODE -ne 0) {
+      # return, not exit: apploi is a function in this profile, so exit would
+      # close the user's shell rather than just this command.
       Write-Host 'apploi: targets left untouched — review each, then re-run with -f to overwrite:' -ForegroundColor Yellow
       chezmoi status
-      exit 1
+      return
     }
   }
 
