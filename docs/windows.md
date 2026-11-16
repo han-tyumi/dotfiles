@@ -25,9 +25,15 @@ that step.
 | `apploi -c` | config only: pull + apply, skip the upgrades (a quick sync) |
 | `apploi -w` | upgrade winget packages only |
 | `apploi -m` | upgrade mise plugins + runtimes (and regenerate the nushell activations) |
+| `apploi -f` | overwrite targets edited or deleted since chezmoi last wrote them |
 
 Every run prints a step line and checks GitHub for a newer WinUtil release. A dirty
 working tree (mid-edit) skips the pull; a dirty submodule does not.
+
+The apply runs `--no-tty`, so a drifted or hand-deleted target is reported and left
+alone instead of prompting — a prompt hangs a run with a terminal attached and aborts
+one without. Everything else in the same apply still lands; `-f` overwrites the listed
+targets.
 
 ## What `chezmoi apply` does
 

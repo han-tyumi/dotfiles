@@ -32,9 +32,10 @@ if (Get-Module -ListAvailable -Name PSFzf) {
 #   apploi -c   config only: pull + apply, skip the upgrades (a quick sync)
 #   apploi -w   upgrade winget packages only
 #   apploi -m   upgrade mise plugins + runtimes (and regenerate the nu activations)
+#   apploi -f   overwrite targets edited or deleted since chezmoi last wrote them
 # Each step prints a line so a converged (no-op) run still confirms it ran.
 function apploi {
-  param([switch] $Chezmoi, [switch] $Winget, [switch] $Mise)
+  param([switch] $Chezmoi, [switch] $Winget, [switch] $Mise, [switch] $Force)
   $all = -not ($Chezmoi -or $Winget -or $Mise)
   $source = chezmoi source-path
 
@@ -54,8 +55,19 @@ function apploi {
     # --keep-going so one failing target doesn't skip every later target.
     # --init re-renders the config file, so a pulled change to .chezmoi.toml.tmpl
     # takes effect in this same run.
+    # --no-tty turns a drifted or hand-deleted target into a reported failure
+    # instead of an interactive prompt, which both hangs a run with a terminal
+    # attached and dies without one. The drifted target keeps its live contents
+    # so an edit waiting to be adopted is listed rather than silently lost.
     Write-Host 'apploi: applying dotfiles...' -ForegroundColor Cyan
-    chezmoi apply --keep-going --init
+    $applyArgs = @('apply', '--keep-going', '--init', '--no-tty')
+    if ($Force) { $applyArgs += '--force' }
+    chezmoi @applyArgs
+    if ($LASTEXITCODE -ne 0) {
+      Write-Host 'apploi: targets left untouched — review each, then re-run with -f to overwrite:' -ForegroundColor Yellow
+      chezmoi status
+      exit 1
+    }
   }
 
   if ($all -or $Winget) {

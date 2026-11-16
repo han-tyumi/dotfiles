@@ -34,8 +34,9 @@ $env.config.keybindings = ($env.config.keybindings | append [
 #   apploi -c    config only: pull + apply, skip the upgrades (a quick sync)
 #   apploi -w    upgrade winget packages only
 #   apploi -m    upgrade mise plugins + runtimes (and regenerate the nu activations)
+#   apploi -f    overwrite targets edited or deleted since chezmoi last wrote them
 # Each step prints a line so a converged (no-op) run still confirms it ran.
-def apploi [--chezmoi (-c), --winget (-w), --mise (-m)] {
+def apploi [--chezmoi (-c), --winget (-w), --mise (-m), --force (-f)] {
   let do_all = (not ($chezmoi or $winget or $mise))
   let source = (^chezmoi source-path)
 
@@ -53,8 +54,22 @@ def apploi [--chezmoi (-c), --winget (-w), --mise (-m)] {
     # --keep-going so one failing target doesn't skip every later target.
     # --init re-renders the config file, so a pulled change to .chezmoi.toml.tmpl
     # takes effect in this same run.
+    # --no-tty turns a drifted or hand-deleted target into a reported failure
+    # instead of an interactive prompt, which both hangs a run with a terminal
+    # attached and dies without one. The drifted target keeps its live contents
+    # so an edit waiting to be adopted is listed rather than silently lost.
     print $"(ansi cyan)apploi(ansi reset): applying dotfiles..."
-    ^chezmoi apply --keep-going --init
+    let force_flag = if $force { [--force] } else { [] }
+    let apply_result = (do {
+      ^chezmoi apply --keep-going --init --no-tty ...$force_flag
+    } | complete)
+    print $apply_result.stdout
+    print $apply_result.stderr
+    if $apply_result.exit_code != 0 {
+      print $"(ansi yellow)apploi(ansi reset): targets left untouched — review each, then re-run with -f to overwrite:"
+      ^chezmoi status
+      exit 1
+    }
   }
 
   if ($do_all or $winget) {
