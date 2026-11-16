@@ -39,7 +39,6 @@
       { app = "/System/Applications/Reminders.app"; }
       { app = "/System/Applications/Notes.app"; }
       { app = "/System/Applications/Calendar.app"; }
-      { app = "/System/Cryptexes/App/System/Applications/Safari.app"; }
       { app = "/Applications/Ghostty.app"; }
       { app = "/Applications/Zed.app"; }
       { app = "/Applications/Claude.app"; }
