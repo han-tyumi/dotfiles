@@ -29,32 +29,6 @@
 - For mise, always use `mise outdated --bump` (or `-l`) to check for tool upgrades. Default `mise outdated` only reports updates *within* the configured version constraint, which means exact pins (e.g. `rclone 1.73.3`) always appear up to date even when newer versions exist.
 - Don't prefix shell commands with `mise exec --`. mise installs shims on `PATH`, so `pnpm`, `node`, etc. resolve directly to the version pinned in `.tool-versions` / `mise.toml`. Using `mise exec` is redundant noise.
 
-## Orca
-
-Orca is the orchestration app: sessions run in per-worktree workspaces with
-per-session diff review, any CLI agent can be launched, and the desktop, mobile,
-web and CLI clients all talk to one daemon. It is installed on every Mac as the
-`stablyai/orca/orca` cask and on Windows as the pinned `StablyAI.Orca` winget
-package; its CLI is `orca`, linked from the app bundle.
-
-Its global skills (`orca-cli`, `computer-use`, `orchestration`) are installed by
-`npx skills add` and owned by Orca's own updater, so they are not tracked as
-files. They live under `~/.agents/skills/` with one symlink per agent under
-`~/.claude/skills/`. For anything more than a single dispatch, read
-`orca skills get orchestration --full` rather than reconstructing flags — it
-ships inside the app and is always version-correct.
-
-## Browsers
-
-On macOS, Safari is the browser: it is the default handler for `http` and
-`https`. Use it for anything a person reads — signing in, opening a link the user
-asked for, viewing a page whose URL you were given. On Windows it is Vivaldi.
-
-Helium is the Mac's Chromium for development and manual dev-mode work. Automated
-browsing goes through the Chromium that `agent-browser` owns (Chrome for Testing,
-fetched by Home Manager), never through Safari — it exposes no automation
-protocol.
-
 ## Agent attribution
 
 Agent-assisted work is marked so a reader can tell the tool from the person. The
