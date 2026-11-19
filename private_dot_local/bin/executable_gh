@@ -12,14 +12,19 @@
 # The same wrapper stamps the `Assisted-by:` line into a published body. An
 # agent cannot report which harness and model it runs as — it only knows what it
 # was told — so the line is written here from the harness's own session record,
-# and a trailing attribution line the body already carries is replaced. The line
-# is then correct whether the agent wrote one, wrote a wrong one, or wrote none.
+# and a stale attribution line the body already carries is replaced. The line is
+# then correct whether the agent wrote one, wrote a wrong one, or wrote none.
 # `agent-identity` is what reads that record; it exits non-zero for a human's
 # own shell, which is left alone.
 #
-# Only a trailing attribution line is replaced. A body that quotes the
-# convention — documentation, a PR explaining this change — keeps its examples,
-# because anything above the final block is content.
+# Every stale stamp goes, not just a trailing one: an integration that edits a
+# body minutes after the agent publishes it appends below the stamp, and treating
+# what follows as content would leave one stamp per edit. Only a stamp at column
+# zero is stripped — indented and fenced examples of the convention, as
+# documentation and a PR explaining this change write them, are content. The
+# stamp goes on the last line as written; a link-reference definition an
+# integration appends below it renders as nothing, so the marker still reads as
+# the body's last line.
 #
 # A body the wrapper cannot see — one gh fills from the commits (`--fill`), one
 # collected in an editor, one read from stdin — is passed through unstamped.
@@ -86,7 +91,7 @@ reserve_scratch() {
   scratch="$work_dir/$work_dir_counter"
 }
 
-# Copy a body with its trailing attribution block replaced by the stamp, and set
+# Copy a body with any stale attribution replaced by the stamp, and set
 # `stamp_path` to the copy. A file that cannot be read, or stdin, returns
 # non-zero so the caller can pass the original argument through for gh to handle.
 stamp_file() {
@@ -95,28 +100,48 @@ stamp_file() {
   reserve_scratch
   target="$scratch"
 
-  # Drop the attribution block only where it sits at the end of the body: the
-  # last non-blank line is an attribution line, so it and the blank run above it
-  # go. An attribution line higher up is quoted content and stays.
-  awk '
+  awk -v stamp="$attribution" '
     { line[NR] = $0 }
     END {
-      last = NR
-      while (last > 0 && line[last] ~ /^[[:space:]]*$/) last--
-      if (last > 0 && line[last] ~ /^[[:space:]]*(🤖[[:space:]]*)?Assisted-by:/) {
-        keep = last - 1
-        while (keep > 0 && (line[keep] ~ /^[[:space:]]*$/ ||
-               line[keep] ~ /^[[:space:]]*(🤖[[:space:]]*)?Assisted-by:/)) keep--
-        for (i = 1; i <= keep; i++) print line[i]
-      } else {
-        for (i = 1; i <= NR; i++) print line[i]
+      # A stamp is an attribution line starting at column zero. Indented ones are
+      # quoted examples (the conventions are written that way), and fenced code is
+      # skipped so a body that explains the stamp keeps its sample.
+      fenced = 0
+      for (i = 1; i <= NR; i++) {
+        if (line[i] ~ /^[[:space:]]*```/) { keep[i] = 1; fenced = !fenced; continue }
+        keep[i] = !(!fenced && line[i] ~ /^(🤖[[:space:]]*)?Assisted-by:[[:space:]]*[^[:space:]]/)
       }
+
+      # Collect the surviving lines. A blank run that a removed stamp sat against
+      # loses one line, so re-stamping does not widen the spacing around it.
+      n = 0
+      i = 1
+      while (i <= NR) {
+        if (!keep[i]) { i++; continue }
+        if (line[i] ~ /^[[:space:]]*$/) {
+          runEnd = i
+          while (runEnd <= NR && keep[runEnd] && line[runEnd] ~ /^[[:space:]]*$/) runEnd++
+          count = runEnd - i
+          if ((i > 1 && !keep[i - 1]) || (runEnd <= NR && !keep[runEnd])) count--
+          for (k = 0; k < count; k++) body[++n] = ""
+          i = runEnd
+          continue
+        }
+        body[++n] = line[i]
+        i++
+      }
+
+      # Emit the surviving body without its trailing blank run, then exactly one
+      # blank line and the stamp.
+      end = n
+      while (end > 0 && body[end] ~ /^[[:space:]]*$/) end--
+
+      for (i = 1; i <= end; i++) print body[i]
+      if (end > 0) print ""
+      print stamp
     }
   ' "$source" > "$target"
 
-  # `$(cat …)` strips the trailing newlines the block removal leaves behind, so
-  # the stamp lands exactly one blank line below the body.
-  printf '%s\n\n%s\n' "$(cat "$target")" "$attribution" > "$target"
   stamp_path="$target"
   return 0
 }

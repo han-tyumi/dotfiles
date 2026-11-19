@@ -49,10 +49,12 @@ review, comment or issue body carries the same marker as its last line, behind a
     🤖 Assisted-by: claude-code:claude-opus-5-5
 
 The `gh` on `PATH` adds that line to every body given on the command line —
-`--body`, `-b`, `--body-file`, or a `body=` field for `gh api` — and replaces a
-trailing one already there. Write the body without it: an agent does not know
-which model it resolved to, so a line it writes itself is a guess, and a wrong
-guess is worse than the stamp that overwrites it.
+`--body`, `-b`, `--body-file`, or a `body=` field for `gh api` — and replaces any
+stamp already in it, so re-publishing a body never accumulates a second one.
+Write the body without it: an agent does not know which model it resolved to, so
+a line it writes itself is a guess, and a wrong guess is worse than the stamp
+that overwrites it. An indented or fenced `Assisted-by:` example is left alone as
+content.
 
 A body gh supplies itself, from `--fill` or from an editor, is published as it
 is. Pass a body when the write needs the marker.
