@@ -43,3 +43,11 @@ trusted_config_paths = [
   "~/.local/share/chezmoi",
   "~/.config/nix-darwin/overlays",
 ]
+
+# Each mise release bundles a snapshot of the aqua registry, and that snapshot
+# lags upstream: bitwarden renamed its CLI assets in cli-v2026.11.0 (bw-*- to
+# bw-bit-*), the registry fix merged upstream before this mise build shipped,
+# yet the baked copy still resolves the old names and fails the install. Reading
+# the registry from upstream costs one fetch, cached under aqua.registry_cache_ttl.
+[settings.aqua]
+baked_registry = false
