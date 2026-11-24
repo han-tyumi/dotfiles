@@ -13,8 +13,8 @@
 type = "git-repo"
 url = "https://github.com/nushell/nu_scripts.git"
 refreshPeriod = "24h"
-clone.args = ["--revision", "381eb7577705b00bea437da7c0439c39ff05f06b", "--depth", "1"]
-pull.args = ["--ff-only", "origin", "381eb7577705b00bea437da7c0439c39ff05f06b"]
+clone.args = ["--revision", "9bd0c65b9eee45ee748bfba00b2ac50c2fb62c10", "--depth", "1"]
+pull.args = ["--ff-only", "origin", "9bd0c65b9eee45ee748bfba00b2ac50c2fb62c10"]
 
 # GitHub authors this skill next to the `gh stack` CLI it documents, so it tracks
 # the default branch rather than a release tag: the extension upgrades on every
